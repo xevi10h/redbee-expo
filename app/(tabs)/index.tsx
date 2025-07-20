@@ -1,75 +1,307 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import React, { useEffect, useState } from 'react';
+import {
+	Alert,
+	Dimensions, // FIX: Import Dimensions
+	FlatList,
+	RefreshControl,
+	StyleSheet,
+	Text,
+	View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { useRequireAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
+import { Video } from '@/shared/types';
+
+// FIX: Get screen height to use for snapping and placeholder height
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Placeholder component for video item - will be implemented later
+const VideoItem: React.FC<{ video: Video; index: number }> = ({
+	video,
+	index,
+}) => {
+	return (
+		<View style={styles.videoPlaceholder}>
+			<Text style={styles.videoTitle}>Video {index + 1}</Text>
+			<Text style={styles.videoDescription}>
+				{video.title || 'Sample video title'}
+			</Text>
+			<Text style={styles.videoUser}>
+				@{video.user?.username || 'username'}
+			</Text>
+		</View>
+	);
+};
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+	const { t } = useTranslation();
+	const { user } = useRequireAuth();
+
+	const [videos, setVideos] = useState<Video[]>([]);
+	const [isLoading, setIsLoading] = useState(false);
+	const [isRefreshing, setIsRefreshing] = useState(false);
+	const [currentTab, setCurrentTab] = useState<'forYou' | 'following'>(
+		'forYou',
+	);
+
+	// FIX: Mock data updated with real URLs, solving the 'null' type error.
+	const mockVideos: Video[] = [
+		{
+			id: '1',
+			user_id: '1',
+			user: {
+				id: '1',
+				username: 'naturelover',
+				display_name: 'Nature Lover',
+				avatar_url:
+					'https://images.pexels.com/photos/1072179/pexels-photo-1072179.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
+			},
+			title: 'Amazing vertical video!',
+			description: 'This is a sample video description with #hashtags',
+			hashtags: ['amazing', 'vertical', 'content'],
+			video_url:
+				'https://videos.pexels.com/video-files/4434255/4434255-hd_720_1366_25fps.mp4',
+			thumbnail_url:
+				'https://images.pexels.com/videos/4434255/pexels-photo-4434255.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
+			duration: 45,
+			is_premium: false,
+			likes_count: 1250,
+			comments_count: 89,
+			views_count: 15600,
+			created_at: new Date().toISOString(),
+			is_liked: false,
+			is_following: false,
+			is_subscribed: false,
+		},
+		{
+			id: '2',
+			user_id: '2',
+			user: {
+				id: '2',
+				username: 'city_explorer',
+				display_name: 'City Explorer',
+				avatar_url:
+					'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
+			},
+			title: 'Exclusive Premium Content',
+			description: 'This premium content requires subscription',
+			hashtags: ['premium', 'exclusive'],
+			video_url:
+				'https://videos.pexels.com/video-files/3209828/3209828-hd_720_1366_24fps.mp4',
+			thumbnail_url:
+				'https://images.pexels.com/videos/3209828/pexels-photo-3209828.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
+			duration: 120,
+			is_premium: true,
+			likes_count: 890,
+			comments_count: 45,
+			views_count: 5200,
+			created_at: new Date().toISOString(),
+			is_liked: false,
+			is_following: true,
+			is_subscribed: false,
+		},
+	];
+
+	const loadVideos = async (refresh = false) => {
+		if (refresh) {
+			setIsRefreshing(true);
+		} else {
+			setIsLoading(true);
+		}
+
+		try {
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+
+			if (refresh) {
+				setVideos(mockVideos);
+			} else {
+				setVideos((prev) => [...prev, ...mockVideos]);
+			}
+		} catch (error) {
+			console.error('Error loading videos:', error);
+			Alert.alert(t('common.error'), t('errors.somethingWentWrong'), [
+				{ text: t('common.ok') },
+			]);
+		} finally {
+			setIsLoading(false);
+			setIsRefreshing(false);
+		}
+	};
+
+	useEffect(() => {
+		if (user) {
+			loadVideos();
+		}
+	}, [user, currentTab]);
+
+	const handleRefresh = () => {
+		loadVideos(true);
+	};
+
+	const handleLoadMore = () => {
+		if (!isLoading && !isRefreshing) {
+			loadVideos();
+		}
+	};
+
+	const renderVideoItem = ({ item, index }: { item: Video; index: number }) => (
+		<VideoItem video={item} index={index} />
+	);
+
+	const renderEmptyState = () => (
+		<View style={styles.emptyState}>
+			<Text style={styles.emptyTitle}>{t('home.noVideos')}</Text>
+			<Text style={styles.emptySubtitle}>{t('home.refreshToSeeNew')}</Text>
+		</View>
+	);
+
+	if (!user) {
+		return null;
+	}
+
+	return (
+		<SafeAreaView style={styles.container} edges={['top']}>
+			<StatusBar style="light" />
+
+			<View style={styles.header}>
+				<Text style={styles.appName}>Redbee</Text>
+				<View style={styles.tabContainer}>
+					<Text
+						style={[styles.tab, currentTab === 'forYou' && styles.activeTab]}
+						onPress={() => setCurrentTab('forYou')}
+					>
+						{t('home.forYou')}
+					</Text>
+					<Text
+						style={[styles.tab, currentTab === 'following' && styles.activeTab]}
+						onPress={() => setCurrentTab('following')}
+					>
+						{t('home.following')}
+					</Text>
+				</View>
+			</View>
+
+			<FlatList
+				data={videos}
+				renderItem={renderVideoItem}
+				keyExtractor={(item) => item.id}
+				style={styles.feedContainer}
+				showsVerticalScrollIndicator={false}
+				refreshControl={
+					<RefreshControl
+						refreshing={isRefreshing}
+						onRefresh={handleRefresh}
+						tintColor="#E1306C"
+						colors={['#E1306C']}
+					/>
+				}
+				onEndReached={handleLoadMore}
+				onEndReachedThreshold={0.5}
+				ListEmptyComponent={renderEmptyState}
+				pagingEnabled
+				// FIX: Use SCREEN_HEIGHT for snapToInterval
+				snapToInterval={SCREEN_HEIGHT}
+				snapToAlignment="start"
+				decelerationRate="fast"
+			/>
+		</SafeAreaView>
+	);
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+	container: {
+		flex: 1,
+		backgroundColor: '#000000',
+	},
+	header: {
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		backgroundColor: '#000000',
+		borderBottomWidth: 1,
+		borderBottomColor: '#1C1C1E',
+	},
+	appName: {
+		fontSize: 24,
+		fontFamily: 'Poppins-Bold',
+		fontWeight: 'bold',
+		color: '#FFFFFF',
+		textAlign: 'center',
+		marginBottom: 12,
+	},
+	tabContainer: {
+		flexDirection: 'row',
+		justifyContent: 'center',
+		gap: 32,
+	},
+	tab: {
+		fontSize: 16,
+		fontFamily: 'Inter-Medium',
+		fontWeight: '500',
+		color: '#6C757D',
+		paddingVertical: 8,
+		paddingHorizontal: 16,
+	},
+	activeTab: {
+		color: '#FFFFFF',
+		borderBottomWidth: 2,
+		borderBottomColor: '#E1306C',
+	},
+	feedContainer: {
+		flex: 1,
+	},
+	videoPlaceholder: {
+		// FIX: Use SCREEN_HEIGHT to make the placeholder fill the screen
+		height: SCREEN_HEIGHT,
+		backgroundColor: '#1C1C1E',
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingHorizontal: 20,
+	},
+	videoTitle: {
+		fontSize: 18,
+		fontFamily: 'Poppins-SemiBold',
+		fontWeight: '600',
+		color: '#FFFFFF',
+		marginBottom: 8,
+		textAlign: 'center',
+	},
+	videoDescription: {
+		fontSize: 14,
+		fontFamily: 'Inter-Regular',
+		color: '#ADB5BD',
+		marginBottom: 8,
+		textAlign: 'center',
+	},
+	videoUser: {
+		fontSize: 16,
+		fontFamily: 'Inter-SemiBold',
+		fontWeight: '600',
+		color: '#E1306C',
+		textAlign: 'center',
+	},
+	emptyState: {
+		// FIX: Ensure empty state also takes up the full screen height
+		height: SCREEN_HEIGHT,
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingHorizontal: 32,
+	},
+	emptyTitle: {
+		fontSize: 20,
+		fontFamily: 'Poppins-SemiBold',
+		fontWeight: '600',
+		color: '#FFFFFF',
+		marginBottom: 8,
+		textAlign: 'center',
+	},
+	emptySubtitle: {
+		fontSize: 16,
+		fontFamily: 'Inter-Regular',
+		color: '#ADB5BD',
+		textAlign: 'center',
+		lineHeight: 24,
+	},
 });
