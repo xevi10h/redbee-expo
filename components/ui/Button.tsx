@@ -9,6 +9,8 @@ import {
 	ViewStyle,
 } from 'react-native';
 
+import { Colors } from '@/constants/Colors';
+
 interface ButtonProps {
 	title: string;
 	onPress: () => void;
@@ -43,7 +45,6 @@ export const Button: React.FC<ButtonProps> = ({
 	];
 
 	const textStyles = [
-		// FIX: Use the renamed 'baseText' style
 		styles.baseText,
 		styles[`${size}Text`],
 		styles[`${variant}Text`],
@@ -51,12 +52,25 @@ export const Button: React.FC<ButtonProps> = ({
 		textStyle,
 	];
 
-	// ... (rest of the component is unchanged)
+	const getLoadingColor = () => {
+		switch (variant) {
+			case 'primary':
+				return Colors.text;
+			case 'secondary':
+				return Colors.text;
+			case 'outline':
+			case 'text':
+				return Colors.primary;
+			default:
+				return Colors.primary;
+		}
+	};
+
 	const renderContent = () => (
 		<>
 			{loading ? (
 				<ActivityIndicator
-					color={variant === 'primary' ? '#FFFFFF' : '#E1306C'}
+					color={getLoadingColor()}
 					size="small"
 					style={icon ? styles.iconSpacing : undefined}
 				/>
@@ -80,7 +94,7 @@ export const Button: React.FC<ButtonProps> = ({
 				activeOpacity={0.8}
 			>
 				<LinearGradient
-					colors={['#E1306C', '#F77737']}
+					colors={Colors.gradientPrimary}
 					style={[styles.gradient, styles[size]]}
 					start={{ x: 0, y: 0 }}
 					end={{ x: 1, y: 0 }}
@@ -104,7 +118,6 @@ export const Button: React.FC<ButtonProps> = ({
 };
 
 const styles = StyleSheet.create({
-	// ... (base, gradient, fullWidth, disabled, sizes are unchanged)
 	base: {
 		borderRadius: 12,
 		alignItems: 'center',
@@ -124,6 +137,8 @@ const styles = StyleSheet.create({
 	disabled: {
 		opacity: 0.5,
 	},
+
+	// Sizes
 	small: {
 		paddingHorizontal: 16,
 		paddingVertical: 8,
@@ -140,24 +155,23 @@ const styles = StyleSheet.create({
 		minHeight: 56,
 	},
 
-	// Variants
+	// Variants - using Colors constants
 	primary: {
 		// Handled by LinearGradient
 	},
 	secondary: {
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.backgroundSecondary,
 	},
 	outline: {
 		backgroundColor: 'transparent',
 		borderWidth: 1,
-		borderColor: '#E1306C',
+		borderColor: Colors.primary,
 	},
 	text: {
 		backgroundColor: 'transparent',
 	},
 
 	// Text styles
-	// FIX: Renamed 'text' to 'baseText' to avoid key collision
 	baseText: {
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
@@ -173,22 +187,24 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 	},
 
-	// ... (rest of the styles are unchanged)
+	// Text colors using Colors constants
 	primaryText: {
-		color: '#FFFFFF',
+		color: Colors.text,
 	},
 	secondaryText: {
-		color: '#FFFFFF',
+		color: Colors.text,
 	},
 	outlineText: {
-		color: '#E1306C',
+		color: Colors.primary,
 	},
 	textText: {
-		color: '#E1306C',
+		color: Colors.primary,
 	},
 	disabledText: {
 		opacity: 0.5,
 	},
+
+	// Icon styles
 	icon: {
 		fontSize: 18,
 	},

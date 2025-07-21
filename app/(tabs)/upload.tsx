@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -156,12 +157,12 @@ export default function UploadScreen() {
 								onPress={handleSelectFromGallery}
 							>
 								<LinearGradient
-									colors={['#E1306C', '#F77737']}
+									colors={Colors.gradientPrimary}
 									style={styles.selectionButtonGradient}
 									start={{ x: 0, y: 0 }}
 									end={{ x: 1, y: 0 }}
 								>
-									<Feather name="image" size={32} color="#FFFFFF" />
+									<Feather name="image" size={32} color={Colors.text} />
 									<Text style={styles.selectionButtonText}>
 										{t('upload.fromGallery')}
 									</Text>
@@ -173,7 +174,7 @@ export default function UploadScreen() {
 								onPress={handleRecordVideo}
 							>
 								<View style={styles.selectionButtonSecondary}>
-									<Feather name="camera" size={32} color="#E1306C" />
+									<Feather name="camera" size={32} color={Colors.primary} />
 									<Text style={styles.selectionButtonSecondaryText}>
 										{t('upload.useCamera')}
 									</Text>
@@ -183,19 +184,23 @@ export default function UploadScreen() {
 
 						<View style={styles.infoContainer}>
 							<View style={styles.infoItem}>
-								<Feather name="clock" size={16} color="#6C757D" />
+								<Feather name="clock" size={16} color={Colors.textTertiary} />
 								<Text style={styles.infoText}>
 									Duración: 15 segundos - 5 minutos
 								</Text>
 							</View>
 							<View style={styles.infoItem}>
-								<Feather name="smartphone" size={16} color="#6C757D" />
+								<Feather
+									name="smartphone"
+									size={16}
+									color={Colors.textTertiary}
+								/>
 								<Text style={styles.infoText}>
 									Formato vertical recomendado (9:16)
 								</Text>
 							</View>
 							<View style={styles.infoItem}>
-								<Feather name="file" size={16} color="#6C757D" />
+								<Feather name="file" size={16} color={Colors.textTertiary} />
 								<Text style={styles.infoText}>Máximo 100MB por video</Text>
 							</View>
 						</View>
@@ -205,7 +210,7 @@ export default function UploadScreen() {
 					<View style={styles.formContainer}>
 						{/* Video Preview Placeholder */}
 						<View style={styles.videoPreview}>
-							<Feather name="play-circle" size={48} color="#E1306C" />
+							<Feather name="play-circle" size={48} color={Colors.primary} />
 							<Text style={styles.videoPreviewText}>Video seleccionado</Text>
 						</View>
 
@@ -288,20 +293,20 @@ export default function UploadScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 	},
 	header: {
 		paddingHorizontal: 16,
 		paddingVertical: 16,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	title: {
 		fontSize: 24,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		textAlign: 'center',
 	},
 	content: {
@@ -329,27 +334,27 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		paddingVertical: 32,
 		paddingHorizontal: 24,
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.backgroundSecondary,
 		borderRadius: 16,
 		borderWidth: 2,
-		borderColor: '#E1306C',
+		borderColor: Colors.primary,
 	},
 	selectionButtonText: {
 		fontSize: 18,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginTop: 12,
 	},
 	selectionButtonSecondaryText: {
 		fontSize: 18,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#E1306C',
+		color: Colors.primary,
 		marginTop: 12,
 	},
 	infoContainer: {
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.backgroundSecondary,
 		borderRadius: 12,
 		padding: 16,
 		gap: 12,
@@ -362,14 +367,14 @@ const styles = StyleSheet.create({
 	infoText: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 	},
 	formContainer: {
 		padding: 24,
 	},
 	videoPreview: {
 		height: 200,
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.backgroundSecondary,
 		borderRadius: 12,
 		alignItems: 'center',
 		justifyContent: 'center',
@@ -379,7 +384,7 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontFamily: 'Inter-Medium',
 		fontWeight: '500',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		marginTop: 8,
 	},
 	textArea: {
@@ -389,7 +394,7 @@ const styles = StyleSheet.create({
 	premiumContainer: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.backgroundSecondary,
 		borderRadius: 12,
 		padding: 16,
 		marginBottom: 24,
@@ -402,30 +407,30 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 4,
 	},
 	premiumDescription: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 	},
 	toggle: {
 		width: 50,
 		height: 30,
 		borderRadius: 15,
-		backgroundColor: '#6C757D',
+		backgroundColor: Colors.textTertiary,
 		justifyContent: 'center',
 		paddingHorizontal: 2,
 	},
 	toggleActive: {
-		backgroundColor: '#E1306C',
+		backgroundColor: Colors.primary,
 	},
 	toggleThumb: {
 		width: 26,
 		height: 26,
 		borderRadius: 13,
-		backgroundColor: '#FFFFFF',
+		backgroundColor: Colors.text,
 		alignSelf: 'flex-start',
 	},
 	toggleThumbActive: {

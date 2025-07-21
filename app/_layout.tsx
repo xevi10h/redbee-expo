@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import 'react-native-reanimated';
 
+import { Colors } from '@/constants/Colors';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -38,7 +39,7 @@ export default function RootLayout() {
 	if (!loaded || isLoading || !isInitialized) {
 		return (
 			<LinearGradient
-				colors={['#000000', '#1C1C1E']}
+				colors={Colors.gradientSecondary}
 				style={styles.loadingContainer}
 			>
 				<StatusBar style="light" />
@@ -46,7 +47,7 @@ export default function RootLayout() {
 					<Text style={styles.appName}>Redbee</Text>
 					<ActivityIndicator
 						size="large"
-						color="#E1306C"
+						color={Colors.primary}
 						style={styles.loader}
 					/>
 					<Text style={styles.loadingText}>{t('common.loading')}</Text>
@@ -58,7 +59,7 @@ export default function RootLayout() {
 	if (error) {
 		return (
 			<LinearGradient
-				colors={['#000000', '#1C1C1E']}
+				colors={Colors.gradientSecondary}
 				style={styles.errorContainer}
 			>
 				<StatusBar style="light" />
@@ -125,7 +126,7 @@ const styles = StyleSheet.create({
 		fontSize: 48,
 		fontFamily: 'Poppins-Bold',
 		fontWeight: 'bold',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 48,
 		textAlign: 'center',
 	},
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
 	loadingText: {
 		fontSize: 16,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 	},
 	errorContainer: {
@@ -151,21 +152,21 @@ const styles = StyleSheet.create({
 		fontSize: 24,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 16,
 		textAlign: 'center',
 	},
 	errorText: {
 		fontSize: 16,
 		fontFamily: 'Inter-Regular',
-		color: '#DC3545',
+		color: Colors.error,
 		marginBottom: 8,
 		textAlign: 'center',
 	},
 	errorHint: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 	},
 });

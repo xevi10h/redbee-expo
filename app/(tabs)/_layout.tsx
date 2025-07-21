@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 
+import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export default function TabLayout() {
@@ -11,12 +12,12 @@ export default function TabLayout() {
 	return (
 		<Tabs
 			screenOptions={{
-				tabBarActiveTintColor: '#E1306C',
-				tabBarInactiveTintColor: '#6C757D',
+				tabBarActiveTintColor: Colors.tabBarActive,
+				tabBarInactiveTintColor: Colors.tabBarInactive,
 				tabBarStyle: {
-					backgroundColor: '#000000',
+					backgroundColor: Colors.tabBarBackground,
 					borderTopWidth: 1,
-					borderTopColor: '#1C1C1E',
+					borderTopColor: Colors.tabBarBorder,
 					height: Platform.OS === 'ios' ? 90 : 70,
 					paddingBottom: Platform.OS === 'ios' ? 30 : 10,
 					paddingTop: 10,
@@ -56,7 +57,11 @@ export default function TabLayout() {
 					title: t('navigation.upload'),
 					tabBarIcon: ({ color, size, focused }) => (
 						<LinearGradient
-							colors={focused ? ['#E1306C', '#F77737'] : ['#6C757D', '#6C757D']}
+							colors={
+								focused
+									? Colors.gradientPrimary
+									: [Colors.tabBarInactive, Colors.tabBarInactive]
+							}
 							style={{
 								width: 32,
 								height: 32,
@@ -67,7 +72,7 @@ export default function TabLayout() {
 							start={{ x: 0, y: 0 }}
 							end={{ x: 1, y: 0 }}
 						>
-							<Feather name="plus" size={size} color="#FFFFFF" />
+							<Feather name="plus" size={size} color={Colors.text} />
 						</LinearGradient>
 					),
 					tabBarLabelStyle: {

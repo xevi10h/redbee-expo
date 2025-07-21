@@ -16,6 +16,7 @@ import {
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Colors } from '@/constants/Colors';
 import { useGuestOnly } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { SupabaseAuthService } from '@/services/supabaseAuth';
@@ -83,7 +84,7 @@ export default function ResetPasswordScreen() {
 	};
 
 	return (
-		<LinearGradient colors={['#000000', '#1C1C1E']} style={styles.container}>
+		<LinearGradient colors={Colors.gradientSecondary} style={styles.container}>
 			<StatusBar style="light" />
 
 			<KeyboardAvoidingView
@@ -100,13 +101,13 @@ export default function ResetPasswordScreen() {
 						style={styles.backButton}
 						onPress={handleBackToSignIn}
 					>
-						<Feather name="arrow-left" size={24} color="#FFFFFF" />
+						<Feather name="arrow-left" size={24} color={Colors.text} />
 					</TouchableOpacity>
 
 					{/* Header */}
 					<View style={styles.header}>
 						<View style={styles.iconContainer}>
-							<Feather name="key" size={48} color="#E1306C" />
+							<Feather name="key" size={48} color={Colors.primary} />
 						</View>
 						<Text style={styles.title}>{t('auth.resetPassword')}</Text>
 						<Text style={styles.subtitle}>
@@ -150,7 +151,7 @@ export default function ResetPasswordScreen() {
 						/* Success State */
 						<View style={styles.successContainer}>
 							<View style={styles.successIconContainer}>
-								<Feather name="check-circle" size={64} color="#28A745" />
+								<Feather name="check-circle" size={64} color={Colors.success} />
 							</View>
 							<Text style={styles.successTitle}>
 								{t('auth.resetEmailSent')}
@@ -187,7 +188,7 @@ export default function ResetPasswordScreen() {
 						<View style={styles.footer}>
 							<TouchableOpacity onPress={handleBackToSignIn}>
 								<Text style={styles.footerText}>
-									<Feather name="arrow-left" size={16} color="#E1306C" />{' '}
+									<Feather name="arrow-left" size={16} color={Colors.primary} />{' '}
 									{t('auth.backToSignIn')}
 								</Text>
 							</TouchableOpacity>
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
 		width: 80,
 		height: 80,
 		borderRadius: 40,
-		backgroundColor: 'rgba(225, 48, 108, 0.1)',
+		backgroundColor: Colors.premiumBackground,
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginBottom: 24,
@@ -233,14 +234,14 @@ const styles = StyleSheet.create({
 		fontSize: 28,
 		fontFamily: 'Poppins-Bold',
 		fontWeight: 'bold',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 12,
 		textAlign: 'center',
 	},
 	subtitle: {
 		fontSize: 16,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 		lineHeight: 24,
 		paddingHorizontal: 16,
@@ -263,14 +264,14 @@ const styles = StyleSheet.create({
 		fontSize: 24,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 12,
 		textAlign: 'center',
 	},
 	successText: {
 		fontSize: 16,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 		lineHeight: 24,
 		marginBottom: 32,
@@ -285,11 +286,11 @@ const styles = StyleSheet.create({
 	resendText: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 	},
 	resendLink: {
-		color: '#E1306C',
+		color: Colors.primary,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
 	},
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
 	footerText: {
 		fontSize: 16,
 		fontFamily: 'Inter-Medium',
-		color: '#E1306C',
+		color: Colors.primary,
 		textAlign: 'center',
 	},
 });

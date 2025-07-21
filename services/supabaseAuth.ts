@@ -35,9 +35,9 @@ export class SupabaseAuthService {
 				};
 			}
 
-			// Get user profile from database
+			// Get user profile from profiles table
 			const { data: profile, error: profileError } = await supabase
-				.from('users')
+				.from('profiles')
 				.select('*')
 				.eq('id', authData.user.id)
 				.single();
@@ -51,6 +51,7 @@ export class SupabaseAuthService {
 
 			const user: User = {
 				...profile,
+				email: authData.user.email!,
 				access_token: authData.session?.access_token,
 				language: getDeviceLanguage(),
 			};
@@ -74,11 +75,20 @@ export class SupabaseAuthService {
 		credentials: RegisterCredentials,
 	): Promise<AuthResponse<User>> {
 		try {
-			// First check if username is available
-			const usernameCheck = await this.checkUsernameAvailability(
-				credentials.username,
-			);
-			if (!usernameCheck.success || !usernameCheck.data?.available) {
+			// First check if username is available using the function
+			const { data: isAvailable, error: availabilityError } =
+				await supabase.rpc('check_username_availability', {
+					username_to_check: credentials.username,
+				});
+
+			if (availabilityError) {
+				return {
+					success: false,
+					error: 'Failed to check username availability',
+				};
+			}
+
+			if (!isAvailable) {
 				return {
 					success: false,
 					error: 'Username is not available',
@@ -89,6 +99,12 @@ export class SupabaseAuthService {
 			const { data: authData, error: authError } = await supabase.auth.signUp({
 				email: credentials.email,
 				password: credentials.password,
+				options: {
+					data: {
+						display_name: credentials.display_name,
+						username: credentials.username,
+					},
+				},
 			});
 
 			if (authError) {
@@ -105,29 +121,28 @@ export class SupabaseAuthService {
 				};
 			}
 
-			// Create user profile in database
+			// Update the profile with the correct username (trigger creates initial profile)
 			const { data: profile, error: profileError } = await supabase
-				.from('users')
-				.insert({
-					id: authData.user.id,
-					email: credentials.email,
+				.from('profiles')
+				.update({
 					username: credentials.username,
 					display_name: credentials.display_name,
+					updated_at: new Date().toISOString(),
 				})
+				.eq('id', authData.user.id)
 				.select()
 				.single();
 
 			if (profileError) {
-				// If profile creation fails, we should clean up the auth user
-				await supabase.auth.admin.deleteUser(authData.user.id);
 				return {
 					success: false,
-					error: 'Failed to create user profile',
+					error: 'Failed to update user profile',
 				};
 			}
 
 			const user: User = {
 				...profile,
+				email: authData.user.email!,
 				access_token: authData.session?.access_token,
 				language: getDeviceLanguage(),
 			};
@@ -255,9 +270,9 @@ export class SupabaseAuthService {
 				};
 			}
 
-			// Get user profile from database
+			// Get user profile from profiles table
 			const { data: profile, error: profileError } = await supabase
-				.from('users')
+				.from('profiles')
 				.select('*')
 				.eq('id', session.session.user.id)
 				.single();
@@ -271,6 +286,7 @@ export class SupabaseAuthService {
 
 			const user: User = {
 				...profile,
+				email: session.session.user.email!,
 				access_token: session.session.access_token,
 				language: getDeviceLanguage(),
 			};
@@ -325,14 +341,14 @@ export class SupabaseAuthService {
 		username: string,
 	): Promise<AuthResponse<{ available: boolean }>> {
 		try {
-			const { data, error } = await supabase
-				.from('users')
-				.select('id')
-				.eq('username', username.toLowerCase())
-				.maybeSingle();
+			const { data, error } = await supabase.rpc(
+				'check_username_availability',
+				{
+					username_to_check: username,
+				},
+			);
 
-			if (error && error.code !== 'PGRST116') {
-				// PGRST116 is "no rows found"
+			if (error) {
 				return {
 					success: false,
 					error: error.message,
@@ -342,7 +358,7 @@ export class SupabaseAuthService {
 			return {
 				success: true,
 				data: {
-					available: !data,
+					available: data,
 				},
 			};
 		} catch (error) {
@@ -362,14 +378,15 @@ export class SupabaseAuthService {
 		currentUserId: string,
 	): Promise<AuthResponse<{ available: boolean }>> {
 		try {
-			const { data, error } = await supabase
-				.from('users')
-				.select('id')
-				.eq('username', username.toLowerCase())
-				.neq('id', currentUserId)
-				.maybeSingle();
+			const { data, error } = await supabase.rpc(
+				'check_username_availability_for_update',
+				{
+					username_to_check: username,
+					user_id: currentUserId,
+				},
+			);
 
-			if (error && error.code !== 'PGRST116') {
+			if (error) {
 				return {
 					success: false,
 					error: error.message,
@@ -379,7 +396,7 @@ export class SupabaseAuthService {
 			return {
 				success: true,
 				data: {
-					available: !data,
+					available: data,
 				},
 			};
 		} catch (error) {
@@ -398,13 +415,14 @@ export class SupabaseAuthService {
 		email: string,
 	): Promise<AuthResponse<{ available: boolean }>> {
 		try {
-			const { data, error } = await supabase
-				.from('users')
+			// Check in auth.users (emails are managed by Supabase Auth)
+			const { data: existingUsers, error } = await supabase
+				.from('users_with_email')
 				.select('id')
 				.eq('email', email.toLowerCase())
-				.maybeSingle();
+				.limit(1);
 
-			if (error && error.code !== 'PGRST116') {
+			if (error) {
 				return {
 					success: false,
 					error: error.message,
@@ -414,7 +432,7 @@ export class SupabaseAuthService {
 			return {
 				success: true,
 				data: {
-					available: !data,
+					available: !existingUsers || existingUsers.length === 0,
 				},
 			};
 		} catch (error) {
@@ -491,28 +509,51 @@ export class SupabaseAuthService {
 		updates: Partial<User>,
 	): Promise<AuthResponse<User>> {
 		try {
-			const { data, error } = await supabase
-				.from('users')
+			// Separate email updates from profile updates
+			const { email, access_token, language, ...profileUpdates } = updates;
+
+			// Update profile in profiles table
+			const { data: profile, error: profileError } = await supabase
+				.from('profiles')
 				.update({
-					...updates,
+					...profileUpdates,
 					updated_at: new Date().toISOString(),
 				})
 				.eq('id', userId)
 				.select()
 				.single();
 
-			if (error) {
+			if (profileError) {
 				return {
 					success: false,
-					error: error.message,
+					error: profileError.message,
 				};
 			}
+
+			// Update email if provided (this updates auth.users)
+			if (email) {
+				const { error: emailError } = await supabase.auth.updateUser({
+					email: email,
+				});
+
+				if (emailError) {
+					return {
+						success: false,
+						error: `Profile updated but email update failed: ${emailError.message}`,
+					};
+				}
+			}
+
+			// Get current email from auth
+			const { data: session } = await supabase.auth.getSession();
+			const currentEmail = session.session?.user?.email || '';
 
 			return {
 				success: true,
 				data: {
-					...data,
-					language: getDeviceLanguage(),
+					...profile,
+					email: email || currentEmail,
+					language: language || getDeviceLanguage(),
 				},
 			};
 		} catch (error) {
@@ -529,9 +570,9 @@ export class SupabaseAuthService {
 	 */
 	static async deleteAccount(userId: string): Promise<AuthResponse<void>> {
 		try {
-			// First delete user data
+			// Delete profile (cascade will handle related data)
 			const { error: deleteError } = await supabase
-				.from('users')
+				.from('profiles')
 				.delete()
 				.eq('id', userId);
 
@@ -542,7 +583,7 @@ export class SupabaseAuthService {
 				};
 			}
 
-			// Then sign out
+			// Sign out
 			await this.signOut();
 
 			return {

@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
+import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatCurrency, formatNumber } from '@/shared/functions/utils';
@@ -30,20 +31,20 @@ const VideoThumbnail: React.FC<{ video: Video; onPress: () => void }> = ({
 	return (
 		<TouchableOpacity style={styles.videoThumbnail} onPress={onPress}>
 			<View style={styles.thumbnailContainer}>
-				<Feather name="play" size={20} color="#FFFFFF" />
+				<Feather name="play" size={20} color={Colors.text} />
 				{video.is_premium && (
 					<View style={styles.premiumBadge}>
-						<Feather name="star" size={12} color="#FFFFFF" />
+						<Feather name="star" size={12} color={Colors.text} />
 					</View>
 				)}
 			</View>
 			<View style={styles.videoStats}>
 				<View style={styles.statItem}>
-					<Feather name="heart" size={12} color="#FFFFFF" />
+					<Feather name="heart" size={12} color={Colors.text} />
 					<Text style={styles.statText}>{formatNumber(video.likes_count)}</Text>
 				</View>
 				<View style={styles.statItem}>
-					<Feather name="eye" size={12} color="#FFFFFF" />
+					<Feather name="eye" size={12} color={Colors.text} />
 					<Text style={styles.statText}>{formatNumber(video.views_count)}</Text>
 				</View>
 			</View>
@@ -110,7 +111,7 @@ export default function ProfileScreen() {
 
 	const renderEmptyState = () => (
 		<View style={styles.emptyState}>
-			<Feather name="video" size={48} color="#6C757D" />
+			<Feather name="video" size={48} color={Colors.textTertiary} />
 			<Text style={styles.emptyTitle}>
 				{currentTab === 'videos' ? t('profile.noVideos') : 'No liked videos'}
 			</Text>
@@ -138,16 +139,16 @@ export default function ProfileScreen() {
 				<View style={styles.header}>
 					<View style={styles.avatarContainer}>
 						<LinearGradient
-							colors={['#E1306C', '#F77737']}
+							colors={Colors.gradientPrimary}
 							style={styles.avatarGradient}
 							start={{ x: 0, y: 0 }}
 							end={{ x: 1, y: 0 }}
 						>
 							{user.avatar_url ? (
 								// TODO: Add Image component when avatar is available
-								<Feather name="user" size={32} color="#FFFFFF" />
+								<Feather name="user" size={32} color={Colors.text} />
 							) : (
-								<Feather name="user" size={32} color="#FFFFFF" />
+								<Feather name="user" size={32} color={Colors.text} />
 							)}
 						</LinearGradient>
 					</View>
@@ -215,7 +216,9 @@ export default function ProfileScreen() {
 						<Feather
 							name="grid"
 							size={20}
-							color={currentTab === 'videos' ? '#E1306C' : '#6C757D'}
+							color={
+								currentTab === 'videos' ? Colors.primary : Colors.textTertiary
+							}
 						/>
 						<Text
 							style={[
@@ -234,7 +237,9 @@ export default function ProfileScreen() {
 						<Feather
 							name="heart"
 							size={20}
-							color={currentTab === 'liked' ? '#E1306C' : '#6C757D'}
+							color={
+								currentTab === 'liked' ? Colors.primary : Colors.textTertiary
+							}
 						/>
 						<Text
 							style={[
@@ -271,7 +276,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 	},
 	scrollContainer: {
 		flex: 1,
@@ -281,7 +286,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 24,
 		paddingVertical: 24,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	avatarContainer: {
 		marginBottom: 16,
@@ -297,21 +302,21 @@ const styles = StyleSheet.create({
 		fontSize: 24,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 4,
 		textAlign: 'center',
 	},
 	username: {
 		fontSize: 16,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		marginBottom: 16,
 		textAlign: 'center',
 	},
 	bio: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#FFFFFF',
+		color: Colors.text,
 		textAlign: 'center',
 		lineHeight: 20,
 		marginBottom: 20,
@@ -328,17 +333,17 @@ const styles = StyleSheet.create({
 		fontSize: 20,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 4,
 	},
 	statLabel: {
 		fontSize: 12,
 		fontFamily: 'Inter-Regular',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 	},
 	subscriptionContainer: {
 		alignItems: 'center',
-		backgroundColor: 'rgba(225, 48, 108, 0.1)',
+		backgroundColor: Colors.premiumBackground,
 		borderRadius: 12,
 		paddingVertical: 12,
 		paddingHorizontal: 20,
@@ -348,17 +353,17 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#E1306C',
+		color: Colors.premium,
 	},
 	subscriptionPeriod: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#E1306C',
+		color: Colors.premium,
 	},
 	subscriptionLabel: {
 		fontSize: 12,
 		fontFamily: 'Inter-Regular',
-		color: '#E1306C',
+		color: Colors.premium,
 		marginTop: 4,
 	},
 	editButton: {
@@ -367,7 +372,7 @@ const styles = StyleSheet.create({
 	},
 	tabsContainer: {
 		flexDirection: 'row',
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 	},
 	tab: {
 		flex: 1,
@@ -380,16 +385,16 @@ const styles = StyleSheet.create({
 		borderBottomColor: 'transparent',
 	},
 	activeTab: {
-		borderBottomColor: '#E1306C',
+		borderBottomColor: Colors.primary,
 	},
 	tabText: {
 		fontSize: 14,
 		fontFamily: 'Inter-Medium',
 		fontWeight: '500',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 	},
 	activeTabText: {
-		color: '#E1306C',
+		color: Colors.primary,
 	},
 	videosContainer: {
 		flex: 1,
@@ -408,7 +413,7 @@ const styles = StyleSheet.create({
 	videoThumbnail: {
 		width: videoWidth,
 		aspectRatio: 9 / 16,
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.backgroundSecondary,
 		borderRadius: 8,
 		overflow: 'hidden',
 	},
@@ -422,7 +427,7 @@ const styles = StyleSheet.create({
 		position: 'absolute',
 		top: 8,
 		right: 8,
-		backgroundColor: '#E1306C',
+		backgroundColor: Colors.premium,
 		borderRadius: 10,
 		width: 20,
 		height: 20,
@@ -434,7 +439,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		paddingHorizontal: 8,
 		paddingVertical: 6,
-		backgroundColor: 'rgba(0, 0, 0, 0.7)',
+		backgroundColor: Colors.overlay,
 	},
 	statItem: {
 		flexDirection: 'row',
@@ -444,7 +449,7 @@ const styles = StyleSheet.create({
 	statText: {
 		fontSize: 10,
 		fontFamily: 'Inter-Regular',
-		color: '#FFFFFF',
+		color: Colors.text,
 	},
 	emptyState: {
 		alignItems: 'center',
@@ -455,7 +460,7 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginTop: 16,
 		marginBottom: 8,
 		textAlign: 'center',
@@ -463,7 +468,7 @@ const styles = StyleSheet.create({
 	emptySubtitle: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 		textAlign: 'center',
 	},
 });

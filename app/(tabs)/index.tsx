@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
 	Alert,
-	Dimensions, // FIX: Import Dimensions
+	Dimensions,
 	FlatList,
 	RefreshControl,
 	StyleSheet,
@@ -11,11 +11,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Video } from '@/shared/types';
 
-// FIX: Get screen height to use for snapping and placeholder height
+// Get screen height to use for snapping and placeholder height
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Placeholder component for video item - will be implemented later
@@ -47,7 +48,7 @@ export default function HomeScreen() {
 		'forYou',
 	);
 
-	// FIX: Mock data updated with real URLs, solving the 'null' type error.
+	// Mock data updated with real URLs
 	const mockVideos: Video[] = [
 		{
 			id: '1',
@@ -194,15 +195,14 @@ export default function HomeScreen() {
 					<RefreshControl
 						refreshing={isRefreshing}
 						onRefresh={handleRefresh}
-						tintColor="#E1306C"
-						colors={['#E1306C']}
+						tintColor={Colors.primary}
+						colors={[Colors.primary]}
 					/>
 				}
 				onEndReached={handleLoadMore}
 				onEndReachedThreshold={0.5}
 				ListEmptyComponent={renderEmptyState}
 				pagingEnabled
-				// FIX: Use SCREEN_HEIGHT for snapToInterval
 				snapToInterval={SCREEN_HEIGHT}
 				snapToAlignment="start"
 				decelerationRate="fast"
@@ -214,20 +214,20 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 	},
 	header: {
 		paddingHorizontal: 16,
 		paddingVertical: 12,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	appName: {
 		fontSize: 24,
 		fontFamily: 'Poppins-Bold',
 		fontWeight: 'bold',
-		color: '#FFFFFF',
+		color: Colors.text,
 		textAlign: 'center',
 		marginBottom: 12,
 	},
@@ -240,22 +240,21 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontFamily: 'Inter-Medium',
 		fontWeight: '500',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 		paddingVertical: 8,
 		paddingHorizontal: 16,
 	},
 	activeTab: {
-		color: '#FFFFFF',
+		color: Colors.text,
 		borderBottomWidth: 2,
-		borderBottomColor: '#E1306C',
+		borderBottomColor: Colors.primary,
 	},
 	feedContainer: {
 		flex: 1,
 	},
 	videoPlaceholder: {
-		// FIX: Use SCREEN_HEIGHT to make the placeholder fill the screen
 		height: SCREEN_HEIGHT,
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.backgroundSecondary,
 		justifyContent: 'center',
 		alignItems: 'center',
 		paddingHorizontal: 20,
@@ -264,14 +263,14 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 8,
 		textAlign: 'center',
 	},
 	videoDescription: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		marginBottom: 8,
 		textAlign: 'center',
 	},
@@ -279,11 +278,10 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
-		color: '#E1306C',
+		color: Colors.primary,
 		textAlign: 'center',
 	},
 	emptyState: {
-		// FIX: Ensure empty state also takes up the full screen height
 		height: SCREEN_HEIGHT,
 		justifyContent: 'center',
 		alignItems: 'center',
@@ -293,14 +291,14 @@ const styles = StyleSheet.create({
 		fontSize: 20,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 8,
 		textAlign: 'center',
 	},
 	emptySubtitle: {
 		fontSize: 16,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 		lineHeight: 24,
 	},

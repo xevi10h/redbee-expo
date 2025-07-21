@@ -16,6 +16,7 @@ import {
 
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Colors } from '@/constants/Colors';
 import { useAuth, useGuestOnly } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { validateEmail } from '@/shared/functions/utils';
@@ -120,7 +121,7 @@ export default function SignInScreen() {
 	}, [error]);
 
 	return (
-		<LinearGradient colors={['#000000', '#1C1C1E']} style={styles.container}>
+		<LinearGradient colors={Colors.gradientSecondary} style={styles.container}>
 			<StatusBar style="light" />
 
 			<KeyboardAvoidingView
@@ -207,7 +208,7 @@ export default function SignInScreen() {
 							variant="secondary"
 							disabled={isLoading}
 							fullWidth
-							icon={<Feather name="chrome" size={18} color="#FFFFFF" />}
+							icon={<Feather name="chrome" size={18} color={Colors.text} />}
 							style={styles.oauthButton}
 						/>
 
@@ -218,7 +219,9 @@ export default function SignInScreen() {
 								variant="secondary"
 								disabled={isLoading}
 								fullWidth
-								icon={<Feather name="smartphone" size={18} color="#FFFFFF" />}
+								icon={
+									<Feather name="smartphone" size={18} color={Colors.text} />
+								}
 								style={styles.oauthButton}
 							/>
 						)}
@@ -263,13 +266,13 @@ const styles = StyleSheet.create({
 		fontSize: 32,
 		fontFamily: 'Poppins-Bold',
 		fontWeight: 'bold',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 8,
 	},
 	subtitle: {
 		fontSize: 16,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 	},
 	form: {
@@ -282,7 +285,7 @@ const styles = StyleSheet.create({
 	forgotPasswordText: {
 		fontSize: 14,
 		fontFamily: 'Inter-Medium',
-		color: '#E1306C',
+		color: Colors.primary,
 	},
 	signInButton: {
 		marginTop: 8,
@@ -295,12 +298,12 @@ const styles = StyleSheet.create({
 	dividerLine: {
 		flex: 1,
 		height: 1,
-		backgroundColor: '#6C757D',
+		backgroundColor: Colors.textTertiary,
 	},
 	dividerText: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 		marginHorizontal: 16,
 	},
 	oauthButtons: {
@@ -308,7 +311,7 @@ const styles = StyleSheet.create({
 		marginBottom: 32,
 	},
 	oauthButton: {
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.backgroundSecondary,
 	},
 	footer: {
 		alignItems: 'center',
@@ -316,11 +319,11 @@ const styles = StyleSheet.create({
 	footerText: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 	},
 	footerLink: {
-		color: '#E1306C',
+		color: Colors.primary,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
 	},

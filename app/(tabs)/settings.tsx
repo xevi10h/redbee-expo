@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Colors } from '@/constants/Colors';
 import { useAuth, useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Language } from '@/shared/types';
@@ -50,7 +51,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
 					<Feather
 						name={icon as any}
 						size={20}
-						color={destructive ? '#DC3545' : '#E1306C'}
+						color={destructive ? Colors.error : Colors.primary}
 					/>
 				</View>
 				<View style={styles.settingsText}>
@@ -69,7 +70,7 @@ const SettingsItem: React.FC<SettingsItemProps> = ({
 			<View style={styles.settingsItemRight}>
 				{rightComponent}
 				{showArrow && onPress && (
-					<Feather name="chevron-right" size={20} color="#6C757D" />
+					<Feather name="chevron-right" size={20} color={Colors.textTertiary} />
 				)}
 			</View>
 		</TouchableOpacity>
@@ -116,7 +117,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 				<View style={styles.languageHeader}>
 					<Text style={styles.languageTitle}>{t('settings.language')}</Text>
 					<TouchableOpacity onPress={() => setIsVisible(false)}>
-						<Feather name="x" size={24} color="#FFFFFF" />
+						<Feather name="x" size={24} color={Colors.text} />
 					</TouchableOpacity>
 				</View>
 				<ScrollView style={styles.languageList}>
@@ -135,7 +136,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 								{language.name}
 							</Text>
 							{currentLanguage === language.code && (
-								<Feather name="check" size={20} color="#E1306C" />
+								<Feather name="check" size={20} color={Colors.primary} />
 							)}
 						</TouchableOpacity>
 					))}
@@ -326,8 +327,11 @@ export default function SettingsScreen() {
 							<Switch
 								value={notificationsEnabled}
 								onValueChange={setNotificationsEnabled}
-								trackColor={{ false: '#6C757D', true: '#E1306C' }}
-								thumbColor="#FFFFFF"
+								trackColor={{
+									false: Colors.textTertiary,
+									true: Colors.primary,
+								}}
+								thumbColor={Colors.text}
 							/>
 						}
 						showArrow={false}
@@ -341,8 +345,11 @@ export default function SettingsScreen() {
 							<Switch
 								value={darkModeEnabled}
 								onValueChange={setDarkModeEnabled}
-								trackColor={{ false: '#6C757D', true: '#E1306C' }}
-								thumbColor="#FFFFFF"
+								trackColor={{
+									false: Colors.textTertiary,
+									true: Colors.primary,
+								}}
+								thumbColor={Colors.text}
 							/>
 						}
 						showArrow={false}
@@ -444,20 +451,20 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 	},
 	header: {
 		paddingHorizontal: 16,
 		paddingVertical: 16,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	title: {
 		fontSize: 24,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		textAlign: 'center',
 	},
 	content: {
@@ -470,7 +477,7 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 16,
 		marginHorizontal: 16,
 	},
@@ -481,7 +488,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 16,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	settingsItemLeft: {
 		flexDirection: 'row',
@@ -492,7 +499,7 @@ const styles = StyleSheet.create({
 		width: 40,
 		height: 40,
 		borderRadius: 20,
-		backgroundColor: 'rgba(225, 48, 108, 0.1)',
+		backgroundColor: Colors.premiumBackground,
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginRight: 12,
@@ -507,16 +514,16 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontFamily: 'Inter-Medium',
 		fontWeight: '500',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 2,
 	},
 	destructiveText: {
-		color: '#DC3545',
+		color: Colors.error,
 	},
 	settingsSubtitle: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 	},
 	settingsItemRight: {
 		flexDirection: 'row',
@@ -529,7 +536,7 @@ const styles = StyleSheet.create({
 		left: 0,
 		right: 0,
 		bottom: 0,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 		zIndex: 1000,
 	},
 	languageHeader: {
@@ -539,13 +546,13 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 16,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	languageTitle: {
 		fontSize: 20,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 	},
 	languageList: {
 		flex: 1,
@@ -557,16 +564,16 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 16,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	languageOptionText: {
 		fontSize: 16,
 		fontFamily: 'Inter-Medium',
 		fontWeight: '500',
-		color: '#FFFFFF',
+		color: Colors.text,
 	},
 	selectedLanguage: {
-		color: '#E1306C',
+		color: Colors.primary,
 	},
 	bottomSpacing: {
 		height: 32,

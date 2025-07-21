@@ -27,14 +27,13 @@ AppState.addEventListener('change', (state) => {
 	}
 });
 
-// Database types for type safety
+// Updated database types for the new structure
 export type Database = {
 	public: {
 		Tables: {
-			users: {
+			profiles: {
 				Row: {
 					id: string;
-					email: string;
 					username: string;
 					display_name: string | null;
 					bio: string | null;
@@ -50,7 +49,6 @@ export type Database = {
 				};
 				Insert: {
 					id: string;
-					email: string;
 					username: string;
 					display_name?: string | null;
 					bio?: string | null;
@@ -58,6 +56,11 @@ export type Database = {
 					subscription_price?: number;
 					subscription_currency?: string;
 					commission_rate?: number;
+					followers_count?: number;
+					subscribers_count?: number;
+					videos_count?: number;
+					created_at?: string;
+					updated_at?: string;
 				};
 				Update: {
 					username?: string;
@@ -66,6 +69,7 @@ export type Database = {
 					avatar_url?: string | null;
 					subscription_price?: number;
 					subscription_currency?: string;
+					commission_rate?: number;
 					updated_at?: string;
 				};
 			};
@@ -174,6 +178,63 @@ export type Database = {
 				Update: {
 					text?: string;
 				};
+			};
+			app_config: {
+				Row: {
+					id: string;
+					default_commission_rate: number;
+					min_video_duration: number;
+					max_video_duration: number;
+					preview_duration: number;
+					supported_currencies: string[];
+				};
+				Insert: {
+					default_commission_rate?: number;
+					min_video_duration?: number;
+					max_video_duration?: number;
+					preview_duration?: number;
+					supported_currencies?: string[];
+				};
+				Update: {
+					default_commission_rate?: number;
+					min_video_duration?: number;
+					max_video_duration?: number;
+					preview_duration?: number;
+					supported_currencies?: string[];
+				};
+			};
+		};
+		Views: {
+			users_with_email: {
+				Row: {
+					id: string;
+					username: string;
+					display_name: string | null;
+					bio: string | null;
+					avatar_url: string | null;
+					subscription_price: number;
+					subscription_currency: string;
+					commission_rate: number;
+					followers_count: number;
+					subscribers_count: number;
+					videos_count: number;
+					created_at: string;
+					updated_at: string;
+					email: string;
+					email_confirmed_at: string | null;
+					auth_created_at: string;
+					auth_updated_at: string;
+				};
+			};
+		};
+		Functions: {
+			check_username_availability: {
+				Args: { username_to_check: string };
+				Returns: boolean;
+			};
+			check_username_availability_for_update: {
+				Args: { username_to_check: string; user_id: string };
+				Returns: boolean;
 			};
 		};
 	};

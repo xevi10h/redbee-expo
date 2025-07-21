@@ -10,6 +10,8 @@ import {
 	ViewStyle,
 } from 'react-native';
 
+import { Colors } from '@/constants/Colors';
+
 interface InputProps extends TextInputProps {
 	label?: string;
 	error?: string;
@@ -56,15 +58,22 @@ export const Input: React.FC<InputProps> = ({
 	];
 
 	const getStatusColor = () => {
-		if (hasError) return '#DC3545';
-		if (hasSuccess) return '#28A745';
-		if (isFocused) return '#E1306C';
-		return '#6C757D';
+		if (hasError) return Colors.error;
+		if (hasSuccess) return Colors.success;
+		if (isFocused) return Colors.primary;
+		return Colors.border;
+	};
+
+	const getLabelColor = () => {
+		if (hasError) return Colors.error;
+		if (hasSuccess) return Colors.success;
+		if (isFocused) return Colors.primary;
+		return Colors.textSecondary;
 	};
 
 	const getRightIcon = () => {
 		if (isLoading) {
-			return <Feather name="loader" size={20} color="#6C757D" />;
+			return <Feather name="loader" size={20} color={Colors.textTertiary} />;
 		}
 
 		if (showPasswordToggle && isPassword) {
@@ -76,7 +85,7 @@ export const Input: React.FC<InputProps> = ({
 					<Feather
 						name={isPasswordVisible ? 'eye-off' : 'eye'}
 						size={20}
-						color="#6C757D"
+						color={Colors.textTertiary}
 					/>
 				</TouchableOpacity>
 			);
@@ -89,17 +98,21 @@ export const Input: React.FC<InputProps> = ({
 					style={styles.iconButton}
 					disabled={!onRightIconPress}
 				>
-					<Feather name={rightIcon as any} size={20} color="#6C757D" />
+					<Feather
+						name={rightIcon as any}
+						size={20}
+						color={Colors.textTertiary}
+					/>
 				</TouchableOpacity>
 			);
 		}
 
 		if (hasError) {
-			return <Feather name="alert-circle" size={20} color="#DC3545" />;
+			return <Feather name="alert-circle" size={20} color={Colors.error} />;
 		}
 
 		if (hasSuccess) {
-			return <Feather name="check-circle" size={20} color="#28A745" />;
+			return <Feather name="check-circle" size={20} color={Colors.success} />;
 		}
 
 		return null;
@@ -108,13 +121,17 @@ export const Input: React.FC<InputProps> = ({
 	return (
 		<View style={[styles.container, containerStyle]}>
 			{label && (
-				<Text style={[styles.label, { color: getStatusColor() }]}>{label}</Text>
+				<Text style={[styles.label, { color: getLabelColor() }]}>{label}</Text>
 			)}
 
 			<View style={[styles.inputContainer, { borderColor: getStatusColor() }]}>
 				{leftIcon && (
 					<View style={styles.leftIconContainer}>
-						<Feather name={leftIcon as any} size={20} color="#6C757D" />
+						<Feather
+							name={leftIcon as any}
+							size={20}
+							color={Colors.textTertiary}
+						/>
 					</View>
 				)}
 
@@ -130,7 +147,7 @@ export const Input: React.FC<InputProps> = ({
 						setIsFocused(false);
 						props.onBlur?.(e);
 					}}
-					placeholderTextColor="#6C757D"
+					placeholderTextColor={Colors.inputPlaceholder}
 				/>
 
 				{getRightIcon() && (
@@ -162,10 +179,9 @@ const styles = StyleSheet.create({
 	inputContainer: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.inputBackground,
 		borderRadius: 12,
 		borderWidth: 1,
-		borderColor: '#6C757D',
 	},
 	input: {
 		flex: 1,
@@ -173,7 +189,7 @@ const styles = StyleSheet.create({
 		paddingVertical: 12,
 		fontSize: 16,
 		fontFamily: 'Inter-Regular',
-		color: '#FFFFFF',
+		color: Colors.text,
 		minHeight: 48,
 	},
 	inputWithLeftIcon: {
@@ -205,19 +221,19 @@ const styles = StyleSheet.create({
 	errorText: {
 		fontSize: 12,
 		fontFamily: 'Inter-Regular',
-		color: '#DC3545',
+		color: Colors.error,
 		marginTop: 4,
 	},
 	successText: {
 		fontSize: 12,
 		fontFamily: 'Inter-Regular',
-		color: '#28A745',
+		color: Colors.success,
 		marginTop: 4,
 	},
 	hintText: {
 		fontSize: 12,
 		fontFamily: 'Inter-Regular',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 		marginTop: 4,
 	},
 });

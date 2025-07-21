@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Input } from '@/components/ui/Input';
+import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { UserProfile } from '@/shared/types';
@@ -20,7 +21,7 @@ const UserItem: React.FC<{ user: UserProfile }> = ({ user }) => {
 	return (
 		<TouchableOpacity style={styles.userItem}>
 			<View style={styles.userAvatar}>
-				<Feather name="user" size={24} color="#6C757D" />
+				<Feather name="user" size={24} color={Colors.textTertiary} />
 			</View>
 			<View style={styles.userInfo}>
 				<Text style={styles.username}>@{user.username}</Text>
@@ -44,7 +45,7 @@ const HashtagItem: React.FC<{ hashtag: string; count: number }> = ({
 	return (
 		<TouchableOpacity style={styles.hashtagItem}>
 			<View style={styles.hashtagIcon}>
-				<Feather name="hash" size={24} color="#E1306C" />
+				<Feather name="hash" size={24} color={Colors.primary} />
 			</View>
 			<View style={styles.hashtagInfo}>
 				<Text style={styles.hashtagName}>#{hashtag}</Text>
@@ -143,7 +144,7 @@ export default function SearchScreen() {
 		<View style={styles.emptyState}>
 			{searchQuery.length === 0 ? (
 				<>
-					<Feather name="search" size={48} color="#6C757D" />
+					<Feather name="search" size={48} color={Colors.textTertiary} />
 					<Text style={styles.emptyTitle}>{t('search.searchPlaceholder')}</Text>
 					<Text style={styles.emptySubtitle}>
 						Busca usuarios, hashtags y contenido
@@ -151,7 +152,7 @@ export default function SearchScreen() {
 				</>
 			) : (
 				<>
-					<Feather name="inbox" size={48} color="#6C757D" />
+					<Feather name="inbox" size={48} color={Colors.textTertiary} />
 					<Text style={styles.emptyTitle}>{t('search.noUsersFound')}</Text>
 					<Text style={styles.emptySubtitle}>
 						Intenta con una búsqueda diferente
@@ -245,14 +246,14 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 	},
 	header: {
 		paddingHorizontal: 16,
 		paddingVertical: 12,
-		backgroundColor: '#000000',
+		backgroundColor: Colors.background,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	searchContainer: {
 		marginBottom: 16,
@@ -269,16 +270,16 @@ const styles = StyleSheet.create({
 		borderBottomColor: 'transparent',
 	},
 	activeTab: {
-		borderBottomColor: '#E1306C',
+		borderBottomColor: Colors.primary,
 	},
 	tabText: {
 		fontSize: 16,
 		fontFamily: 'Inter-Medium',
 		fontWeight: '500',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 	},
 	activeTabText: {
-		color: '#FFFFFF',
+		color: Colors.text,
 	},
 	content: {
 		flex: 1,
@@ -292,13 +293,13 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 12,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	userAvatar: {
 		width: 48,
 		height: 48,
 		borderRadius: 24,
-		backgroundColor: '#1C1C1E',
+		backgroundColor: Colors.backgroundSecondary,
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginRight: 12,
@@ -310,32 +311,32 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 2,
 	},
 	displayName: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		marginBottom: 2,
 	},
 	followers: {
 		fontSize: 12,
 		fontFamily: 'Inter-Regular',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 	},
 	followButton: {
 		paddingHorizontal: 16,
 		paddingVertical: 8,
 		borderRadius: 8,
 		borderWidth: 1,
-		borderColor: '#E1306C',
+		borderColor: Colors.primary,
 	},
 	followButtonText: {
 		fontSize: 14,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
-		color: '#E1306C',
+		color: Colors.primary,
 	},
 	hashtagItem: {
 		flexDirection: 'row',
@@ -343,13 +344,13 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 16,
 		borderBottomWidth: 1,
-		borderBottomColor: '#1C1C1E',
+		borderBottomColor: Colors.borderSecondary,
 	},
 	hashtagIcon: {
 		width: 40,
 		height: 40,
 		borderRadius: 20,
-		backgroundColor: 'rgba(225, 48, 108, 0.1)',
+		backgroundColor: Colors.premiumBackground,
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginRight: 12,
@@ -361,13 +362,13 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginBottom: 2,
 	},
 	hashtagCount: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#6C757D',
+		color: Colors.textTertiary,
 	},
 	emptyState: {
 		flex: 1,
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
 		fontSize: 18,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginTop: 16,
 		marginBottom: 8,
 		textAlign: 'center',
@@ -387,7 +388,7 @@ const styles = StyleSheet.create({
 	emptySubtitle: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 		lineHeight: 20,
 	},

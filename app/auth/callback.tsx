@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { SupabaseAuthService } from '@/services/supabaseAuth';
 import { useAuthStore } from '@/stores/authStore';
@@ -42,11 +43,11 @@ export default function AuthCallbackScreen() {
 	}, [setUser]);
 
 	return (
-		<LinearGradient colors={['#000000', '#1C1C1E']} style={styles.container}>
+		<LinearGradient colors={Colors.gradientSecondary} style={styles.container}>
 			<StatusBar style="light" />
 
 			<View style={styles.content}>
-				<ActivityIndicator size="large" color="#E1306C" />
+				<ActivityIndicator size="large" color={Colors.primary} />
 				<Text style={styles.title}>{t('auth.loading')}</Text>
 				<Text style={styles.subtitle}>Completando inicio de sesión...</Text>
 			</View>
@@ -68,7 +69,7 @@ const styles = StyleSheet.create({
 		fontSize: 24,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: '#FFFFFF',
+		color: Colors.text,
 		marginTop: 24,
 		marginBottom: 8,
 		textAlign: 'center',
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
 	subtitle: {
 		fontSize: 16,
 		fontFamily: 'Inter-Regular',
-		color: '#ADB5BD',
+		color: Colors.textSecondary,
 		textAlign: 'center',
 	},
 });
