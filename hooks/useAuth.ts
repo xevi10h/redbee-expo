@@ -13,6 +13,9 @@ export const useAuth = () => {
 	const signIn = useAuthStore((state) => state.signIn);
 	const signUp = useAuthStore((state) => state.signUp);
 	const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
+	const signInWithGoogleOAuth = useAuthStore(
+		(state) => state.signInWithGoogleOAuth,
+	);
 	const signInWithApple = useAuthStore((state) => state.signInWithApple);
 	const signOut = useAuthStore((state) => state.signOut);
 	const updateProfile = useAuthStore((state) => state.updateProfile);
@@ -27,6 +30,7 @@ export const useAuth = () => {
 		signIn,
 		signUp,
 		signInWithGoogle,
+		signInWithGoogleOAuth,
 		signInWithApple,
 		signOut,
 		updateProfile,

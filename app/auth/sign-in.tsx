@@ -24,8 +24,14 @@ import { LoginCredentials } from '@/shared/types';
 
 export default function SignInScreen() {
 	const { t } = useTranslation();
-	const { signIn, signInWithGoogle, signInWithApple, error, clearError } =
-		useAuth();
+	const {
+		signIn,
+		signInWithGoogle,
+		signInWithGoogleOAuth,
+		signInWithApple,
+		error,
+		clearError,
+	} = useAuth();
 
 	// This hook will redirect to home if user is already authenticated
 	useGuestOnly('/');
@@ -82,22 +88,48 @@ export default function SignInScreen() {
 		clearError();
 
 		try {
-			await signInWithGoogle();
-			// OAuth flow will handle navigation
+			// Try native Google Sign-In first
+			const success = await signInWithGoogle();
+			console.log('Google sign in success:', success);
+			if (success) {
+				router.replace('/' as RelativePathString);
+			}
 		} catch (err) {
 			console.error('Google sign in error:', err);
+
+			// If native method fails, try OAuth method as fallback
+			try {
+				const oauthSuccess = await signInWithGoogleOAuth();
+				if (oauthSuccess) {
+					router.replace('/' as RelativePathString);
+				}
+			} catch (oauthErr) {
+				console.error('Google OAuth sign in error:', oauthErr);
+			}
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
 	const handleAppleSignIn = async () => {
+		// Check if we're on iOS
+		if (Platform.OS !== 'ios') {
+			Alert.alert(
+				t('common.info'),
+				'Apple Sign-In is only available on iOS devices',
+				[{ text: t('common.ok') }],
+			);
+			return;
+		}
+
 		setIsLoading(true);
 		clearError();
 
 		try {
-			await signInWithApple();
-			// OAuth flow will handle navigation
+			const success = await signInWithApple();
+			if (success) {
+				router.replace('/' as RelativePathString);
+			}
 		} catch (err) {
 			console.error('Apple sign in error:', err);
 		} finally {
@@ -200,8 +232,9 @@ export default function SignInScreen() {
 						<View style={styles.dividerLine} />
 					</View>
 
-					{/* OAuth Buttons */}
-					<View style={styles.oauthButtons}>
+					{/* Social Sign-In Buttons */}
+					<View style={styles.socialButtons}>
+						{/* Google Sign-In */}
 						<Button
 							title={t('auth.continueWithGoogle')}
 							onPress={handleGoogleSignIn}
@@ -209,9 +242,10 @@ export default function SignInScreen() {
 							disabled={isLoading}
 							fullWidth
 							icon={<Feather name="chrome" size={18} color={Colors.text} />}
-							style={styles.oauthButton}
+							style={styles.socialButton}
 						/>
 
+						{/* Apple Sign-In (iOS only) */}
 						{Platform.OS === 'ios' && (
 							<Button
 								title={t('auth.continueWithApple')}
@@ -222,7 +256,7 @@ export default function SignInScreen() {
 								icon={
 									<Feather name="smartphone" size={18} color={Colors.text} />
 								}
-								style={styles.oauthButton}
+								style={styles.socialButton}
 							/>
 						)}
 					</View>
@@ -306,11 +340,11 @@ const styles = StyleSheet.create({
 		color: Colors.textTertiary,
 		marginHorizontal: 16,
 	},
-	oauthButtons: {
+	socialButtons: {
 		gap: 12,
 		marginBottom: 32,
 	},
-	oauthButton: {
+	socialButton: {
 		backgroundColor: Colors.backgroundSecondary,
 	},
 	footer: {

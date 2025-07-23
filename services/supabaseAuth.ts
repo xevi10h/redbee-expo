@@ -6,8 +6,35 @@ import {
 	RegisterCredentials,
 	User,
 } from '@/shared/types';
+import {
+	GoogleSignin,
+	statusCodes,
+} from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+
+// Complete auth session for WebBrowser
+WebBrowser.maybeCompleteAuthSession();
 
 export class SupabaseAuthService {
+	/**
+	 * Initialize Google Sign-In configuration
+	 * Call this in your app's initialization (App.tsx or index.tsx)
+	 */
+	static initializeGoogleSignIn() {
+		GoogleSignin.configure({
+			// You'll get these from your Google Cloud Console
+			// webClientId should be your Supabase project's Google OAuth client ID
+			webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+			iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+			// Include any additional scopes you need
+			scopes: ['email', 'profile'],
+			// Ensure offline access to get refresh tokens
+			offlineAccess: true,
+		});
+	}
+
 	/**
 	 * Sign in with email and password
 	 */
@@ -160,15 +187,32 @@ export class SupabaseAuthService {
 	}
 
 	/**
-	 * Sign in with Google
+	 * Sign in with Google using native GoogleSignin
+	 * Recommended method for Google authentication
 	 */
 	static async signInWithGoogle(): Promise<AuthResponse<User>> {
 		try {
-			const { data, error } = await supabase.auth.signInWithOAuth({
+			// Check if device supports Google Play Services
+			await GoogleSignin.hasPlayServices();
+
+			console.log('Google Play Services are available');
+
+			// Get user info and id token
+			const userInfo = await GoogleSignin.signIn();
+
+			console.log('Google user info:', userInfo);
+
+			if (!userInfo.data?.idToken) {
+				return {
+					success: false,
+					error: 'No ID token received from Google',
+				};
+			}
+
+			// Sign in to Supabase with the ID token
+			const { data, error } = await supabase.auth.signInWithIdToken({
 				provider: 'google',
-				options: {
-					redirectTo: 'redbee://auth/callback',
-				},
+				token: userInfo.data?.idToken,
 			});
 
 			if (error) {
@@ -178,28 +222,97 @@ export class SupabaseAuthService {
 				};
 			}
 
-			// Note: For OAuth, the actual user data will be handled in the callback
+			if (!data.user) {
+				return {
+					success: false,
+					error: 'No user data received from Supabase',
+				};
+			}
+
+			// Check if user has a profile, create one if not
+			let { data: profile, error: profileError } = await supabase
+				.from('profiles')
+				.select('*')
+				.eq('id', data.user.id)
+				.single();
+
+			if (profileError && profileError.code === 'PGRST116') {
+				// Profile doesn't exist, create one
+				const username = this.generateUsernameFromEmail(data.user.email || '');
+				const { data: newProfile, error: createError } = await supabase
+					.from('profiles')
+					.insert({
+						id: data.user.id,
+						username,
+						display_name: data.user.user_metadata?.full_name || username,
+						avatar_url: data.user.user_metadata?.avatar_url,
+					})
+					.select()
+					.single();
+
+				if (createError) {
+					return {
+						success: false,
+						error: 'Failed to create user profile',
+					};
+				}
+
+				profile = newProfile;
+			} else if (profileError) {
+				return {
+					success: false,
+					error: 'Failed to fetch user profile',
+				};
+			}
+
+			const user: User = {
+				...profile!,
+				email: data.user.email!,
+				access_token: data.session?.access_token,
+				language: getDeviceLanguage(),
+			};
+
 			return {
 				success: true,
-				data: undefined,
+				data: user,
 			};
-		} catch (error) {
+		} catch (error: any) {
+			let errorMessage = 'Google sign in failed';
+
+			console.error('Google sign in error:', error);
+
+			if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+				errorMessage = 'Google sign in was cancelled';
+			} else if (error.code === statusCodes.IN_PROGRESS) {
+				errorMessage = 'Google sign in is already in progress';
+			} else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+				errorMessage = 'Google Play Services not available';
+			}
+
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Google sign in failed',
+				error: errorMessage,
 			};
 		}
 	}
 
 	/**
-	 * Sign in with Apple
+	 * Sign in with Google using OAuth WebBrowser flow
+	 * Alternative method, works on all platforms
 	 */
-	static async signInWithApple(): Promise<AuthResponse<User>> {
+	static async signInWithGoogleOAuth(): Promise<AuthResponse<User>> {
 		try {
+			const redirectUrl = Linking.createURL('auth/callback');
+
+			// Start OAuth flow with Supabase
 			const { data, error } = await supabase.auth.signInWithOAuth({
-				provider: 'apple',
+				provider: 'google',
 				options: {
-					redirectTo: 'redbee://auth/callback',
+					redirectTo: redirectUrl,
+					queryParams: {
+						access_type: 'offline',
+						prompt: 'consent',
+					},
 				},
 			});
 
@@ -210,12 +323,227 @@ export class SupabaseAuthService {
 				};
 			}
 
-			// Note: For OAuth, the actual user data will be handled in the callback
+			if (!data.url) {
+				return {
+					success: false,
+					error: 'No authorization URL received',
+				};
+			}
+
+			// Open browser for authentication
+			const result = await WebBrowser.openAuthSessionAsync(
+				data.url,
+				redirectUrl,
+				{
+					showInRecents: true,
+				},
+			);
+
+			if (result.type !== 'success') {
+				return {
+					success: false,
+					error: 'Authentication was cancelled or failed',
+				};
+			}
+
+			// Extract tokens from URL
+			const url = new URL(result.url);
+			const accessToken = url.searchParams.get('access_token');
+			const refreshToken = url.searchParams.get('refresh_token');
+
+			if (!accessToken || !refreshToken) {
+				return {
+					success: false,
+					error: 'No tokens received from authentication',
+				};
+			}
+
+			// Set session in Supabase
+			const { data: sessionData, error: sessionError } =
+				await supabase.auth.setSession({
+					access_token: accessToken,
+					refresh_token: refreshToken,
+				});
+
+			if (sessionError || !sessionData.user) {
+				return {
+					success: false,
+					error: sessionError?.message || 'Failed to establish session',
+				};
+			}
+
+			// Get or create user profile
+			let { data: profile, error: profileError } = await supabase
+				.from('profiles')
+				.select('*')
+				.eq('id', sessionData.user.id)
+				.single();
+
+			if (profileError && profileError.code === 'PGRST116') {
+				// Profile doesn't exist, create one
+				const username = this.generateUsernameFromEmail(
+					sessionData.user.email || '',
+				);
+				const { data: newProfile, error: createError } = await supabase
+					.from('profiles')
+					.insert({
+						id: sessionData.user.id,
+						username,
+						display_name: sessionData.user.user_metadata?.full_name || username,
+						avatar_url: sessionData.user.user_metadata?.avatar_url,
+					})
+					.select()
+					.single();
+
+				if (createError) {
+					return {
+						success: false,
+						error: 'Failed to create user profile',
+					};
+				}
+
+				profile = newProfile;
+			} else if (profileError) {
+				return {
+					success: false,
+					error: 'Failed to fetch user profile',
+				};
+			}
+
+			const user: User = {
+				...profile!,
+				email: sessionData.user.email!,
+				access_token: sessionData.session?.access_token,
+				language: getDeviceLanguage(),
+			};
+
 			return {
 				success: true,
-				data: undefined,
+				data: user,
 			};
 		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Google OAuth failed',
+			};
+		}
+	}
+
+	/**
+	 * Sign in with Apple (iOS only)
+	 */
+	static async signInWithApple(): Promise<AuthResponse<User>> {
+		try {
+			// Check if Apple Sign In is available
+			const isAvailable = await AppleAuthentication.isAvailableAsync();
+			if (!isAvailable) {
+				return {
+					success: false,
+					error: 'Apple Sign In is not available on this device',
+				};
+			}
+
+			// Request Apple authentication
+			const credential = await AppleAuthentication.signInAsync({
+				requestedScopes: [
+					AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+					AppleAuthentication.AppleAuthenticationScope.EMAIL,
+				],
+			});
+
+			if (!credential.identityToken) {
+				return {
+					success: false,
+					error: 'No identity token received from Apple',
+				};
+			}
+
+			// Sign in to Supabase with the identity token
+			const { data, error } = await supabase.auth.signInWithIdToken({
+				provider: 'apple',
+				token: credential.identityToken,
+			});
+
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			if (!data.user) {
+				return {
+					success: false,
+					error: 'No user data received from Supabase',
+				};
+			}
+
+			// Check if user has a profile, create one if not
+			let { data: profile, error: profileError } = await supabase
+				.from('profiles')
+				.select('*')
+				.eq('id', data.user.id)
+				.single();
+
+			if (profileError && profileError.code === 'PGRST116') {
+				// Profile doesn't exist, create one
+				let displayName = data.user.user_metadata?.full_name;
+
+				// Apple provides full name only on first sign in
+				if (!displayName && credential.fullName) {
+					displayName = `${credential.fullName.givenName || ''} ${
+						credential.fullName.familyName || ''
+					}`.trim();
+				}
+
+				const username = this.generateUsernameFromEmail(
+					data.user.email || credential.email || '',
+				);
+
+				const { data: newProfile, error: createError } = await supabase
+					.from('profiles')
+					.insert({
+						id: data.user.id,
+						username,
+						display_name: displayName || username,
+					})
+					.select()
+					.single();
+
+				if (createError) {
+					return {
+						success: false,
+						error: 'Failed to create user profile',
+					};
+				}
+
+				profile = newProfile;
+			} else if (profileError) {
+				return {
+					success: false,
+					error: 'Failed to fetch user profile',
+				};
+			}
+
+			const user: User = {
+				...profile!,
+				email: data.user.email || credential.email || '',
+				access_token: data.session?.access_token,
+				language: getDeviceLanguage(),
+			};
+
+			return {
+				success: true,
+				data: user,
+			};
+		} catch (error: any) {
+			if (error.code === 'ERR_REQUEST_CANCELED') {
+				return {
+					success: false,
+					error: 'Apple sign in was cancelled',
+				};
+			}
+
 			return {
 				success: false,
 				error: error instanceof Error ? error.message : 'Apple sign in failed',
@@ -224,10 +552,23 @@ export class SupabaseAuthService {
 	}
 
 	/**
-	 * Sign out
+	 * Sign out and clean up Google/Apple sessions
 	 */
 	static async signOut(): Promise<AuthResponse<void>> {
 		try {
+			// Clean up Google session if signed in
+			const hasPreviousSignIn = GoogleSignin.hasPreviousSignIn();
+			if (hasPreviousSignIn) {
+				const currentUser = GoogleSignin.getCurrentUser();
+				if (currentUser) {
+					await GoogleSignin.signOut();
+				}
+			}
+
+			// Clean up Apple session (Apple doesn't provide a sign out method)
+			// Apple recommends just clearing local session data
+
+			// Sign out from Supabase
 			const { error } = await supabase.auth.signOut();
 
 			if (error) {
@@ -301,6 +642,18 @@ export class SupabaseAuthService {
 				error: error instanceof Error ? error.message : 'Failed to get session',
 			};
 		}
+	}
+
+	/**
+	 * Helper method to generate username from email
+	 */
+	private static generateUsernameFromEmail(email: string): string {
+		const baseUsername = email.split('@')[0].toLowerCase();
+		// Remove any non-alphanumeric characters except underscore
+		const cleanUsername = baseUsername.replace(/[^a-z0-9_]/g, '');
+		// Add random suffix to avoid conflicts
+		const randomSuffix = Math.floor(Math.random() * 1000);
+		return `${cleanUsername}${randomSuffix}`;
 	}
 
 	/**
@@ -449,7 +802,7 @@ export class SupabaseAuthService {
 	static async resetPassword(email: string): Promise<AuthResponse<void>> {
 		try {
 			const { error } = await supabase.auth.resetPasswordForEmail(email, {
-				redirectTo: 'redbee://auth/reset-password',
+				redirectTo: 'redbeeexpo://auth/reset-password',
 			});
 
 			if (error) {

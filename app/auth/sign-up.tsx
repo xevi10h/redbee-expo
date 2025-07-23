@@ -34,8 +34,14 @@ import { RegisterCredentials } from '@/shared/types';
 
 export default function SignUpScreen() {
 	const { t } = useTranslation();
-	const { signUp, signInWithGoogle, signInWithApple, error, clearError } =
-		useAuth();
+	const {
+		signUp,
+		signInWithGoogle,
+		signInWithGoogleOAuth,
+		signInWithApple,
+		error,
+		clearError,
+	} = useAuth();
 
 	// This hook will redirect to home if user is already authenticated
 	useGuestOnly('/');
@@ -154,22 +160,47 @@ export default function SignUpScreen() {
 		clearError();
 
 		try {
-			await signInWithGoogle();
-			// OAuth flow will handle navigation
+			// Try native Google Sign-In first
+			const success = await signInWithGoogle();
+			if (success) {
+				router.replace('/' as RelativePathString);
+			}
 		} catch (err) {
 			console.error('Google sign up error:', err);
+
+			// If native method fails, try OAuth method as fallback
+			try {
+				const oauthSuccess = await signInWithGoogleOAuth();
+				if (oauthSuccess) {
+					router.replace('/' as RelativePathString);
+				}
+			} catch (oauthErr) {
+				console.error('Google OAuth sign up error:', oauthErr);
+			}
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
 	const handleAppleSignUp = async () => {
+		// Check if we're on iOS
+		if (Platform.OS !== 'ios') {
+			Alert.alert(
+				t('common.info'),
+				'Apple Sign-In is only available on iOS devices',
+				[{ text: t('common.ok') }],
+			);
+			return;
+		}
+
 		setIsLoading(true);
 		clearError();
 
 		try {
-			await signInWithApple();
-			// OAuth flow will handle navigation
+			const success = await signInWithApple();
+			if (success) {
+				router.replace('/' as RelativePathString);
+			}
 		} catch (err) {
 			console.error('Apple sign up error:', err);
 		} finally {
@@ -224,6 +255,42 @@ export default function SignUpScreen() {
 					<View style={styles.header}>
 						<Text style={styles.title}>Redbee</Text>
 						<Text style={styles.subtitle}>{t('auth.welcome')}</Text>
+					</View>
+
+					{/* Social Sign-Up Buttons */}
+					<View style={styles.socialButtons}>
+						{/* Google Sign-Up */}
+						<Button
+							title={t('auth.continueWithGoogle')}
+							onPress={handleGoogleSignUp}
+							variant="secondary"
+							disabled={isLoading}
+							fullWidth
+							icon={<Feather name="chrome" size={18} color={Colors.text} />}
+							style={styles.socialButton}
+						/>
+
+						{/* Apple Sign-Up (iOS only) */}
+						{Platform.OS === 'ios' && (
+							<Button
+								title={t('auth.continueWithApple')}
+								onPress={handleAppleSignUp}
+								variant="secondary"
+								disabled={isLoading}
+								fullWidth
+								icon={
+									<Feather name="smartphone" size={18} color={Colors.text} />
+								}
+								style={styles.socialButton}
+							/>
+						)}
+					</View>
+
+					{/* Divider */}
+					<View style={styles.divider}>
+						<View style={styles.dividerLine} />
+						<Text style={styles.dividerText}>{t('auth.orContinueWith')}</Text>
+						<View style={styles.dividerLine} />
 					</View>
 
 					{/* Sign Up Form */}
@@ -361,40 +428,6 @@ export default function SignUpScreen() {
 						/>
 					</View>
 
-					{/* Divider */}
-					<View style={styles.divider}>
-						<View style={styles.dividerLine} />
-						<Text style={styles.dividerText}>{t('auth.orContinueWith')}</Text>
-						<View style={styles.dividerLine} />
-					</View>
-
-					{/* OAuth Buttons */}
-					<View style={styles.oauthButtons}>
-						<Button
-							title={t('auth.continueWithGoogle')}
-							onPress={handleGoogleSignUp}
-							variant="secondary"
-							disabled={isLoading}
-							fullWidth
-							icon={<Feather name="chrome" size={18} color={Colors.text} />}
-							style={styles.oauthButton}
-						/>
-
-						{Platform.OS === 'ios' && (
-							<Button
-								title={t('auth.continueWithApple')}
-								onPress={handleAppleSignUp}
-								variant="secondary"
-								disabled={isLoading}
-								fullWidth
-								icon={
-									<Feather name="smartphone" size={18} color={Colors.text} />
-								}
-								style={styles.oauthButton}
-							/>
-						)}
-					</View>
-
 					{/* Footer */}
 					<View style={styles.footer}>
 						<Text style={styles.footerText}>
@@ -443,6 +476,29 @@ const styles = StyleSheet.create({
 		color: Colors.textSecondary,
 		textAlign: 'center',
 	},
+	socialButtons: {
+		gap: 12,
+		marginBottom: 24,
+	},
+	socialButton: {
+		backgroundColor: Colors.backgroundSecondary,
+	},
+	divider: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		marginVertical: 24,
+	},
+	dividerLine: {
+		flex: 1,
+		height: 1,
+		backgroundColor: Colors.textTertiary,
+	},
+	dividerText: {
+		fontSize: 14,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textTertiary,
+		marginHorizontal: 16,
+	},
 	form: {
 		marginBottom: 24,
 	},
@@ -482,29 +538,6 @@ const styles = StyleSheet.create({
 	},
 	signUpButton: {
 		marginTop: 8,
-	},
-	divider: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		marginVertical: 24,
-	},
-	dividerLine: {
-		flex: 1,
-		height: 1,
-		backgroundColor: Colors.textTertiary,
-	},
-	dividerText: {
-		fontSize: 14,
-		fontFamily: 'Inter-Regular',
-		color: Colors.textTertiary,
-		marginHorizontal: 16,
-	},
-	oauthButtons: {
-		gap: 12,
-		marginBottom: 32,
-	},
-	oauthButton: {
-		backgroundColor: Colors.backgroundSecondary,
 	},
 	footer: {
 		alignItems: 'center',

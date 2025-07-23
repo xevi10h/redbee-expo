@@ -1,0 +1,84 @@
+{
+	"cli": {
+		"version": ">= 16.17.0",
+		"appVersionSource": "remote"
+	},
+	"build": {
+		"development": {
+			"developmentClient": true,
+			"distribution": "internal",
+			"env": {
+				"EXPO_PUBLIC_SUPABASE_URL": "https://hecpxuoxynuamcmzwulm.supabase.co",
+				"EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_lCB9zfPj0tOboOr0V0a3xQ_AeN6D3Uu",
+				"EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "your_stripe_publishable_key_here",
+				"EXPO_PUBLIC_APP_NAME": "Redbee",
+				"EXPO_PUBLIC_APP_VERSION": "1.0.0",
+				"EXPO_PUBLIC_API_BASE_URL": "http://192.168.0.14:3000/api",
+				"EXPO_PUBLIC_ENVIRONMENT": "development",
+				"EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "132449152942-hpoctk1anvm6pg03cge89opmcm85o3ci.apps.googleusercontent.com",
+				"EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "132449152942-mn65smkh4k8narclkoho6jf17n17cutg.apps.googleusercontent.com",
+				"EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "132449152942-eilk641sc5lbnqvhnmenq3l6gua4q3j3.apps.googleusercontent.com"
+			}
+		},
+		"development-simulator": {
+			"developmentClient": true,
+			"distribution": "internal",
+			"ios": {
+				"simulator": true
+			},
+			"env": {
+				"EXPO_PUBLIC_SUPABASE_URL": "https://hecpxuoxynuamcmzwulm.supabase.co",
+				"EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_lCB9zfPj0tOboOr0V0a3xQ_AeN6D3Uu",
+				"EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "your_stripe_publishable_key_here",
+				"EXPO_PUBLIC_APP_NAME": "Redbee",
+				"EXPO_PUBLIC_APP_VERSION": "1.0.0",
+				"EXPO_PUBLIC_API_BASE_URL": "http://localhost:3000/api",
+				"EXPO_PUBLIC_ENVIRONMENT": "development",
+				"EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "132449152942-hpoctk1anvm6pg03cge89opmcm85o3ci.apps.googleusercontent.com",
+				"EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "132449152942-mn65smkh4k8narclkoho6jf17n17cutg.apps.googleusercontent.com",
+				"EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "132449152942-eilk641sc5lbnqvhnmenq3l6gua4q3j3.apps.googleusercontent.com"
+			}
+		},
+		"preview": {
+			"distribution": "internal",
+			"env": {
+				"EXPO_PUBLIC_SUPABASE_URL": "https://hecpxuoxynuamcmzwulm.supabase.co",
+				"EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_lCB9zfPj0tOboOr0V0a3xQ_AeN6D3Uu",
+				"EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "your_stripe_publishable_key_here",
+				"EXPO_PUBLIC_APP_NAME": "Redbee",
+				"EXPO_PUBLIC_APP_VERSION": "1.0.0",
+				"EXPO_PUBLIC_API_BASE_URL": "https://api.tu-dominio-staging.com/api",
+				"EXPO_PUBLIC_ENVIRONMENT": "preview",
+				"EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "132449152942-hpoctk1anvm6pg03cge89opmcm85o3ci.apps.googleusercontent.com",
+				"EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "132449152942-mn65smkh4k8narclkoho6jf17n17cutg.apps.googleusercontent.com",
+				"EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "132449152942-eilk641sc5lbnqvhnmenq3l6gua4q3j3.apps.googleusercontent.com"
+			}
+		},
+		"production": {
+			"autoIncrement": true,
+			"env": {
+				"EXPO_PUBLIC_SUPABASE_URL": "https://hecpxuoxynuamcmzwulm.supabase.co",
+				"EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_lCB9zfPj0tOboOr0V0a3xQ_AeN6D3Uu",
+				"EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "your_stripe_publishable_key_here",
+				"EXPO_PUBLIC_APP_NAME": "Redbee",
+				"EXPO_PUBLIC_APP_VERSION": "1.0.0",
+				"EXPO_PUBLIC_API_BASE_URL": "https://api.tu-dominio-produccion.com/api",
+				"EXPO_PUBLIC_ENVIRONMENT": "production",
+				"EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "132449152942-hpoctk1anvm6pg03cge89opmcm85o3ci.apps.googleusercontent.com",
+				"EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "132449152942-mn65smkh4k8narclkoho6jf17n17cutg.apps.googleusercontent.com",
+				"EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "132449152942-eilk641sc5lbnqvhnmenq3l6gua4q3j3.apps.googleusercontent.com"
+			}
+		}
+	},
+	"submit": {
+		"production": {
+			"android": {
+				"serviceAccountKeyPath": "./playstore-credentials.json",
+				"track": "internal"
+			},
+			"ios": {
+				"ascAppId": "6748830812"
+			}
+		}
+	}
+}

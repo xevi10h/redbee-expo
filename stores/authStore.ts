@@ -21,6 +21,7 @@ interface AuthState {
 	signIn: (credentials: LoginCredentials) => Promise<boolean>;
 	signUp: (credentials: RegisterCredentials) => Promise<boolean>;
 	signInWithGoogle: () => Promise<boolean>;
+	signInWithGoogleOAuth: () => Promise<boolean>;
 	signInWithApple: () => Promise<boolean>;
 	signOut: () => Promise<void>;
 	updateProfile: (updates: Partial<User>) => Promise<boolean>;
@@ -64,6 +65,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		set({ isLoading: true, error: null });
 
 		try {
+			// Initialize Google Sign-In configuration
+			SupabaseAuthService.initializeGoogleSignIn();
+
 			const result = await SupabaseAuthService.getCurrentSession();
 
 			if (result.success && result.data) {
@@ -157,16 +161,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		}
 	},
 
-	// Sign in with Google
+	// Sign in with Google (native method)
 	signInWithGoogle: async () => {
 		set({ isLoading: true, error: null });
 
 		try {
 			const result = await SupabaseAuthService.signInWithGoogle();
 
-			if (result.success) {
-				// For OAuth, we'll handle the success in the callback
-				set({ isLoading: false });
+			console.log('Google sign in result:', result);
+
+			if (result.success && result.data) {
+				set({
+					user: result.data,
+					isAuthenticated: true,
+					isLoading: false,
+					error: null,
+				});
 				return true;
 			} else {
 				set({
@@ -184,6 +194,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		}
 	},
 
+	// Sign in with Google (OAuth WebBrowser method)
+	signInWithGoogleOAuth: async () => {
+		set({ isLoading: true, error: null });
+
+		try {
+			const result = await SupabaseAuthService.signInWithGoogleOAuth();
+
+			if (result.success && result.data) {
+				set({
+					user: result.data,
+					isAuthenticated: true,
+					isLoading: false,
+					error: null,
+				});
+				return true;
+			} else {
+				set({
+					isLoading: false,
+					error: result.error || 'Google OAuth sign in failed',
+				});
+				return false;
+			}
+		} catch (error) {
+			set({
+				isLoading: false,
+				error:
+					error instanceof Error
+						? error.message
+						: 'Google OAuth sign in failed',
+			});
+			return false;
+		}
+	},
+
 	// Sign in with Apple
 	signInWithApple: async () => {
 		set({ isLoading: true, error: null });
@@ -191,9 +235,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		try {
 			const result = await SupabaseAuthService.signInWithApple();
 
-			if (result.success) {
-				// For OAuth, we'll handle the success in the callback
-				set({ isLoading: false });
+			if (result.success && result.data) {
+				set({
+					user: result.data,
+					isAuthenticated: true,
+					isLoading: false,
+					error: null,
+				});
 				return true;
 			} else {
 				set({
