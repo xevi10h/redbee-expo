@@ -13,6 +13,7 @@ import {
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
+import { jwtDecode } from 'jwt-decode';
 
 // Complete auth session for WebBrowser
 WebBrowser.maybeCompleteAuthSession();
@@ -187,8 +188,7 @@ export class SupabaseAuthService {
 	}
 
 	/**
-	 * Sign in with Google using native GoogleSignin
-	 * Recommended method for Google authentication
+	 * Sign in with Google usando native GoogleSignin con manejo correcto del nonce
 	 */
 	static async signInWithGoogle(): Promise<AuthResponse<User>> {
 		try {
@@ -209,10 +209,18 @@ export class SupabaseAuthService {
 				};
 			}
 
-			// Sign in to Supabase with the ID token
+			// NUEVO: Extraer el nonce del ID token
+			const decodedToken = jwtDecode<any>(userInfo.data.idToken);
+			const nonce = decodedToken.nonce;
+
+			console.log('Decoded token nonce:', nonce);
+
+			// Sign in to Supabase with the ID token AND nonce
 			const { data, error } = await supabase.auth.signInWithIdToken({
 				provider: 'google',
 				token: userInfo.data?.idToken,
+				// Pasar el nonce extraído del token
+				...(nonce && { nonce }),
 			});
 
 			if (error) {

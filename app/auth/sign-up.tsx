@@ -1,4 +1,4 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RelativePathString, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -266,7 +266,9 @@ export default function SignUpScreen() {
 							variant="secondary"
 							disabled={isLoading}
 							fullWidth
-							icon={<Feather name="chrome" size={18} color={Colors.text} />}
+							icon={
+								<Ionicons name="logo-google" size={18} color={Colors.text} />
+							}
 							style={styles.socialButton}
 						/>
 
@@ -279,7 +281,7 @@ export default function SignUpScreen() {
 								disabled={isLoading}
 								fullWidth
 								icon={
-									<Feather name="smartphone" size={18} color={Colors.text} />
+									<Ionicons name="logo-apple" size={18} color={Colors.text} />
 								}
 								style={styles.socialButton}
 							/>
