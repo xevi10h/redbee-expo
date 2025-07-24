@@ -265,16 +265,17 @@ export default function SignInScreen() {
 
 					{/* Footer */}
 					<View style={styles.footer}>
-						<Text style={styles.footerText}>
-							{t('auth.dontHaveAccount')}{' '}
+						<View style={styles.footerTextContainer}>
+							<Text style={styles.footerText}>
+								{t('auth.dontHaveAccount')}{' '}
+							</Text>
 							<TouchableOpacity
 								onPress={() => router.push('/auth/sign-up')}
 								disabled={isLoading}
-								style={{ alignItems: 'center' }}
 							>
 								<Text style={styles.footerLink}>{t('auth.signUp')}</Text>
 							</TouchableOpacity>
-						</Text>
+						</View>
 					</View>
 				</ScrollView>
 			</KeyboardAvoidingView>
@@ -353,16 +354,23 @@ const styles = StyleSheet.create({
 	footer: {
 		alignItems: 'center',
 	},
+	footerTextContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		flexWrap: 'wrap',
+		justifyContent: 'center',
+	},
 	footerText: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
 		color: Colors.textSecondary,
 		textAlign: 'center',
-		justifyContent: 'flex-end',
+		marginRight: 4,
 	},
 	footerLink: {
 		color: Colors.primary,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
+		fontSize: 14,
 	},
 });
