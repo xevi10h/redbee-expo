@@ -106,7 +106,34 @@
 		"views": "visualizaciones",
 		"addComment": "Añadir comentario...",
 		"noComments": "No hay comentarios aún",
-		"beFirstToComment": "Sé el primero en comentar"
+		"beFirstToComment": "Sé el primero en comentar",
+		"play": "Reproducir",
+		"pause": "Pausar",
+		"mute": "Silenciar",
+		"unmute": "Activar sonido",
+		"fullscreen": "Pantalla completa",
+		"exitFullscreen": "Salir de pantalla completa",
+		"loadingVideo": "Cargando video...",
+		"videoError": "Error al cargar el video",
+		"retryLoad": "Reintentar",
+		"reportVideo": "Reportar video",
+		"reportReasons": {
+			"inappropriate": "Contenido inapropiado",
+			"spam": "Spam",
+			"harassment": "Acoso",
+			"violence": "Violencia",
+			"copyright": "Derechos de autor",
+			"other": "Otro motivo"
+		},
+		"reportSent": "Reporte enviado",
+		"reportSuccess": "Hemos recibido tu reporte y lo estamos revisando",
+		"subscriptionBenefits": {
+			"accessPremium": "Acceso a todos los videos premium",
+			"commentPremium": "Comentar en contenido exclusivo",
+			"supportCreator": "Apoyar directamente al creador",
+			"qualityContent": "Disfrutar de contenido de mayor calidad"
+		},
+		"subscriptionDisclaimer": "Puedes cancelar en cualquier momento"
 	},
 	"profile": {
 		"followers": "Seguidores",

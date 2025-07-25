@@ -49,7 +49,21 @@
 					"iosUrlScheme": "com.googleusercontent.apps.132449152942-mn65smkh4k8narclkoho6jf17n17cutg"
 				}
 			],
-			"expo-apple-authentication"
+			"expo-apple-authentication",
+			[
+				"@stripe/stripe-react-native",
+				{
+					"merchantIdentifier": ["merchant.com.redbeeapp.mobile"],
+					"enableGooglePay": true
+				}
+			],
+			[
+				"expo-video",
+				{
+					"supportsBackgroundPlayback": true,
+					"supportsPictureInPicture": true
+				}
+			]
 		],
 		"experiments": {
 			"typedRoutes": true
