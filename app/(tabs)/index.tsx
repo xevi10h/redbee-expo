@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import VideoPlayer from '@/components/VideoPlayer';
+import { VideoPlayer } from '@/components/VideoPlayer';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -184,7 +184,7 @@ export default function HomeScreen() {
 					'motivation',
 				],
 				video_url:
-					'https://videos.pexels.com/video-files/4434255/4434255-hd_720_1366_25fps.mp4',
+					'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
 				thumbnail_url:
 					'https://images.pexels.com/videos/4752861/pexels-photo-4752861.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
 				duration: 60,

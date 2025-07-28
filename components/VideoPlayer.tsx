@@ -1,7 +1,8 @@
 import { Feather } from '@expo/vector-icons';
-import { ResizeMode, Video } from 'expo-av';
+import { useEvent, useEventListener } from 'expo';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useEffect, useRef, useState } from 'react';
 import {
 	Alert,
@@ -45,7 +46,6 @@ interface VideoControlsProps {
 	onUserPress: () => void;
 }
 
-// Premium Modal Component
 const PremiumModal: React.FC<{
 	isVisible: boolean;
 	video: VideoType;
@@ -92,7 +92,6 @@ const PremiumModal: React.FC<{
 				</View>
 
 				<View style={styles.modalContent}>
-					{/* Creator Info */}
 					<View style={styles.creatorHeader}>
 						<View style={styles.creatorAvatar}>
 							<Feather name="user" size={24} color={Colors.text} />
@@ -110,7 +109,6 @@ const PremiumModal: React.FC<{
 						</View>
 					</View>
 
-					{/* Premium Benefits */}
 					<View style={styles.benefitsContainer}>
 						<Text style={styles.benefitsTitle}>
 							{t('video.subscribeToWatch')}
@@ -147,7 +145,6 @@ const PremiumModal: React.FC<{
 						</View>
 					</View>
 
-					{/* Subscription Price */}
 					<View style={styles.priceContainer}>
 						<Text style={styles.priceAmount}>
 							€{video.user?.subscription_price || 4.99}
@@ -155,7 +152,6 @@ const PremiumModal: React.FC<{
 						<Text style={styles.pricePeriod}>/mes</Text>
 					</View>
 
-					{/* Subscribe Button */}
 					<TouchableOpacity
 						style={styles.subscribeButton}
 						onPress={onSubscribe}
@@ -181,7 +177,6 @@ const PremiumModal: React.FC<{
 	);
 };
 
-// Video Controls Component
 const VideoControls: React.FC<VideoControlsProps> = ({
 	video,
 	currentUser,
@@ -200,7 +195,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 			await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 			await Share.share({
 				message: `¡Mira este increíble video de @${video.user?.username} en Redbee!`,
-				url: `https://redbee.app/video/${video.id}`, // URL ficticia
+				url: `https://redbee.app/video/${video.id}`,
 			});
 		} catch (error) {
 			console.error('Share error:', error);
@@ -237,7 +232,6 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 
 	return (
 		<>
-			{/* Left Side - User Info */}
 			<View style={styles.leftControls}>
 				<TouchableOpacity
 					style={styles.userInfoContainer}
@@ -275,7 +269,6 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 					)}
 				</View>
 
-				{/* Follow/Subscribe Buttons */}
 				<View style={styles.actionButtonsContainer}>
 					{!video.is_following && video.user?.id !== currentUser.id && (
 						<TouchableOpacity
@@ -311,9 +304,7 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 				</View>
 			</View>
 
-			{/* Right Side - Action Buttons */}
 			<View style={styles.rightControls}>
-				{/* Premium Badge */}
 				{video.is_premium && (
 					<TouchableOpacity
 						style={styles.premiumIndicator}
@@ -323,7 +314,6 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 					</TouchableOpacity>
 				)}
 
-				{/* Like Button */}
 				<TouchableOpacity
 					style={styles.actionButton}
 					onPress={handleLike}
@@ -340,7 +330,6 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 					</Text>
 				</TouchableOpacity>
 
-				{/* Comment Button */}
 				<TouchableOpacity
 					style={styles.actionButton}
 					onPress={handleComment}
@@ -352,7 +341,6 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 					</Text>
 				</TouchableOpacity>
 
-				{/* Share Button */}
 				<TouchableOpacity
 					style={styles.actionButton}
 					onPress={handleShare}
@@ -362,7 +350,6 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 					<Text style={styles.actionText}>{t('video.share')}</Text>
 				</TouchableOpacity>
 
-				{/* Report Button */}
 				<TouchableOpacity
 					style={styles.actionButton}
 					onPress={handleReport}
@@ -372,7 +359,6 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 				</TouchableOpacity>
 			</View>
 
-			{/* Premium Modal */}
 			<PremiumModal
 				isVisible={showPremiumModal}
 				video={video}
@@ -386,7 +372,6 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 	);
 };
 
-// Main VideoPlayer Component
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	video,
 	isActive,
@@ -398,18 +383,46 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	onReport,
 	onUserPress,
 }) => {
-	const videoRef = useRef<Video>(null);
-	const [isLoaded, setIsLoaded] = useState(false);
-	const [isPlaying, setIsPlaying] = useState(false);
 	const [hasError, setHasError] = useState(false);
 	const [showControls, setShowControls] = useState(true);
-	const [progress, setProgress] = useState(0);
 	const fadeAnim = useRef(new Animated.Value(1)).current;
 	const { t } = useTranslation();
 
-	// Auto-hide controls
+	const player = useVideoPlayer(video.video_url, (player) => {
+		player.loop = true;
+		player.muted = false;
+		player.timeUpdateEventInterval = 0.5;
+		player.audioMixingMode = 'mixWithOthers';
+	});
+
+	const { isPlaying } = useEvent(player, 'playingChange', {
+		isPlaying: player.playing,
+	});
+
+	const [currentTime, setCurrentTime] = useState(0);
+	const [duration, setDuration] = useState(0);
+	const [isLoaded, setIsLoaded] = useState(false);
+
+	useEventListener(player, 'timeUpdate', ({ currentTime: time }) => {
+		setCurrentTime(time);
+		setDuration(player.duration);
+	});
+
+	useEventListener(player, 'statusChange', ({ status, error }) => {
+		if (status === 'error') {
+			console.error('Video load error:', error);
+			setHasError(true);
+			setIsLoaded(false);
+		} else if (status === 'readyToPlay') {
+			setHasError(false);
+			setIsLoaded(true);
+		} else if (status === 'loading') {
+			setIsLoaded(false);
+		}
+	});
+
 	useEffect(() => {
-		let timer: number;
+		let timer: ReturnType<typeof setTimeout>;
 
 		if (showControls && isPlaying) {
 			timer = setTimeout(() => {
@@ -424,18 +437,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		return () => clearTimeout(timer);
 	}, [showControls, isPlaying, fadeAnim]);
 
-	// Handle video playback based on active state
 	useEffect(() => {
-		if (!videoRef.current) return;
-
 		if (isActive && isLoaded) {
-			videoRef.current.playAsync();
-			setIsPlaying(true);
-		} else {
-			videoRef.current.pauseAsync();
-			setIsPlaying(false);
+			player.play();
+		} else if (!isActive) {
+			player.pause();
 		}
-	}, [isActive, isLoaded]);
+	}, [isActive, isLoaded, player]);
 
 	const handleVideoPress = () => {
 		if (!showControls) {
@@ -450,44 +458,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		}
 	};
 
-	const togglePlayback = async () => {
-		if (!videoRef.current) return;
-
-		try {
-			if (isPlaying) {
-				await videoRef.current.pauseAsync();
-				setIsPlaying(false);
-			} else {
-				await videoRef.current.playAsync();
-				setIsPlaying(true);
-			}
-		} catch (error) {
-			console.error('Video playback error:', error);
+	const togglePlayback = () => {
+		if (isPlaying) {
+			player.pause();
+		} else {
+			player.play();
 		}
 	};
 
-	const handleLoadStart = () => {
-		setIsLoaded(false);
-		setHasError(false);
-	};
-
-	const handleLoad = () => {
-		setIsLoaded(true);
-		setHasError(false);
-	};
-
-	const handleError = (error: any) => {
-		console.error('Video load error:', error);
-		setHasError(true);
-		setIsLoaded(false);
-	};
-
-	const handleProgress = (status: any) => {
-		if (status.durationMillis && status.positionMillis) {
-			const progressPercent = status.positionMillis / status.durationMillis;
-			setProgress(progressPercent);
-		}
-	};
+	const progress = duration > 0 ? currentTime / duration : 0;
 
 	const renderVideoContent = () => {
 		if (hasError) {
@@ -499,7 +478,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						style={styles.retryButton}
 						onPress={() => {
 							setHasError(false);
-							setIsLoaded(false);
+							player.replace({ uri: video.video_url });
 						}}
 					>
 						<Text style={styles.retryText}>Reintentar</Text>
@@ -510,23 +489,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 		return (
 			<>
-				<Video
-					ref={videoRef}
-					source={{
-						uri: video.video_url,
-					}}
+				<VideoView
+					player={player}
 					style={styles.video}
-					resizeMode={ResizeMode.COVER}
-					shouldPlay={false}
-					isLooping
-					isMuted={false}
-					onLoadStart={handleLoadStart}
-					onLoad={handleLoad}
-					onError={handleError}
-					onPlaybackStatusUpdate={handleProgress}
+					contentFit="cover"
+					nativeControls={false}
+					allowsFullscreen={false}
+					allowsPictureInPicture={false}
 				/>
 
-				{/* Loading Overlay */}
 				{!isLoaded && !hasError && (
 					<View style={styles.loadingContainer}>
 						<LinearGradient
@@ -541,7 +512,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					</View>
 				)}
 
-				{/* Premium Preview Overlay */}
 				{video.is_premium && !video.is_subscribed && (
 					<View style={styles.premiumOverlay}>
 						<LinearGradient
@@ -561,7 +531,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					</View>
 				)}
 
-				{/* Play/Pause Indicator */}
 				{showControls && isLoaded && (
 					<Animated.View style={[styles.playIndicator, { opacity: fadeAnim }]}>
 						{!isPlaying && (
@@ -576,7 +545,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					</Animated.View>
 				)}
 
-				{/* Progress Bar */}
 				{isLoaded && progress > 0 && (
 					<View style={styles.progressContainer}>
 						<View style={styles.progressBar}>
@@ -596,7 +564,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				{renderVideoContent()}
 			</Pressable>
 
-			{/* Video Controls */}
 			{showControls && isLoaded && (
 				<Animated.View
 					style={[styles.controlsContainer, { opacity: fadeAnim }]}
@@ -614,7 +581,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				</Animated.View>
 			)}
 
-			{/* Video Stats */}
 			<View style={styles.statsContainer}>
 				<Text style={styles.viewsText}>
 					{formatNumber(video.views_count)} {t('video.views')} •{' '}
@@ -891,7 +857,6 @@ const styles = StyleSheet.create({
 		textShadowOffset: { width: 0, height: 1 },
 		textShadowRadius: 3,
 	},
-	// Modal Styles
 	modalOverlay: {
 		position: 'absolute',
 		top: 0,

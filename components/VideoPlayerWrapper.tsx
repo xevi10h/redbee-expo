@@ -25,7 +25,6 @@ export const VideoPlayerWrapper: React.FC<VideoPlayerWrapperProps> = (
 	const handleVideoError = useCallback(
 		(error: Error, errorInfo: any) => {
 			console.error('Video player error:', error, errorInfo);
-			// TODO: Report to error tracking service
 			ErrorReporting.reportError(error, 'video_player', props.currentUser.id, {
 				videoId: props.video.id,
 				videoUrl: props.video.video_url,
@@ -74,20 +73,13 @@ const styles = StyleSheet.create({
 	},
 });
 
-// utils/performance.ts - Performance monitoring utilities
 export class PerformanceMonitor {
 	private static measurements: Map<string, number> = new Map();
 
-	/**
-	 * Start measuring performance
-	 */
 	static startMeasurement(key: string): void {
 		this.measurements.set(key, Date.now());
 	}
 
-	/**
-	 * End measurement and get duration
-	 */
 	static endMeasurement(key: string): number {
 		const startTime = this.measurements.get(key);
 		if (!startTime) return 0;
@@ -97,9 +89,6 @@ export class PerformanceMonitor {
 		return duration;
 	}
 
-	/**
-	 * Measure async operation
-	 */
 	static async measureAsync<T>(
 		operation: () => Promise<T>,
 		key: string,
@@ -115,13 +104,7 @@ export class PerformanceMonitor {
 		}
 	}
 
-	/**
-	 * Log performance metrics
-	 */
 	static logMetrics(context: string, metrics: Record<string, number>): void {
 		console.log(`Performance metrics for ${context}:`, metrics);
-
-		// TODO: Send to analytics service
-		// AnalyticsService.trackPerformance(context, metrics);
 	}
 }

@@ -308,7 +308,7 @@ export const useVideoFeed = (feedType: 'forYou' | 'following') => {
 						description: 'This premium content requires subscription',
 						hashtags: ['premium', 'exclusive'],
 						video_url:
-							'https://videos.pexels.com/video-files/3209828/3209828-hd_720_1366_24fps.mp4',
+							'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
 						thumbnail_url:
 							'https://images.pexels.com/videos/3209828/pexels-photo-3209828.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
 						duration: 120,
