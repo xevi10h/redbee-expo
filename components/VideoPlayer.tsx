@@ -478,7 +478,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						style={styles.retryButton}
 						onPress={() => {
 							setHasError(false);
-							player.replace({ uri: video.video_url });
+							player.replaceAsync({ uri: video.video_url });
 						}}
 					>
 						<Text style={styles.retryText}>Reintentar</Text>

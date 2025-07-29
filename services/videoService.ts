@@ -13,7 +13,7 @@ export interface VideoFilters {
 
 export class VideoService {
 	/**
-	 * Get videos feed with pagination
+	 * Get videos feed with pagination and user interactions
 	 */
 	static async getVideosFeed(filters: VideoFilters): Promise<AuthResponse<{
 		videos: Video[];
@@ -31,6 +31,34 @@ export class VideoService {
 				hashtags
 			} = filters;
 
+			// First, get the list of followed users if feed_type is 'following'
+			let followedUserIds: string[] = [];
+			if (feed_type === 'following' && user_id) {
+				const { data: follows, error: followsError } = await supabase
+					.from('follows')
+					.select('following_id')
+					.eq('follower_id', user_id);
+
+				if (followsError) {
+					console.error('Error fetching follows:', followsError);
+				} else {
+					followedUserIds = follows?.map(f => f.following_id) || [];
+				}
+
+				// If user doesn't follow anyone, return empty result
+				if (followedUserIds.length === 0) {
+					return {
+						success: true,
+						data: {
+							videos: [],
+							hasMore: false,
+							total: 0,
+						},
+					};
+				}
+			}
+
+			// Build the main query
 			let query = supabase
 				.from('videos')
 				.select(`
@@ -43,15 +71,14 @@ export class VideoService {
 						subscription_price,
 						subscription_currency
 					)
-				`);
+				`, { count: 'exact' });
 
-			// Apply filters based on feed type
-			if (feed_type === 'following' && user_id) {
-				// Get videos from users that current user follows
-				query = query.in('user_id', [
-					// TODO: Get list of followed user IDs
-					// This would require a subquery to the follows table
-				]);
+			// Apply feed type filter
+			if (feed_type === 'following' && followedUserIds.length > 0) {
+				query = query.in('user_id', followedUserIds);
+			} else if (feed_type === 'forYou' && user_id) {
+				// Exclude user's own videos from "For You" feed
+				query = query.neq('user_id', user_id);
 			}
 
 			// Apply other filters
@@ -71,7 +98,9 @@ export class VideoService {
 			const startRange = page * limit;
 			const endRange = startRange + limit - 1;
 
-			const { data: videos, error, count } = await query.order('created_at', { ascending: false }).range(startRange, endRange);
+			const { data: videos, error, count } = await query
+				.order('created_at', { ascending: false })
+				.range(startRange, endRange);
 
 			if (error) {
 				return {
@@ -84,13 +113,58 @@ export class VideoService {
 			const total = count || 0;
 			const hasMore = startRange + limit < total;
 
-			// Process videos to add interaction states
-			const processedVideos: Video[] = (videos || []).map(video => ({
-				...video,
-				is_liked: false, // TODO: Check if current user liked this video
-				is_following: false, // TODO: Check if current user follows video creator
-				is_subscribed: false, // TODO: Check if current user is subscribed to creator
-			}));
+			// Get user interactions for these videos
+			let processedVideos: Video[] = videos || [];
+
+			if (user_id && videos && videos.length > 0) {
+				const videoIds = videos.map(v => v.id);
+				const creatorIds = videos.map(v => v.user_id).filter(Boolean);
+
+				// Get likes
+				const { data: likes } = await supabase
+					.from('likes')
+					.select('video_id')
+					.eq('user_id', user_id)
+					.in('video_id', videoIds);
+
+				const likedVideoIds = new Set(likes?.map(l => l.video_id) || []);
+
+				// Get follows
+				const { data: follows } = await supabase
+					.from('follows')
+					.select('following_id')
+					.eq('follower_id', user_id)
+					.in('following_id', creatorIds);
+
+				const followedUserIds = new Set(follows?.map(f => f.following_id) || []);
+
+				// Get active subscriptions
+				const { data: subscriptions } = await supabase
+					.from('subscriptions')
+					.select('creator_id')
+					.eq('subscriber_id', user_id)
+					.eq('status', 'active')
+					.gte('current_period_end', new Date().toISOString())
+					.in('creator_id', creatorIds);
+
+				const subscribedCreatorIds = new Set(subscriptions?.map(s => s.creator_id) || []);
+
+				// Process videos with interaction states
+				processedVideos = videos.map(video => ({
+					...video,
+					is_liked: likedVideoIds.has(video.id),
+					is_following: followedUserIds.has(video.user_id),
+					is_subscribed: subscribedCreatorIds.has(video.user_id),
+				}));
+			} else {
+				// No user context, just return videos without interaction states
+				processedVideos = videos?.map(video => ({
+					...video,
+					is_liked: false,
+					is_following: false,
+					is_subscribed: false,
+				})) || [];
+			}
 
 			return {
 				success: true,
@@ -202,7 +276,7 @@ export class VideoService {
 			const { error: reportError } = await supabase
 				.from('reports')
 				.insert({
-					video_id: videoId,
+					reported_video_id: videoId,
 					reporter_id: reporterId,
 					reported_user_id: video.user_id,
 					reason: reason,
@@ -238,6 +312,98 @@ export class VideoService {
 		} catch (error) {
 			console.error('Failed to increment view count:', error);
 			// Don't throw error as this is not critical
+		}
+	}
+
+	/**
+	 * Search videos
+	 */
+	static async searchVideos(
+		searchQuery: string,
+		viewerId?: string,
+		page = 0,
+		limit = 10
+	): Promise<AuthResponse<{
+		videos: Video[];
+		hasMore: boolean;
+		total: number;
+	}>> {
+		try {
+			const startRange = page * limit;
+			const endRange = startRange + limit - 1;
+
+			const { data: videos, error, count } = await supabase
+				.from('videos')
+				.select(`
+					*,
+					user:profiles!videos_user_id_fkey (
+						id,
+						username,
+						display_name,
+						avatar_url,
+						subscription_price,
+						subscription_currency
+					)
+				`, { count: 'exact' })
+				.or(`title.ilike.%${searchQuery}%, description.ilike.%${searchQuery}%`)
+				.order('views_count', { ascending: false })
+				.range(startRange, endRange);
+
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			const total = count || 0;
+			const hasMore = startRange + limit < total;
+
+			// Process videos with interaction states if viewer is provided
+			let processedVideos: Video[] = videos || [];
+			if (viewerId && videos && videos.length > 0) {
+				// Similar logic as in getVideosFeed for getting user interactions
+				const videoIds = videos.map(v => v.id);
+				const creatorIds = videos.map(v => v.user_id).filter(Boolean);
+
+				const [likesResponse, followsResponse, subscriptionsResponse] = await Promise.all([
+					supabase.from('likes').select('video_id').eq('user_id', viewerId).in('video_id', videoIds),
+					supabase.from('follows').select('following_id').eq('follower_id', viewerId).in('following_id', creatorIds),
+					supabase.from('subscriptions').select('creator_id').eq('subscriber_id', viewerId).eq('status', 'active').gte('current_period_end', new Date().toISOString()).in('creator_id', creatorIds)
+				]);
+
+				const likedVideoIds = new Set(likesResponse.data?.map(l => l.video_id) || []);
+				const followedUserIds = new Set(followsResponse.data?.map(f => f.following_id) || []);
+				const subscribedCreatorIds = new Set(subscriptionsResponse.data?.map(s => s.creator_id) || []);
+
+				processedVideos = videos.map(video => ({
+					...video,
+					is_liked: likedVideoIds.has(video.id),
+					is_following: followedUserIds.has(video.user_id),
+					is_subscribed: subscribedCreatorIds.has(video.user_id),
+				}));
+			} else {
+				processedVideos = videos?.map(video => ({
+					...video,
+					is_liked: false,
+					is_following: false,
+					is_subscribed: false,
+				})) || [];
+			}
+
+			return {
+				success: true,
+				data: {
+					videos: processedVideos,
+					hasMore,
+					total,
+				},
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to search videos',
+			};
 		}
 	}
 }

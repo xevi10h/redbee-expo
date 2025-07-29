@@ -39,168 +39,7 @@ export default function HomeScreen() {
 	// Refs
 	const flatListRef = useRef<FlatList>(null);
 
-	// Enhanced mock data generator
-	const generateMockVideos = useCallback((): Video[] => {
-		const baseTimestamp = Date.now();
-		const feedPrefix = currentTab;
-
-		return [
-			{
-				id: `${feedPrefix}-${baseTimestamp}-1`,
-				user_id: '1',
-				user: {
-					id: '1',
-					username: 'naturelover',
-					display_name: 'Nature Lover',
-					avatar_url:
-						'https://images.pexels.com/photos/1072179/pexels-photo-1072179.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-					subscription_price: 4.99,
-				},
-				title: 'Incredible sunset timelapse 🌅',
-				description:
-					'Captured this amazing sunset from my rooftop. The colors were absolutely stunning! Watch till the end for the best part! #nature #sunset #timelapse #photography #peaceful',
-				hashtags: ['nature', 'sunset', 'timelapse', 'photography', 'peaceful'],
-				video_url:
-					'https://videos.pexels.com/video-files/32158974/13712189_1080_1920_24fps.mp4',
-				thumbnail_url:
-					'https://images.pexels.com/videos/4434255/pexels-photo-4434255.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-				duration: 45,
-				is_premium: false,
-				likes_count: 1250,
-				comments_count: 89,
-				views_count: 15600,
-				created_at: new Date(baseTimestamp - 2 * 60 * 60 * 1000).toISOString(),
-				is_liked: false,
-				is_following: false,
-				is_subscribed: false,
-			},
-			{
-				id: `${feedPrefix}-${baseTimestamp}-2`,
-				user_id: '2',
-				user: {
-					id: '2',
-					username: 'city_explorer',
-					display_name: 'City Explorer',
-					avatar_url:
-						'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-					subscription_price: 9.99,
-				},
-				title: '🔥 EXCLUSIVE: Behind the scenes content',
-				description:
-					'Get an exclusive look at my creative process! This premium content shows you exactly how I create my viral videos. Subscribe for more exclusive tutorials and insider tips! #premium #tutorial #bts #exclusive',
-				hashtags: ['premium', 'exclusive', 'tutorial', 'bts', 'creative'],
-				video_url:
-					'https://videos.pexels.com/video-files/32892276/14018057_1080_1920_25fps.mp4',
-				thumbnail_url:
-					'https://images.pexels.com/videos/3209828/pexels-photo-3209828.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-				duration: 120,
-				is_premium: true,
-				likes_count: 890,
-				comments_count: 45,
-				views_count: 5200,
-				created_at: new Date(baseTimestamp - 5 * 60 * 60 * 1000).toISOString(),
-				is_liked: false,
-				is_following: true,
-				is_subscribed: false,
-			},
-			{
-				id: `${feedPrefix}-${baseTimestamp}-3`,
-				user_id: '3',
-				user: {
-					id: '3',
-					username: 'tech_guru',
-					display_name: 'Tech Guru',
-					avatar_url: undefined,
-					subscription_price: 0,
-				},
-				title: 'Mind-blowing tech hack! 🤯',
-				description:
-					"This simple trick will change how you use your phone forever. Can't believe more people don't know about this! Try it and let me know if it works for you! #tech #hack #productivity #lifehack #smartphone",
-				hashtags: ['tech', 'hack', 'productivity', 'lifehack', 'smartphone'],
-				video_url:
-					'https://videos.pexels.com/video-files/33092997/14106170_1440_2560_60fps.mp4',
-				thumbnail_url:
-					'https://images.pexels.com/videos/2795405/pexels-photo-2795405.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-				duration: 30,
-				is_premium: false,
-				likes_count: 2340,
-				comments_count: 156,
-				views_count: 28900,
-				created_at: new Date(
-					baseTimestamp - 1 * 24 * 60 * 60 * 1000,
-				).toISOString(),
-				is_liked: true,
-				is_following: false,
-				is_subscribed: false,
-			},
-			{
-				id: `${feedPrefix}-${baseTimestamp}-4`,
-				user_id: '4',
-				user: {
-					id: '4',
-					username: 'food_artist',
-					display_name: 'Culinary Artist',
-					avatar_url: undefined,
-					subscription_price: 7.99,
-				},
-				title: 'Premium cooking masterclass 👨‍🍳',
-				description:
-					'Learn my secret techniques for creating restaurant-quality dishes at home. This premium series covers advanced knife skills, flavor pairing, and presentation secrets that took me years to master. Perfect for aspiring chefs!',
-				hashtags: ['cooking', 'premium', 'masterclass', 'chef', 'culinary'],
-				video_url:
-					'https://videos.pexels.com/video-files/26224653/11940597_1440_2560_25fps.mp4',
-				thumbnail_url:
-					'https://images.pexels.com/videos/3191624/pexels-photo-3191624.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-				duration: 180,
-				is_premium: true,
-				likes_count: 567,
-				comments_count: 78,
-				views_count: 3400,
-				created_at: new Date(
-					baseTimestamp - 3 * 24 * 60 * 60 * 1000,
-				).toISOString(),
-				is_liked: false,
-				is_following: false,
-				is_subscribed: false,
-			},
-			{
-				id: `${feedPrefix}-${baseTimestamp}-5`,
-				user_id: '5',
-				user: {
-					id: '5',
-					username: 'fitness_coach',
-					display_name: 'Fitness Coach Pro',
-					avatar_url: undefined,
-					subscription_price: 12.99,
-				},
-				title: 'Transform your body in 30 days! 💪',
-				description:
-					'My personal transformation program that helped thousands achieve their dream body. Get access to my complete workout plans, nutrition guides, and personal coaching! #fitness #transformation #workout #health #motivation',
-				hashtags: [
-					'fitness',
-					'transformation',
-					'workout',
-					'health',
-					'motivation',
-				],
-				video_url:
-					'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-				thumbnail_url:
-					'https://images.pexels.com/videos/4752861/pexels-photo-4752861.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
-				duration: 60,
-				is_premium: true,
-				likes_count: 3200,
-				comments_count: 245,
-				views_count: 45600,
-				created_at: new Date(baseTimestamp - 6 * 60 * 60 * 1000).toISOString(),
-				is_liked: false,
-				is_following: true,
-				is_subscribed: true,
-			},
-		];
-	}, [currentTab]);
-
-	// Load videos function
+	// Load videos function - ahora usa datos reales de Supabase
 	const loadVideos = useCallback(
 		async (refresh = false) => {
 			if (refresh) {
@@ -208,41 +47,40 @@ export default function HomeScreen() {
 				setPage(0);
 				setError(null);
 			} else {
-				if (!hasMore) return;
+				if (!hasMore || isLoading) return;
 				setIsLoading(true);
 			}
 
 			try {
-				// TODO: Replace with real API call
-				// const result = await VideoService.getVideosFeed({
-				//   feed_type: currentTab,
-				//   page: refresh ? 0 : page,
-				//   limit: 5,
-				//   user_id: user?.id,
-				// });
+				const result = await VideoService.getVideosFeed({
+					feed_type: currentTab,
+					page: refresh ? 0 : page,
+					limit: 5,
+					user_id: user?.id,
+				});
 
-				// Simulate API delay
-				await new Promise((resolve) => setTimeout(resolve, 1000));
+				if (result.success && result.data) {
+					if (refresh) {
+						setVideos(result.data.videos);
+						setPage(1);
+						setActiveVideoIndex(0);
+					} else {
+						setVideos((prev) => [...prev, ...result.data.videos]);
+						setPage((prev) => prev + 1);
+					}
 
-				const newVideos = generateMockVideos();
-
-				if (refresh) {
-					setVideos(newVideos);
-					setPage(1);
-					setActiveVideoIndex(0);
+					setHasMore(result.data.hasMore);
+					setError(null);
 				} else {
-					setVideos((prev) => [...prev, ...newVideos]);
-					setPage((prev) => prev + 1);
-				}
+					const errorMessage = result.error || 'Failed to load videos';
+					setError(errorMessage);
 
-				// Simulate end of pagination after 3 pages
-				if (page >= 2) {
-					setHasMore(false);
-				} else {
-					setHasMore(true);
+					if (!refresh) {
+						Alert.alert(t('common.error'), errorMessage, [
+							{ text: t('common.ok') },
+						]);
+					}
 				}
-
-				setError(null);
 			} catch (error) {
 				console.error('Error loading videos:', error);
 				const errorMessage =
@@ -259,7 +97,7 @@ export default function HomeScreen() {
 				setIsRefreshing(false);
 			}
 		},
-		[currentTab, page, hasMore, generateMockVideos, t],
+		[currentTab, page, hasMore, user?.id, t, isLoading],
 	);
 
 	// Handle viewable items change for video playback
@@ -310,9 +148,39 @@ export default function HomeScreen() {
 			);
 
 			try {
-				// TODO: Implement real API call
-				// await VideoService.toggleLike(videoId, user.id);
-				console.log('Video liked:', videoId);
+				const result = await VideoService.toggleLike(videoId, user.id);
+
+				if (result.success) {
+					// Update with actual result
+					setVideos((prev) =>
+						prev.map((video) => {
+							if (video.id === videoId) {
+								return {
+									...video,
+									is_liked: result.data?.liked || false,
+								};
+							}
+							return video;
+						}),
+					);
+				} else {
+					// Revert optimistic update on error
+					setVideos((prev) =>
+						prev.map((video) => {
+							if (video.id === videoId) {
+								return {
+									...video,
+									is_liked: !video.is_liked,
+									likes_count: video.is_liked
+										? video.likes_count + 1
+										: video.likes_count - 1,
+								};
+							}
+							return video;
+						}),
+					);
+					console.error('Like error:', result.error);
+				}
 			} catch (error) {
 				// Revert optimistic update on error
 				setVideos((prev) =>
@@ -344,7 +212,7 @@ export default function HomeScreen() {
 		async (userId: string) => {
 			if (!user || user.id === userId) return;
 
-			// Optimistic update
+			// Optimistic update for all videos from this user
 			setVideos((prev) =>
 				prev.map((video) => {
 					if (video.user?.id === userId) {
@@ -358,9 +226,38 @@ export default function HomeScreen() {
 			);
 
 			try {
-				// TODO: Implement real API call
-				// await UserService.toggleFollow(userId, user.id);
-				console.log('User followed:', userId);
+				// Import UserService for follow functionality
+				const { UserService } = await import('@/services');
+				const result = await UserService.toggleFollow(userId, user.id);
+
+				if (result.success) {
+					// Update with actual result
+					setVideos((prev) =>
+						prev.map((video) => {
+							if (video.user?.id === userId) {
+								return {
+									...video,
+									is_following: result.data?.following || false,
+								};
+							}
+							return video;
+						}),
+					);
+				} else {
+					// Revert optimistic update on error
+					setVideos((prev) =>
+						prev.map((video) => {
+							if (video.user?.id === userId) {
+								return {
+									...video,
+									is_following: !video.is_following,
+								};
+							}
+							return video;
+						}),
+					);
+					console.error('Follow error:', result.error);
+				}
 			} catch (error) {
 				// Revert optimistic update on error
 				setVideos((prev) =>
@@ -385,10 +282,10 @@ export default function HomeScreen() {
 			if (!user || user.id === userId) return;
 
 			try {
-				// TODO: Implement Stripe subscription flow
-				// const result = await SubscriptionService.createSubscription(userId);
+				// Import SubscriptionService for subscription functionality
+				const { SubscriptionService } = await import('@/services');
 
-				// For now, show placeholder alert
+				// For now, show placeholder alert since Stripe integration needs setup
 				Alert.alert(
 					'Suscripción',
 					'¡Funcionalidad de suscripción próximamente! Se implementará con Stripe para pagos seguros.',
@@ -431,15 +328,21 @@ export default function HomeScreen() {
 			if (!user) return;
 
 			try {
-				// TODO: Implement real API call
-				// await VideoService.reportVideo(videoId, user.id, reason);
-
-				Alert.alert(
-					'Reporte enviado',
-					'Hemos recibido tu reporte y lo estamos revisando. Te notificaremos cuando tengamos una resolución.',
-					[{ text: 'OK' }],
+				const result = await VideoService.reportVideo(
+					videoId,
+					user.id,
+					'inappropriate',
 				);
-				console.log('Video reported:', videoId);
+
+				if (result.success) {
+					Alert.alert(
+						'Reporte enviado',
+						'Hemos recibido tu reporte y lo estamos revisando. Te notificaremos cuando tengamos una resolución.',
+						[{ text: 'OK' }],
+					);
+				} else {
+					Alert.alert('Error', 'No se pudo enviar el reporte');
+				}
 			} catch (error) {
 				console.error('Report error:', error);
 				Alert.alert('Error', 'No se pudo enviar el reporte');
