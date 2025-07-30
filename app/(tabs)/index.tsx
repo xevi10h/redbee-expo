@@ -17,8 +17,8 @@ import { VideoPlayer } from '@/components/VideoPlayer';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { VideoService } from '@/services';
-import { Comment, FeedType, Video } from '@/shared/types';
+import { useVideoFeedWithPermissions } from '@/hooks/useVideoFeedWithPermissions';
+import { Comment, FeedType } from '@/shared/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -27,78 +27,32 @@ export default function HomeScreen() {
 	const { user } = useRequireAuth();
 
 	// State management
-	const [videos, setVideos] = useState<Video[]>([]);
-	const [isLoading, setIsLoading] = useState(false);
-	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [currentTab, setCurrentTab] = useState<FeedType>('forYou');
 	const [activeVideoIndex, setActiveVideoIndex] = useState(0);
-	const [hasMore, setHasMore] = useState(true);
-	const [page, setPage] = useState(0);
-	const [error, setError] = useState<string | null>(null);
 
 	// Refs
 	const flatListRef = useRef<FlatList>(null);
 
-	// Load videos function - ahora usa datos reales de Supabase
-	const loadVideos = useCallback(
-		async (refresh = false) => {
-			if (refresh) {
-				setIsRefreshing(true);
-				setPage(0);
-				setError(null);
-			} else {
-				if (!hasMore || isLoading) return;
-				setIsLoading(true);
-			}
+	// Use the improved video feed hook with permissions
+	const {
+		videos,
+		isLoading,
+		isRefreshing,
+		hasMore,
+		error,
+		handleVideoLike,
+		handleUserFollow,
+		handleUserSubscribe,
+		handleVideoComment,
+		handleVideoReport,
+		handleCommentAdded,
+		handleUserPress,
+		handleRefresh,
+		handleLoadMore,
+		clearError,
+	} = useVideoFeedWithPermissions(currentTab, user!);
 
-			try {
-				const result = await VideoService.getVideosFeed({
-					feed_type: currentTab,
-					page: refresh ? 0 : page,
-					limit: 5,
-					user_id: user?.id,
-				});
-
-				if (result.success && result.data) {
-					if (refresh) {
-						setVideos(result.data.videos);
-						setPage(1);
-						setActiveVideoIndex(0);
-					} else {
-						setVideos((prev) => [...prev, ...result.data.videos]);
-						setPage((prev) => prev + 1);
-					}
-
-					setHasMore(result.data.hasMore);
-					setError(null);
-				} else {
-					const errorMessage = result.error || 'Failed to load videos';
-					setError(errorMessage);
-
-					if (!refresh) {
-						Alert.alert(t('common.error'), errorMessage, [
-							{ text: t('common.ok') },
-						]);
-					}
-				}
-			} catch (error) {
-				console.error('Error loading videos:', error);
-				const errorMessage =
-					error instanceof Error ? error.message : 'Failed to load videos';
-				setError(errorMessage);
-
-				if (!refresh) {
-					Alert.alert(t('common.error'), errorMessage, [
-						{ text: t('common.ok') },
-					]);
-				}
-			} finally {
-				setIsLoading(false);
-				setIsRefreshing(false);
-			}
-		},
-		[currentTab, page, hasMore, user?.id, t, isLoading],
-	);
+	console.log('videos', videos);
 
 	// Handle viewable items change for video playback
 	const onViewableItemsChanged = useCallback(
@@ -110,10 +64,13 @@ export default function HomeScreen() {
 				if (activeItem && activeItem.index !== null) {
 					setActiveVideoIndex(activeItem.index);
 
-					// Track video view
+					// Track video view (solo si el usuario puede ver el video)
 					const video = videos[activeItem.index];
 					if (video) {
-						VideoService.incrementViewCount(video.id);
+						// La función incrementViewCount ahora verifica permisos internamente
+						import('@/services/videoService').then(({ VideoService }) => {
+							VideoService.incrementViewCount(video.id, user?.id);
+						});
 					}
 				}
 			}
@@ -126,294 +83,45 @@ export default function HomeScreen() {
 		minimumViewTime: 500,
 	};
 
-	// Video interaction handlers with optimistic updates
-	const handleVideoLike = useCallback(
-		async (videoId: string) => {
-			if (!user) return;
-
-			// Optimistic update
-			setVideos((prev) =>
-				prev.map((video) => {
-					if (video.id === videoId) {
-						return {
-							...video,
-							is_liked: !video.is_liked,
-							likes_count: video.is_liked
-								? video.likes_count - 1
-								: video.likes_count + 1,
-						};
-					}
-					return video;
-				}),
-			);
-
-			try {
-				const result = await VideoService.toggleLike(videoId, user.id);
-
-				if (result.success) {
-					// Update with actual result
-					setVideos((prev) =>
-						prev.map((video) => {
-							if (video.id === videoId) {
-								return {
-									...video,
-									is_liked: result.data?.liked || false,
-								};
-							}
-							return video;
-						}),
-					);
-				} else {
-					// Revert optimistic update on error
-					setVideos((prev) =>
-						prev.map((video) => {
-							if (video.id === videoId) {
-								return {
-									...video,
-									is_liked: !video.is_liked,
-									likes_count: video.is_liked
-										? video.likes_count + 1
-										: video.likes_count - 1,
-								};
-							}
-							return video;
-						}),
-					);
-					console.error('Like error:', result.error);
-				}
-			} catch (error) {
-				// Revert optimistic update on error
-				setVideos((prev) =>
-					prev.map((video) => {
-						if (video.id === videoId) {
-							return {
-								...video,
-								is_liked: !video.is_liked,
-								likes_count: video.is_liked
-									? video.likes_count + 1
-									: video.likes_count - 1,
-							};
-						}
-						return video;
-					}),
-				);
-				console.error('Like error:', error);
-			}
-		},
-		[user],
-	);
-
-	const handleVideoComment = useCallback((videoId: string) => {
-		console.log('Open comments for video:', videoId);
-		// Comments modal is handled within VideoPlayer component
-	}, []);
-
-	const handleUserFollow = useCallback(
-		async (userId: string) => {
-			if (!user || user.id === userId) return;
-
-			// Optimistic update for all videos from this user
-			setVideos((prev) =>
-				prev.map((video) => {
-					if (video.user?.id === userId) {
-						return {
-							...video,
-							is_following: !video.is_following,
-						};
-					}
-					return video;
-				}),
-			);
-
-			try {
-				// Import UserService for follow functionality
-				const { UserService } = await import('@/services');
-				const result = await UserService.toggleFollow(userId, user.id);
-
-				if (result.success) {
-					// Update with actual result
-					setVideos((prev) =>
-						prev.map((video) => {
-							if (video.user?.id === userId) {
-								return {
-									...video,
-									is_following: result.data?.following || false,
-								};
-							}
-							return video;
-						}),
-					);
-				} else {
-					// Revert optimistic update on error
-					setVideos((prev) =>
-						prev.map((video) => {
-							if (video.user?.id === userId) {
-								return {
-									...video,
-									is_following: !video.is_following,
-								};
-							}
-							return video;
-						}),
-					);
-					console.error('Follow error:', result.error);
-				}
-			} catch (error) {
-				// Revert optimistic update on error
-				setVideos((prev) =>
-					prev.map((video) => {
-						if (video.user?.id === userId) {
-							return {
-								...video,
-								is_following: !video.is_following,
-							};
-						}
-						return video;
-					}),
-				);
-				console.error('Follow error:', error);
-			}
-		},
-		[user],
-	);
-
-	const handleUserSubscribe = useCallback(
-		async (userId: string) => {
-			if (!user || user.id === userId) return;
-
-			try {
-				// Import SubscriptionService for subscription functionality
-				const { SubscriptionService } = await import('@/services');
-
-				// For now, show placeholder alert since Stripe integration needs setup
-				Alert.alert(
-					'Suscripción',
-					'¡Funcionalidad de suscripción próximamente! Se implementará con Stripe para pagos seguros.',
-					[
-						{ text: 'Entendido' },
-						{
-							text: 'Simular suscripción',
-							onPress: () => {
-								// Simulate successful subscription
-								setVideos((prev) =>
-									prev.map((video) => {
-										if (video.user?.id === userId) {
-											return {
-												...video,
-												is_subscribed: true,
-											};
-										}
-										return video;
-									}),
-								);
-								Alert.alert(
-									'¡Suscripción exitosa!',
-									'Ahora tienes acceso a todo el contenido premium de este creador.',
-									[{ text: 'Perfecto' }],
-								);
-							},
-						},
-					],
-				);
-			} catch (error) {
-				console.error('Subscribe error:', error);
-				Alert.alert('Error', 'No se pudo procesar la suscripción');
-			}
-		},
-		[user],
-	);
-
-	const handleVideoReport = useCallback(
-		async (videoId: string) => {
-			if (!user) return;
-
-			try {
-				const result = await VideoService.reportVideo(
-					videoId,
-					user.id,
-					'inappropriate',
-				);
-
-				if (result.success) {
-					Alert.alert(
-						'Reporte enviado',
-						'Hemos recibido tu reporte y lo estamos revisando. Te notificaremos cuando tengamos una resolución.',
-						[{ text: 'OK' }],
-					);
-				} else {
-					Alert.alert('Error', 'No se pudo enviar el reporte');
-				}
-			} catch (error) {
-				console.error('Report error:', error);
-				Alert.alert('Error', 'No se pudo enviar el reporte');
-			}
-		},
-		[user],
-	);
-
-	const handleUserPress = useCallback((userId: string) => {
-		console.log('Navigate to user profile:', userId);
-		// TODO: Navigate to user profile screen
-		// router.push(`/profile/${userId}`);
-	}, []);
-
-	const handleCommentAdded = useCallback(
-		(videoId: string, comment: Comment) => {
-			setVideos((prev) =>
-				prev.map((video) => {
-					if (video.id === videoId) {
-						return {
-							...video,
-							comments_count: video.comments_count + 1,
-						};
-					}
-					return video;
-				}),
-			);
-		},
-		[],
-	);
-
-	// Load more videos
-	const handleLoadMore = useCallback(() => {
-		if (!isLoading && !isRefreshing && hasMore) {
-			loadVideos(false);
-		}
-	}, [isLoading, isRefreshing, hasMore, loadVideos]);
-
-	// Refresh videos
-	const handleRefresh = useCallback(() => {
-		if (!isRefreshing && !isLoading) {
-			setHasMore(true);
-			loadVideos(true);
-		}
-	}, [isRefreshing, isLoading, loadVideos]);
-
-	// Handle tab change
+	// Handle tab change with proper reset
 	const handleTabChange = useCallback(
 		(newTab: FeedType) => {
 			if (newTab !== currentTab) {
 				setCurrentTab(newTab);
-				setVideos([]);
-				setPage(0);
-				setHasMore(true);
 				setActiveVideoIndex(0);
-				setError(null);
+				clearError();
+
+				// Scroll to top when changing tabs
+				if (flatListRef.current) {
+					flatListRef.current.scrollToOffset({ offset: 0, animated: false });
+				}
 			}
 		},
-		[currentTab],
+		[currentTab, clearError],
 	);
 
-	// Load videos when component mounts or tab changes
+	// Show error alert when error state changes
 	useEffect(() => {
-		if (user) {
-			loadVideos(true);
+		if (error) {
+			Alert.alert(t('common.error'), error, [
+				{
+					text: t('common.ok'),
+					onPress: clearError,
+				},
+				{
+					text: 'Reintentar',
+					onPress: () => {
+						clearError();
+						handleRefresh();
+					},
+				},
+			]);
 		}
-	}, [user, currentTab]);
+	}, [error, t, clearError, handleRefresh]);
 
 	// Render individual video item
 	const renderVideoItem = useCallback(
-		({ item, index }: { item: Video; index: number }) => {
+		({ item, index }: { item: any; index: number }) => {
 			const isActive = index === activeVideoIndex;
 
 			return (
@@ -428,8 +136,9 @@ export default function HomeScreen() {
 						onSubscribe={() =>
 							item.user?.id && handleUserSubscribe(item.user.id)
 						}
-						onReport={() => handleVideoReport(item.id)}
+						onReport={(reason) => handleVideoReport(item.id, reason)}
 						onUserPress={() => item.user?.id && handleUserPress(item.user.id)}
+						onCommentAdded={(comment: Comment) => handleCommentAdded(item.id)}
 					/>
 				</View>
 			);
@@ -443,6 +152,7 @@ export default function HomeScreen() {
 			handleUserSubscribe,
 			handleVideoReport,
 			handleUserPress,
+			handleCommentAdded,
 		],
 	);
 
@@ -458,7 +168,7 @@ export default function HomeScreen() {
 			</Text>
 			<Text style={styles.emptySubtitle}>
 				{error
-					? error
+					? 'Verifica tu conexión e inténtalo de nuevo'
 					: currentTab === 'forYou'
 					? t('home.refreshToSeeNew')
 					: 'Sigue a más creadores para ver su contenido aquí'}
@@ -466,7 +176,10 @@ export default function HomeScreen() {
 			{error && (
 				<TouchableOpacity
 					style={styles.retryButton}
-					onPress={() => loadVideos(true)}
+					onPress={() => {
+						clearError();
+						handleRefresh();
+					}}
 				>
 					<Text style={styles.retryText}>Reintentar</Text>
 				</TouchableOpacity>
@@ -484,6 +197,9 @@ export default function HomeScreen() {
 			</View>
 		);
 	};
+
+	// Key extractor
+	const keyExtractor = useCallback((item: any) => item.id, []);
 
 	if (!user) {
 		return null;
@@ -537,7 +253,7 @@ export default function HomeScreen() {
 				ref={flatListRef}
 				data={videos}
 				renderItem={renderVideoItem}
-				keyExtractor={(item) => item.id}
+				keyExtractor={keyExtractor}
 				style={styles.feedContainer}
 				showsVerticalScrollIndicator={false}
 				refreshControl={

@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
 	Alert,
+	Image,
 	KeyboardAvoidingView,
 	Platform,
 	ScrollView,
@@ -253,6 +254,10 @@ export default function SignUpScreen() {
 				>
 					{/* Header */}
 					<View style={styles.header}>
+						<Image
+							source={require('../../assets/images/icon.png')}
+							style={styles.logo}
+						/>
 						<Text style={styles.title}>Redbee</Text>
 						<Text style={styles.subtitle}>{t('auth.welcome')}</Text>
 					</View>
@@ -466,6 +471,13 @@ const styles = StyleSheet.create({
 	header: {
 		alignItems: 'center',
 		marginBottom: 32,
+	},
+	logo: {
+		marginTop: 20,
+		width: 80,
+		height: 80,
+		resizeMode: 'contain',
+		marginBottom: 12,
 	},
 	title: {
 		fontSize: 32,

@@ -13,94 +13,208 @@ export interface VideoFilters {
 
 export class VideoService {
 	/**
-	 * Get videos feed with pagination and user interactions
+	 * Get videos feed with proper permission filtering
+	 * Solo devuelve videos que el usuario puede ver
 	 */
-	static async getVideosFeed(filters: VideoFilters): Promise<AuthResponse<{
-		videos: Video[];
-		hasMore: boolean;
-		total: number;
-	}>> {
+	static async getVideosFeed(filters: VideoFilters): Promise<
+		AuthResponse<{
+			videos: Video[];
+			hasMore: boolean;
+			total: number;
+		}>
+	> {
 		try {
 			const {
 				feed_type = 'forYou',
 				page = 0,
 				limit = 10,
 				user_id,
-				is_premium,
 				search_query,
-				hashtags
+				hashtags,
 			} = filters;
 
-			// First, get the list of followed users if feed_type is 'following'
-			let followedUserIds: string[] = [];
-			if (feed_type === 'following' && user_id) {
-				const { data: follows, error: followsError } = await supabase
-					.from('follows')
-					.select('following_id')
-					.eq('follower_id', user_id);
+			// Validar que tenemos un user_id
+			if (!user_id) {
+				return {
+					success: false,
+					error: 'User ID is required to fetch videos',
+				};
+			}
 
-				if (followsError) {
-					console.error('Error fetching follows:', followsError);
-				} else {
-					followedUserIds = follows?.map(f => f.following_id) || [];
-				}
+			let result;
 
-				// If user doesn't follow anyone, return empty result
-				if (followedUserIds.length === 0) {
+			// Usar las funciones de base de datos mejoradas con control de permisos
+			if (feed_type === 'forYou') {
+				const { data, error } = await supabase.rpc(
+					'get_for_you_feed_with_permissions',
+					{
+						viewer_id: user_id,
+						page_offset: page * limit,
+						page_limit: limit,
+					},
+				);
+
+				if (error) {
 					return {
-						success: true,
-						data: {
-							videos: [],
-							hasMore: false,
-							total: 0,
-						},
+						success: false,
+						error: error.message,
 					};
 				}
+
+				result = data || [];
+			} else if (feed_type === 'following') {
+				const { data, error } = await supabase.rpc(
+					'get_following_feed_with_permissions',
+					{
+						viewer_id: user_id,
+						page_offset: page * limit,
+						page_limit: limit,
+					},
+				);
+
+				if (error) {
+					return {
+						success: false,
+						error: error.message,
+					};
+				}
+
+				result = data || [];
 			}
 
-			// Build the main query
-			let query = supabase
-				.from('videos')
-				.select(`
-					*,
-					user:profiles!videos_user_id_fkey (
-						id,
-						username,
-						display_name,
-						avatar_url,
-						subscription_price,
-						subscription_currency
-					)
-				`, { count: 'exact' });
-
-			// Apply feed type filter
-			if (feed_type === 'following' && followedUserIds.length > 0) {
-				query = query.in('user_id', followedUserIds);
-			} else if (feed_type === 'forYou' && user_id) {
-				// Exclude user's own videos from "For You" feed
-				query = query.neq('user_id', user_id);
+			if (!result) {
+				return {
+					success: true,
+					data: {
+						videos: [],
+						hasMore: false,
+						total: 0,
+					},
+				};
 			}
 
-			// Apply other filters
-			if (is_premium !== undefined) {
-				query = query.eq('is_premium', is_premium);
+			// Obtener las interacciones del usuario para estos videos
+			const videoIds = result.map((v: any) => v.id);
+			let interactions: any = {};
+
+			if (videoIds.length > 0) {
+				const { data: interactionData, error: interactionError } =
+					await supabase.rpc('get_video_interactions_safe', {
+						video_ids: videoIds,
+						viewer_id: user_id,
+					});
+
+				if (!interactionError && interactionData) {
+					// Convertir array a objeto para fácil acceso
+					interactions = interactionData.reduce((acc: any, item: any) => {
+						acc[item.video_id] = {
+							is_liked: item.is_liked,
+							is_following: item.is_following,
+							is_subscribed: item.is_subscribed,
+							can_access: item.can_access,
+						};
+						return acc;
+					}, {});
+				}
 			}
 
+			// Procesar los videos y agregar información de interacciones
+			const processedVideos: Video[] = result.map((video: any) => {
+				const videoInteractions = interactions[video.id] || {
+					is_liked: false,
+					is_following: false,
+					is_subscribed: false,
+					can_access: true, // Por defecto true ya que estos videos ya pasaron el filtro de permisos
+				};
+
+				return {
+					id: video.id,
+					user_id: video.user_id,
+					user: {
+						id: video.user_id,
+						username: video.username,
+						display_name: video.display_name,
+						avatar_url: video.avatar_url,
+						subscription_price: video.subscription_price,
+						subscription_currency: video.subscription_currency,
+					},
+					title: video.title,
+					description: video.description,
+					hashtags: video.hashtags,
+					video_url: video.video_url,
+					thumbnail_url: video.thumbnail_url,
+					duration: video.duration,
+					is_premium: video.is_premium,
+					likes_count: video.likes_count,
+					comments_count: video.comments_count,
+					views_count: video.views_count,
+					created_at: video.created_at,
+					is_liked: videoInteractions.is_liked,
+					is_following: videoInteractions.is_following,
+					is_subscribed: videoInteractions.is_subscribed,
+				};
+			});
+
+			// Filtrar por búsqueda si se proporciona
+			let filteredVideos = processedVideos;
 			if (search_query) {
-				query = query.or(`title.ilike.%${search_query}%, description.ilike.%${search_query}%`);
+				filteredVideos = processedVideos.filter(
+					(video) =>
+						video.title?.toLowerCase().includes(search_query.toLowerCase()) ||
+						video.description
+							?.toLowerCase()
+							.includes(search_query.toLowerCase()) ||
+						video.user?.username
+							?.toLowerCase()
+							.includes(search_query.toLowerCase()) ||
+						video.hashtags?.some((tag) =>
+							tag.toLowerCase().includes(search_query.toLowerCase()),
+						),
+				);
 			}
 
+			// Filtrar por hashtags si se proporciona
 			if (hashtags && hashtags.length > 0) {
-				query = query.overlaps('hashtags', hashtags);
+				filteredVideos = filteredVideos.filter((video) =>
+					video.hashtags?.some((tag) => hashtags.includes(tag)),
+				);
 			}
 
-			// Apply pagination and sorting
-			const startRange = page * limit;
-			const endRange = startRange + limit - 1;
+			// Calcular si hay más videos
+			const hasMore = result.length === limit;
 
-			const { data: videos, error, count } = await query
-				.order('created_at', { ascending: false })
-				.range(startRange, endRange);
+			return {
+				success: true,
+				data: {
+					videos: filteredVideos,
+					hasMore,
+					total: filteredVideos.length,
+				},
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error:
+					error instanceof Error ? error.message : 'Failed to fetch videos',
+			};
+		}
+	}
+
+	/**
+	 * Verificar si un usuario puede acceder a un video específico
+	 */
+	static async canAccessVideo(
+		videoId: string,
+		userId: string,
+	): Promise<AuthResponse<{ canAccess: boolean }>> {
+		try {
+			const { data, error } = await supabase.rpc(
+				'can_access_premium_video_enhanced',
+				{
+					video_id: videoId,
+					viewer_id: userId,
+				},
+			);
 
 			if (error) {
 				return {
@@ -109,84 +223,171 @@ export class VideoService {
 				};
 			}
 
-			// Calculate if there are more videos
-			const total = count || 0;
-			const hasMore = startRange + limit < total;
+			return {
+				success: true,
+				data: {
+					canAccess: data || false,
+				},
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error:
+					error instanceof Error
+						? error.message
+						: 'Failed to check video access',
+			};
+		}
+	}
 
-			// Get user interactions for these videos
-			let processedVideos: Video[] = videos || [];
+	/**
+	 * Buscar videos con filtros de permisos aplicados
+	 */
+	static async searchVideos(
+		searchQuery: string,
+		viewerId?: string,
+		page = 0,
+		limit = 10,
+	): Promise<
+		AuthResponse<{
+			videos: Video[];
+			hasMore: boolean;
+			total: number;
+		}>
+	> {
+		try {
+			if (!viewerId) {
+				return {
+					success: false,
+					error: 'Viewer ID is required for search',
+				};
+			}
 
-			if (user_id && videos && videos.length > 0) {
-				const videoIds = videos.map(v => v.id);
-				const creatorIds = videos.map(v => v.user_id).filter(Boolean);
+			const { data, error } = await supabase.rpc(
+				'search_videos_with_permissions',
+				{
+					search_query: searchQuery,
+					viewer_id: viewerId,
+					page_offset: page * limit,
+					page_limit: limit,
+				},
+			);
 
-				// Get likes
-				const { data: likes } = await supabase
-					.from('likes')
-					.select('video_id')
-					.eq('user_id', user_id)
-					.in('video_id', videoIds);
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
 
-				const likedVideoIds = new Set(likes?.map(l => l.video_id) || []);
+			if (!data) {
+				return {
+					success: true,
+					data: {
+						videos: [],
+						hasMore: false,
+						total: 0,
+					},
+				};
+			}
 
-				// Get follows
-				const { data: follows } = await supabase
-					.from('follows')
-					.select('following_id')
-					.eq('follower_id', user_id)
-					.in('following_id', creatorIds);
+			// Obtener interacciones del usuario
+			const videoIds = data.map((v: any) => v.id);
+			let interactions: any = {};
 
-				const followedUserIds = new Set(follows?.map(f => f.following_id) || []);
+			if (videoIds.length > 0) {
+				const { data: interactionData, error: interactionError } =
+					await supabase.rpc('get_video_interactions_safe', {
+						video_ids: videoIds,
+						viewer_id: viewerId,
+					});
 
-				// Get active subscriptions
-				const { data: subscriptions } = await supabase
-					.from('subscriptions')
-					.select('creator_id')
-					.eq('subscriber_id', user_id)
-					.eq('status', 'active')
-					.gte('current_period_end', new Date().toISOString())
-					.in('creator_id', creatorIds);
+				if (!interactionError && interactionData) {
+					interactions = interactionData.reduce((acc: any, item: any) => {
+						acc[item.video_id] = {
+							is_liked: item.is_liked,
+							is_following: item.is_following,
+							is_subscribed: item.is_subscribed,
+							can_access: item.can_access,
+						};
+						return acc;
+					}, {});
+				}
+			}
 
-				const subscribedCreatorIds = new Set(subscriptions?.map(s => s.creator_id) || []);
-
-				// Process videos with interaction states
-				processedVideos = videos.map(video => ({
-					...video,
-					is_liked: likedVideoIds.has(video.id),
-					is_following: followedUserIds.has(video.user_id),
-					is_subscribed: subscribedCreatorIds.has(video.user_id),
-				}));
-			} else {
-				// No user context, just return videos without interaction states
-				processedVideos = videos?.map(video => ({
-					...video,
+			// Procesar videos
+			const processedVideos: Video[] = data.map((video: any) => {
+				const videoInteractions = interactions[video.id] || {
 					is_liked: false,
 					is_following: false,
 					is_subscribed: false,
-				})) || [];
-			}
+					can_access: true, // Por defecto true ya que estos videos ya pasaron el filtro de permisos
+				};
+
+				return {
+					id: video.id,
+					user_id: video.user_id,
+					user: {
+						id: video.user_id,
+						username: video.username,
+						display_name: video.display_name,
+						avatar_url: video.avatar_url,
+						subscription_price: video.subscription_price,
+						subscription_currency: video.subscription_currency,
+					},
+					title: video.title,
+					description: video.description,
+					hashtags: video.hashtags,
+					video_url: video.video_url,
+					thumbnail_url: video.thumbnail_url,
+					duration: video.duration,
+					is_premium: video.is_premium,
+					likes_count: video.likes_count,
+					comments_count: video.comments_count,
+					views_count: video.views_count,
+					created_at: video.created_at,
+					is_liked: videoInteractions.is_liked,
+					is_following: videoInteractions.is_following,
+					is_subscribed: videoInteractions.is_subscribed,
+				};
+			});
+
+			const hasMore = data.length === limit;
 
 			return {
 				success: true,
 				data: {
 					videos: processedVideos,
 					hasMore,
-					total,
+					total: processedVideos.length,
 				},
 			};
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Failed to fetch videos',
+				error:
+					error instanceof Error ? error.message : 'Failed to search videos',
 			};
 		}
 	}
 
 	/**
-	 * Toggle like on a video
+	 * Toggle like on a video (manteniendo la funcionalidad existente)
 	 */
-	static async toggleLike(videoId: string, userId: string): Promise<AuthResponse<{ liked: boolean }>> {
+	static async toggleLike(
+		videoId: string,
+		userId: string,
+	): Promise<AuthResponse<{ liked: boolean }>> {
 		try {
+			// Verificar primero si el usuario puede acceder al video
+			const accessResult = await this.canAccessVideo(videoId, userId);
+			if (!accessResult.success || !accessResult.data?.canAccess) {
+				return {
+					success: false,
+					error: 'You do not have permission to interact with this video',
+				};
+			}
+
 			// Check if already liked
 			const { data: existingLike, error: checkError } = await supabase
 				.from('likes')
@@ -222,12 +423,10 @@ export class VideoService {
 				};
 			} else {
 				// Like
-				const { error: insertError } = await supabase
-					.from('likes')
-					.insert({
-						video_id: videoId,
-						user_id: userId,
-					});
+				const { error: insertError } = await supabase.from('likes').insert({
+					video_id: videoId,
+					user_id: userId,
+				});
 
 				if (insertError) {
 					return {
@@ -250,15 +449,15 @@ export class VideoService {
 	}
 
 	/**
-	 * Report a video
+	 * Report a video (con verificación de permisos)
 	 */
 	static async reportVideo(
 		videoId: string,
 		reporterId: string,
-		reason: string
+		reason: string,
 	): Promise<AuthResponse<void>> {
 		try {
-			// Get video details for the report
+			// Verificar que el video existe y obtener información del creador
 			const { data: video, error: videoError } = await supabase
 				.from('videos')
 				.select('user_id')
@@ -273,15 +472,13 @@ export class VideoService {
 			}
 
 			// Insert report
-			const { error: reportError } = await supabase
-				.from('reports')
-				.insert({
-					reported_video_id: videoId,
-					reporter_id: reporterId,
-					reported_user_id: video.user_id,
-					reason: reason,
-					status: 'pending',
-				});
+			const { error: reportError } = await supabase.from('reports').insert({
+				reported_video_id: videoId,
+				reporter_id: reporterId,
+				reported_user_id: video.user_id,
+				reason: reason,
+				status: 'pending',
+			});
 
 			if (reportError) {
 				return {
@@ -296,114 +493,27 @@ export class VideoService {
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Failed to report video',
+				error:
+					error instanceof Error ? error.message : 'Failed to report video',
 			};
 		}
 	}
 
 	/**
-	 * Increment video view count
+	 * Increment video view count (solo si el usuario tiene acceso)
 	 */
-	static async incrementViewCount(videoId: string): Promise<void> {
+	static async incrementViewCount(
+		videoId: string,
+		viewerId?: string,
+	): Promise<void> {
 		try {
-			await supabase.rpc('increment_video_views', {
+			await supabase.rpc('increment_video_views_safe', {
 				video_id: videoId,
+				viewer_id: viewerId,
 			});
 		} catch (error) {
 			console.error('Failed to increment view count:', error);
 			// Don't throw error as this is not critical
-		}
-	}
-
-	/**
-	 * Search videos
-	 */
-	static async searchVideos(
-		searchQuery: string,
-		viewerId?: string,
-		page = 0,
-		limit = 10
-	): Promise<AuthResponse<{
-		videos: Video[];
-		hasMore: boolean;
-		total: number;
-	}>> {
-		try {
-			const startRange = page * limit;
-			const endRange = startRange + limit - 1;
-
-			const { data: videos, error, count } = await supabase
-				.from('videos')
-				.select(`
-					*,
-					user:profiles!videos_user_id_fkey (
-						id,
-						username,
-						display_name,
-						avatar_url,
-						subscription_price,
-						subscription_currency
-					)
-				`, { count: 'exact' })
-				.or(`title.ilike.%${searchQuery}%, description.ilike.%${searchQuery}%`)
-				.order('views_count', { ascending: false })
-				.range(startRange, endRange);
-
-			if (error) {
-				return {
-					success: false,
-					error: error.message,
-				};
-			}
-
-			const total = count || 0;
-			const hasMore = startRange + limit < total;
-
-			// Process videos with interaction states if viewer is provided
-			let processedVideos: Video[] = videos || [];
-			if (viewerId && videos && videos.length > 0) {
-				// Similar logic as in getVideosFeed for getting user interactions
-				const videoIds = videos.map(v => v.id);
-				const creatorIds = videos.map(v => v.user_id).filter(Boolean);
-
-				const [likesResponse, followsResponse, subscriptionsResponse] = await Promise.all([
-					supabase.from('likes').select('video_id').eq('user_id', viewerId).in('video_id', videoIds),
-					supabase.from('follows').select('following_id').eq('follower_id', viewerId).in('following_id', creatorIds),
-					supabase.from('subscriptions').select('creator_id').eq('subscriber_id', viewerId).eq('status', 'active').gte('current_period_end', new Date().toISOString()).in('creator_id', creatorIds)
-				]);
-
-				const likedVideoIds = new Set(likesResponse.data?.map(l => l.video_id) || []);
-				const followedUserIds = new Set(followsResponse.data?.map(f => f.following_id) || []);
-				const subscribedCreatorIds = new Set(subscriptionsResponse.data?.map(s => s.creator_id) || []);
-
-				processedVideos = videos.map(video => ({
-					...video,
-					is_liked: likedVideoIds.has(video.id),
-					is_following: followedUserIds.has(video.user_id),
-					is_subscribed: subscribedCreatorIds.has(video.user_id),
-				}));
-			} else {
-				processedVideos = videos?.map(video => ({
-					...video,
-					is_liked: false,
-					is_following: false,
-					is_subscribed: false,
-				})) || [];
-			}
-
-			return {
-				success: true,
-				data: {
-					videos: processedVideos,
-					hasMore,
-					total,
-				},
-			};
-		} catch (error) {
-			return {
-				success: false,
-				error: error instanceof Error ? error.message : 'Failed to search videos',
-			};
 		}
 	}
 }
