@@ -594,7 +594,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 const styles = StyleSheet.create({
 	container: {
 		width: SCREEN_WIDTH,
-		height: SCREEN_HEIGHT,
+		height: SCREEN_HEIGHT - 70,
+		marginBottom: 70,
 		backgroundColor: Colors.videoBackground,
 		position: 'relative',
 	},

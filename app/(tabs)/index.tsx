@@ -52,8 +52,6 @@ export default function HomeScreen() {
 		clearError,
 	} = useVideoFeedWithPermissions(currentTab, user!);
 
-	console.log('videos', videos);
-
 	// Handle viewable items change for video playback
 	const onViewableItemsChanged = useCallback(
 		({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -215,7 +213,6 @@ export default function HomeScreen() {
 
 			{/* Header with tabs - positioned absolutely */}
 			<View style={styles.header}>
-				<Text style={styles.appName}>Redbee</Text>
 				<View style={styles.tabContainer}>
 					<TouchableOpacity
 						style={[styles.tab, currentTab === 'forYou' && styles.activeTab]}
@@ -300,7 +297,7 @@ const styles = StyleSheet.create({
 		right: 0,
 		paddingHorizontal: 16,
 		paddingVertical: 12,
-		paddingTop: 50, // Account for status bar
+		marginTop: 50,
 		backgroundColor: 'rgba(0, 0, 0, 0.7)',
 		borderBottomWidth: 1,
 		borderBottomColor: 'rgba(28, 28, 30, 0.5)',
