@@ -78,7 +78,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 		loadMoreComments,
 		toggleReplies,
 		loadMoreReplies,
-	} = useComments(video.id);
+	} = useComments(video.id, currentUser.id);
 
 	// Keyboard handling
 	useEffect(() => {
@@ -254,6 +254,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 				repliesCount={item.replies_count || 0}
 				isLoadingReplies={loadingReplies[item.id] || false}
 				hasMoreReplies={repliesHasMore[item.id] || false}
+				onLike={() => {}}
 			/>
 		),
 		[

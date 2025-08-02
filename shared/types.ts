@@ -82,6 +82,7 @@ export type Like = {
 	created_at: string;
 };
 
+// ✅ TIPO ACTUALIZADO CON LIKES
 export type Comment = {
 	id: string;
 	user_id: string;
@@ -91,8 +92,19 @@ export type Comment = {
 	is_pinned?: boolean;
 	reply_to?: string;
 	replies_count?: number;
+	likes_count: number; // ✅ Nueva propiedad obligatoria
 	created_at: string;
 	updated_at?: string;
+	// Client-side state
+	is_liked?: boolean; // ✅ Nueva propiedad para estado del cliente
+};
+
+// ✅ NUEVO TIPO PARA LIKES DE COMENTARIOS
+export type CommentLike = {
+	id: string;
+	user_id: string;
+	comment_id: string;
+	created_at: string;
 };
 
 export type Report = {
@@ -119,7 +131,8 @@ export type Notification = {
 		| 'subscription'
 		| 'milestone'
 		| 'strike'
-		| 'report_resolved';
+		| 'report_resolved'
+		| 'comment_like'; // ✅ Nuevo tipo de notificación
 	title: string;
 	message: string;
 	data?: {
@@ -238,4 +251,48 @@ export interface AppConfiguration {
 	supported_currencies: string[];
 	max_file_size: number;
 	supported_video_formats: string[];
+}
+
+export interface CommentLikeResult {
+	liked: boolean;
+	likes_count: number;
+}
+
+export interface CommentLikeData {
+	comment_id: string;
+	user_id: string;
+	liked: boolean;
+	likes_count: number;
+	created_at?: string;
+}
+
+export interface CommentInteractionStates {
+	isLiking: boolean;
+	isReporting: boolean;
+	isDeleting: boolean;
+	isEditing: boolean;
+}
+
+export interface CommentEngagementMetrics {
+	total_likes: number;
+	total_replies: number;
+	engagement_rate: number;
+	top_liked_comments: Comment[];
+}
+
+export interface CommentFilters {
+	video_id?: string;
+	user_id?: string;
+	reply_to?: string;
+	has_likes?: boolean;
+	min_likes?: number;
+	sort_by?: 'created_at' | 'likes_count' | 'replies_count';
+	sort_order?: 'asc' | 'desc';
+}
+
+export interface CommentWithLikesResponse {
+	comment: Comment;
+	user_liked: boolean;
+	likes_count: number;
+	recent_likers: Pick<User, 'id' | 'username' | 'avatar_url'>[];
 }

@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
 import {
 	Alert,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
-import { formatTimeAgo } from '@/shared/functions/utils';
+import { formatNumber, formatTimeAgo } from '@/shared/functions/utils';
 import { Comment, User } from '@/shared/types';
 
 interface CommentItemProps {
@@ -24,6 +25,8 @@ interface CommentItemProps {
 	onReply: (commentId: string, username: string) => void;
 	onToggleReplies: (commentId: string) => void;
 	onLoadMoreReplies: (commentId: string) => void;
+	onLike: (commentId: string, isReply?: boolean, parentId?: string) => void;
+	isLiking?: boolean;
 	replies?: Comment[];
 	repliesCount?: number;
 	isLoadingReplies?: boolean;
@@ -40,6 +43,8 @@ export const CommentItem: React.FC<CommentItemProps> = ({
 	onReply,
 	onToggleReplies,
 	onLoadMoreReplies,
+	onLike,
+	isLiking = false,
 	replies = [],
 	repliesCount = 0,
 	isLoadingReplies = false,
@@ -99,6 +104,18 @@ export const CommentItem: React.FC<CommentItemProps> = ({
 		onReply(comment.id, comment.user?.username || '');
 	};
 
+	const handleLike = async () => {
+		if (isLiking) return; // Prevent double-tap
+
+		try {
+			await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+		} catch (error) {
+			// Haptics might fail on some devices, but that's okay
+		}
+
+		onLike(comment.id, isReply, comment.reply_to);
+	};
+
 	return (
 		<View style={[styles.commentItem, isReply && styles.replyItem]}>
 			<Pressable
@@ -155,16 +172,47 @@ export const CommentItem: React.FC<CommentItemProps> = ({
 						<>
 							<Text style={styles.commentText}>{comment.text}</Text>
 
-							{!isReply && (
-								<View style={styles.commentActions}>
+							{/* Comment actions */}
+							<View style={styles.commentActions}>
+								{/* Like button */}
+								<TouchableOpacity
+									style={[
+										styles.actionButton,
+										isLiking && styles.actionButtonLoading,
+									]}
+									onPress={handleLike}
+									disabled={isLiking}
+								>
+									<Feather
+										name="heart"
+										size={14}
+										color={
+											comment.is_liked ? Colors.error : Colors.textTertiary
+										}
+										style={comment.is_liked && styles.likedIcon}
+									/>
+									{comment.likes_count > 0 && (
+										<Text
+											style={[
+												styles.actionText,
+												comment.is_liked && styles.likedText,
+											]}
+										>
+											{formatNumber(comment.likes_count)}
+										</Text>
+									)}
+								</TouchableOpacity>
+
+								{/* Reply button - only for top-level comments */}
+								{!isReply && (
 									<TouchableOpacity
-										style={styles.replyButton}
+										style={styles.actionButton}
 										onPress={handleReply}
 									>
-										<Text style={styles.replyButtonText}>Responder</Text>
+										<Text style={styles.actionText}>Responder</Text>
 									</TouchableOpacity>
-								</View>
-							)}
+								)}
+							</View>
 						</>
 					)}
 				</View>
@@ -244,6 +292,8 @@ export const CommentItem: React.FC<CommentItemProps> = ({
 									onReply={onReply}
 									onToggleReplies={onToggleReplies}
 									onLoadMoreReplies={onLoadMoreReplies}
+									onLike={onLike}
+									isLiking={isLiking}
 								/>
 							))}
 
@@ -327,17 +377,35 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-Regular',
 		color: Colors.text,
 		lineHeight: 20,
+		marginBottom: 8,
 	},
 	commentActions: {
-		marginTop: 8,
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 16,
+		marginTop: 4,
 	},
-	replyButton: {
-		alignSelf: 'flex-start',
+	actionButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 4,
+		paddingVertical: 4,
+		paddingHorizontal: 8,
+		borderRadius: 12,
 	},
-	replyButtonText: {
+	actionButtonLoading: {
+		opacity: 0.6,
+	},
+	actionText: {
 		fontSize: 12,
 		fontFamily: 'Inter-Medium',
 		color: Colors.textTertiary,
+	},
+	likedIcon: {
+		transform: [{ scale: 1.1 }],
+	},
+	likedText: {
+		color: Colors.error,
 	},
 	editContainer: {
 		marginTop: 4,
@@ -388,6 +456,14 @@ const styles = StyleSheet.create({
 		borderColor: Colors.borderSecondary,
 		minWidth: 120,
 		zIndex: 1000,
+		shadowColor: '#000',
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.25,
+		shadowRadius: 3.84,
+		elevation: 5,
 	},
 	commentOption: {
 		flexDirection: 'row',

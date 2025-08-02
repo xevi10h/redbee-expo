@@ -3,10 +3,11 @@ import { AuthResponse, Comment } from '@/shared/types';
 
 export class CommentService {
 	/**
-	 * Get comments for a video with replies support
+	 * Get comments for a video with likes support
 	 */
 	static async getVideoComments(
 		videoId: string,
+		viewerId: string,
 		page = 0,
 		limit = 20,
 	): Promise<
@@ -18,33 +19,19 @@ export class CommentService {
 	> {
 		try {
 			const startRange = page * limit;
-			const endRange = startRange + limit - 1;
 
-			// Get top-level comments (no reply_to)
-			const {
-				data: comments,
-				error,
-				count,
-			} = await supabase
-				.from('comments')
-				.select(
-					`
-					*,
-					user:profiles!comments_user_id_fkey (
-						id,
-						username,
-						display_name,
-						avatar_url
-					)
-				`,
-					{ count: 'exact' },
-				)
-				.eq('video_id', videoId)
-				.is('reply_to', null) // Only top-level comments
-				.order('created_at', { ascending: false })
-				.range(startRange, endRange);
+			// Use the new function that includes likes information
+			const { data: comments, error } = await supabase.rpc(
+				'get_video_comments_paginated_with_likes',
+				{
+					video_id_param: videoId,
+					viewer_id_param: viewerId,
+					page_offset: startRange,
+					page_limit: limit,
+				},
+			);
 
-			console.log('comments', comments);
+			console.log('get_video_comments_paginated_with_likes', comments);
 
 			if (error) {
 				return {
@@ -53,24 +40,34 @@ export class CommentService {
 				};
 			}
 
-			// Get reply counts for each comment
-			if (comments && comments.length > 0) {
-				const commentIds = comments.map((c) => c.id);
-				const { data: replyCounts } = await supabase
-					.from('comments')
-					.select('reply_to')
-					.in('reply_to', commentIds);
+			// Get total count for pagination
+			const { count } = await supabase
+				.from('comments')
+				.select('*', { count: 'exact', head: true })
+				.eq('video_id', videoId)
+				.is('reply_to', null);
 
-				// Add reply counts to comments
-				const replyCountMap = (replyCounts || []).reduce((acc, reply) => {
-					acc[reply.reply_to] = (acc[reply.reply_to] || 0) + 1;
-					return acc;
-				}, {} as Record<string, number>);
-
-				comments.forEach((comment) => {
-					comment.replies_count = replyCountMap[comment.id] || 0;
-				});
-			}
+			// Transform the data to match our Comment type
+			const processedComments: Comment[] = (comments || []).map(
+				(comment: any) => ({
+					id: comment.id,
+					user_id: comment.user_id,
+					video_id: comment.video_id,
+					text: comment.text,
+					reply_to: comment.reply_to,
+					replies_count: comment.replies_count || 0,
+					likes_count: comment.likes_count || 0,
+					created_at: comment.created_at,
+					updated_at: comment.updated_at,
+					is_liked: comment.is_liked || false,
+					user: {
+						id: comment.user_id,
+						username: comment.username,
+						display_name: comment.display_name,
+						avatar_url: comment.avatar_url,
+					},
+				}),
+			);
 
 			const total = count || 0;
 			const hasMore = startRange + limit < total;
@@ -78,7 +75,7 @@ export class CommentService {
 			return {
 				success: true,
 				data: {
-					comments: comments || [],
+					comments: processedComments,
 					hasMore,
 					total,
 				},
@@ -93,10 +90,11 @@ export class CommentService {
 	}
 
 	/**
-	 * Get replies for a specific comment
+	 * Get replies for a specific comment with likes support
 	 */
 	static async getCommentReplies(
 		commentId: string,
+		viewerId: string,
 		page = 0,
 		limit = 10,
 	): Promise<
@@ -108,29 +106,17 @@ export class CommentService {
 	> {
 		try {
 			const startRange = page * limit;
-			const endRange = startRange + limit - 1;
 
-			const {
-				data: replies,
-				error,
-				count,
-			} = await supabase
-				.from('comments')
-				.select(
-					`
-					*,
-					user:profiles!comments_user_id_fkey (
-						id,
-						username,
-						display_name,
-						avatar_url
-					)
-				`,
-					{ count: 'exact' },
-				)
-				.eq('reply_to', commentId)
-				.order('created_at', { ascending: true }) // Replies in chronological order
-				.range(startRange, endRange);
+			// Use the new function that includes likes information
+			const { data: replies, error } = await supabase.rpc(
+				'get_comment_replies_with_likes',
+				{
+					comment_id_param: commentId,
+					viewer_id_param: viewerId,
+					page_offset: startRange,
+					page_limit: limit,
+				},
+			);
 
 			if (error) {
 				return {
@@ -139,13 +125,39 @@ export class CommentService {
 				};
 			}
 
+			// Get total count for pagination
+			const { count } = await supabase
+				.from('comments')
+				.select('*', { count: 'exact', head: true })
+				.eq('reply_to', commentId);
+
+			// Transform the data to match our Comment type
+			const processedReplies: Comment[] = (replies || []).map((reply: any) => ({
+				id: reply.id,
+				user_id: reply.user_id,
+				video_id: reply.video_id,
+				text: reply.text,
+				reply_to: reply.reply_to,
+				replies_count: 0, // Replies don't have sub-replies
+				likes_count: reply.likes_count || 0,
+				created_at: reply.created_at,
+				updated_at: reply.updated_at,
+				is_liked: reply.is_liked || false,
+				user: {
+					id: reply.user_id,
+					username: reply.username,
+					display_name: reply.display_name,
+					avatar_url: reply.avatar_url,
+				},
+			}));
+
 			const total = count || 0;
 			const hasMore = startRange + limit < total;
 
 			return {
 				success: true,
 				data: {
-					replies: replies || [],
+					replies: processedReplies,
 					hasMore,
 					total,
 				},
@@ -204,12 +216,17 @@ export class CommentService {
 				};
 			}
 
-			// Initialize replies_count for new comments
-			comment.replies_count = 0;
+			// Initialize likes_count and is_liked for new comments
+			const processedComment: Comment = {
+				...comment,
+				likes_count: 0,
+				is_liked: false,
+				replies_count: 0,
+			};
 
 			return {
 				success: true,
-				data: comment,
+				data: processedComment,
 			};
 		} catch (error) {
 			return {
@@ -317,7 +334,7 @@ export class CommentService {
 				await supabase.from('comments').delete().eq('reply_to', commentId);
 			}
 
-			// Delete the comment
+			// Delete the comment (this will also cascade delete comment_likes)
 			const { error } = await supabase
 				.from('comments')
 				.delete()
@@ -338,6 +355,53 @@ export class CommentService {
 				success: false,
 				error:
 					error instanceof Error ? error.message : 'Failed to delete comment',
+			};
+		}
+	}
+
+	/**
+	 * Toggle like on a comment
+	 */
+	static async toggleCommentLike(
+		commentId: string,
+		userId: string,
+	): Promise<AuthResponse<{ liked: boolean; likes_count: number }>> {
+		try {
+			const { data, error } = await supabase.rpc('toggle_comment_like', {
+				comment_id_param: commentId,
+				user_id_param: userId,
+			});
+
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			if (!data || data.length === 0) {
+				return {
+					success: false,
+					error: 'Failed to toggle comment like',
+				};
+			}
+
+			const result = data[0];
+
+			return {
+				success: true,
+				data: {
+					liked: result.liked,
+					likes_count: result.likes_count,
+				},
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error:
+					error instanceof Error
+						? error.message
+						: 'Failed to toggle comment like',
 			};
 		}
 	}
@@ -367,7 +431,7 @@ export class CommentService {
 
 			// Create report
 			const { error: reportError } = await supabase.from('reports').insert({
-				comment_id: commentId,
+				reported_comment_id: commentId,
 				video_id: comment.video_id,
 				reporter_id: reporterId,
 				reported_user_id: comment.user_id,

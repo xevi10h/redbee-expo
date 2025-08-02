@@ -3,7 +3,7 @@ import { Comment } from '@/shared/types';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
-export const useComments = (videoId: string) => {
+export const useComments = (videoId: string, viewerId: string) => {
 	const [comments, setComments] = useState<Comment[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -24,9 +24,19 @@ export const useComments = (videoId: string) => {
 		{},
 	);
 
+	// Loading states for comment likes
+	const [likingComments, setLikingComments] = useState<Record<string, boolean>>(
+		{},
+	);
+
 	// Load initial comments
 	const loadComments = useCallback(
 		async (refresh = false) => {
+			if (!viewerId) {
+				setError('Viewer ID is required');
+				return;
+			}
+
 			if (refresh) {
 				setIsLoading(true);
 				setPage(0);
@@ -39,6 +49,7 @@ export const useComments = (videoId: string) => {
 			try {
 				const result = await CommentService.getVideoComments(
 					videoId,
+					viewerId,
 					refresh ? 0 : page,
 					20,
 				);
@@ -68,12 +79,14 @@ export const useComments = (videoId: string) => {
 				setIsLoadingMore(false);
 			}
 		},
-		[videoId, page, hasMore, isLoadingMore],
+		[videoId, viewerId, page, hasMore, isLoadingMore],
 	);
 
 	// Load replies for a specific comment
 	const loadReplies = useCallback(
 		async (commentId: string, refresh = false): Promise<void> => {
+			if (!viewerId) return;
+
 			const currentPage = refresh
 				? 0
 				: Math.floor((loadedReplies[commentId]?.length || 0) / 10);
@@ -83,6 +96,7 @@ export const useComments = (videoId: string) => {
 			try {
 				const result = await CommentService.getCommentReplies(
 					commentId,
+					viewerId,
 					currentPage,
 					10,
 				);
@@ -110,7 +124,7 @@ export const useComments = (videoId: string) => {
 				setLoadingReplies((prev) => ({ ...prev, [commentId]: false }));
 			}
 		},
-		[loadedReplies],
+		[loadedReplies, viewerId],
 	);
 
 	// Submit new comment or reply
@@ -174,6 +188,141 @@ export const useComments = (videoId: string) => {
 			}
 		},
 		[videoId],
+	);
+
+	// Toggle like on comment
+	const toggleCommentLike = useCallback(
+		async (
+			commentId: string,
+			isReply = false,
+			parentId?: string,
+		): Promise<boolean> => {
+			if (!viewerId) return false;
+
+			// Set loading state
+			setLikingComments((prev) => ({ ...prev, [commentId]: true }));
+
+			// Find current comment
+			let currentComment: Comment | undefined;
+			if (isReply && parentId) {
+				currentComment = loadedReplies[parentId]?.find(
+					(r) => r.id === commentId,
+				);
+			} else {
+				currentComment = comments.find((c) => c.id === commentId);
+			}
+
+			if (!currentComment) {
+				setLikingComments((prev) => ({ ...prev, [commentId]: false }));
+				return false;
+			}
+
+			// Optimistic update
+			const optimisticUpdate = (comment: Comment) => ({
+				...comment,
+				is_liked: !comment.is_liked,
+				likes_count: comment.is_liked
+					? comment.likes_count - 1
+					: comment.likes_count + 1,
+			});
+
+			if (isReply && parentId) {
+				setLoadedReplies((prev) => ({
+					...prev,
+					[parentId]:
+						prev[parentId]?.map((reply) =>
+							reply.id === commentId ? optimisticUpdate(reply) : reply,
+						) || [],
+				}));
+			} else {
+				setComments((prev) =>
+					prev.map((comment) =>
+						comment.id === commentId ? optimisticUpdate(comment) : comment,
+					),
+				);
+			}
+
+			try {
+				const result = await CommentService.toggleCommentLike(
+					commentId,
+					viewerId,
+				);
+
+				if (result.success && result.data) {
+					// Update with actual result
+					const updateWithReal = (comment: Comment) => ({
+						...comment,
+						is_liked: result.data!.liked,
+						likes_count: result.data!.likes_count,
+					});
+
+					if (isReply && parentId) {
+						setLoadedReplies((prev) => ({
+							...prev,
+							[parentId]:
+								prev[parentId]?.map((reply) =>
+									reply.id === commentId ? updateWithReal(reply) : reply,
+								) || [],
+						}));
+					} else {
+						setComments((prev) =>
+							prev.map((comment) =>
+								comment.id === commentId ? updateWithReal(comment) : comment,
+							),
+						);
+					}
+
+					return result.data.liked;
+				} else {
+					// Revert optimistic update on error
+					if (isReply && parentId) {
+						setLoadedReplies((prev) => ({
+							...prev,
+							[parentId]:
+								prev[parentId]?.map((reply) =>
+									reply.id === commentId ? currentComment! : reply,
+								) || [],
+						}));
+					} else {
+						setComments((prev) =>
+							prev.map((comment) =>
+								comment.id === commentId ? currentComment! : comment,
+							),
+						);
+					}
+
+					const errorMessage = result.error || 'Failed to like comment';
+					Alert.alert('Error', errorMessage);
+					return currentComment.is_liked || false;
+				}
+			} catch (error) {
+				// Revert optimistic update on error
+				if (isReply && parentId) {
+					setLoadedReplies((prev) => ({
+						...prev,
+						[parentId]:
+							prev[parentId]?.map((reply) =>
+								reply.id === commentId ? currentComment! : reply,
+							) || [],
+					}));
+				} else {
+					setComments((prev) =>
+						prev.map((comment) =>
+							comment.id === commentId ? currentComment! : comment,
+						),
+					);
+				}
+
+				const errorMessage =
+					error instanceof Error ? error.message : 'Failed to like comment';
+				console.error('Error liking comment:', error);
+				Alert.alert('Error', errorMessage);
+				return currentComment.is_liked || false;
+			} finally {
+				setLikingComments((prev) => ({ ...prev, [commentId]: false }));
+			}
+		},
+		[viewerId, comments, loadedReplies],
 	);
 
 	// Edit comment
@@ -333,10 +482,7 @@ export const useComments = (videoId: string) => {
 	const reportComment = useCallback(
 		async (commentId: string, reason: string): Promise<boolean> => {
 			try {
-				const { useAuthStore } = await import('@/stores/authStore');
-				const { user } = useAuthStore.getState();
-
-				if (!user) {
+				if (!viewerId) {
 					Alert.alert(
 						'Error',
 						'Debes iniciar sesión para reportar comentarios',
@@ -346,7 +492,7 @@ export const useComments = (videoId: string) => {
 
 				const result = await CommentService.reportComment(
 					commentId,
-					user.id,
+					viewerId,
 					reason,
 				);
 
@@ -369,7 +515,7 @@ export const useComments = (videoId: string) => {
 				return false;
 			}
 		},
-		[],
+		[viewerId],
 	);
 
 	// Toggle replies visibility
@@ -425,9 +571,9 @@ export const useComments = (videoId: string) => {
 		setError(null);
 	}, []);
 
-	// Load comments when videoId changes
+	// Load comments when videoId or viewerId changes
 	useEffect(() => {
-		if (videoId) {
+		if (videoId && viewerId) {
 			setComments([]);
 			setLoadedReplies({});
 			setPage(0);
@@ -435,7 +581,7 @@ export const useComments = (videoId: string) => {
 			setError(null);
 			loadComments(true);
 		}
-	}, [videoId]);
+	}, [videoId, viewerId]);
 
 	// Add comment manually (for external updates)
 	const addComment = useCallback((comment: Comment) => {
@@ -469,6 +615,14 @@ export const useComments = (videoId: string) => {
 		[comments],
 	);
 
+	// Check if comment is being liked
+	const isCommentBeingLiked = useCallback(
+		(commentId: string): boolean => {
+			return likingComments[commentId] || false;
+		},
+		[likingComments],
+	);
+
 	return {
 		// State
 		comments,
@@ -495,6 +649,10 @@ export const useComments = (videoId: string) => {
 		refreshComments,
 		retryLoad,
 		clearError,
+
+		// Like functionality
+		toggleCommentLike,
+		isCommentBeingLiked,
 
 		// Replies actions
 		loadReplies,
