@@ -89,7 +89,7 @@ export type Comment = {
 	user?: Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url'>;
 	text: string;
 	is_pinned?: boolean;
-	reply_to?: string | null;
+	reply_to?: string;
 	replies_count?: number;
 	created_at: string;
 	updated_at?: string;

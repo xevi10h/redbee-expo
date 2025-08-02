@@ -20,7 +20,7 @@ import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatNumber, formatTimeAgo } from '@/shared/functions/utils';
 import { Comment, User, Video as VideoType } from '@/shared/types';
-import CommentsModal from './CommentsModal';
+import { CommentsModal } from './comments/CommentsModal';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
