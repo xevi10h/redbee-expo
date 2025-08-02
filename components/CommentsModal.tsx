@@ -170,14 +170,14 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 				toValue: 0,
 				useNativeDriver: true,
 				tension: 100,
-				friction: 8,
+				friction: 10,
 			}).start();
 		} else {
 			Animated.spring(slideAnim, {
 				toValue: SCREEN_HEIGHT,
 				useNativeDriver: true,
 				tension: 100,
-				friction: 8,
+				friction: 10,
 			}).start();
 		}
 	}, [isVisible, slideAnim]);
