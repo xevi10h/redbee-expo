@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+	Alert,
 	Animated,
 	Dimensions,
 	FlatList,
@@ -35,19 +36,41 @@ interface CommentsModalProps {
 interface CommentItemProps {
 	comment: Comment;
 	currentUser: User;
+	isReply?: boolean;
 	onReport: (commentId: string) => void;
-	onDelete: (commentId: string) => void;
+	onDelete: (commentId: string, isReply?: boolean, parentId?: string) => void;
+	onEdit: (commentId: string, newText: string) => void;
+	onReply: (commentId: string, username: string) => void;
+	onToggleReplies: (commentId: string) => void;
+	onLoadMoreReplies: (commentId: string) => void;
+	replies?: Comment[];
+	repliesCount?: number;
+	isLoadingReplies?: boolean;
+	hasMoreReplies?: boolean;
 }
 
 const CommentItem: React.FC<CommentItemProps> = ({
 	comment,
 	currentUser,
+	isReply = false,
 	onReport,
 	onDelete,
+	onEdit,
+	onReply,
+	onToggleReplies,
+	onLoadMoreReplies,
+	replies = [],
+	repliesCount = 0,
+	isLoadingReplies = false,
+	hasMoreReplies = false,
 }) => {
 	const [showOptions, setShowOptions] = useState(false);
+	const [isEditing, setIsEditing] = useState(false);
+	const [editText, setEditText] = useState(comment.text);
 
 	const isOwn = comment.user?.id === currentUser.id;
+	const hasReplies = !isReply && (repliesCount > 0 || replies.length > 0);
+	const showingReplies = replies.length > 0;
 
 	const handleLongPress = () => {
 		setShowOptions(true);
@@ -55,44 +78,138 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
 	const handleReport = () => {
 		setShowOptions(false);
-		onReport(comment.id);
+		Alert.alert(
+			'Reportar comentario',
+			'¿Por qué estás reportando este comentario?',
+			[
+				{ text: 'Cancelar', style: 'cancel' },
+				{ text: 'Contenido inapropiado', onPress: () => onReport(comment.id) },
+				{ text: 'Spam', onPress: () => onReport(comment.id) },
+				{ text: 'Acoso', onPress: () => onReport(comment.id) },
+				{ text: 'Otro motivo', onPress: () => onReport(comment.id) },
+			],
+			{ cancelable: true },
+		);
 	};
 
 	const handleDelete = () => {
 		setShowOptions(false);
-		onDelete(comment.id);
+		onDelete(comment.id, isReply, comment.reply_to);
+	};
+
+	const handleEdit = () => {
+		setShowOptions(false);
+		setIsEditing(true);
+	};
+
+	const handleSaveEdit = () => {
+		if (editText.trim() && editText.trim() !== comment.text) {
+			onEdit(comment.id, editText.trim());
+		}
+		setIsEditing(false);
+	};
+
+	const handleCancelEdit = () => {
+		setEditText(comment.text);
+		setIsEditing(false);
+	};
+
+	const handleReply = () => {
+		onReply(comment.id, comment.user?.username || '');
 	};
 
 	return (
-		<Pressable style={styles.commentItem} onLongPress={handleLongPress}>
-			<View style={styles.commentAvatar}>
-				<Feather name="user" size={20} color={Colors.text} />
-			</View>
-
-			<View style={styles.commentContent}>
-				<View style={styles.commentHeader}>
-					<Text style={styles.commentUsername}>
-						{comment.user?.display_name || comment.user?.username}
-					</Text>
-					<Text style={styles.commentTime}>
-						{formatTimeAgo(comment.created_at)}
-					</Text>
+		<View style={[styles.commentItem, isReply && styles.replyItem]}>
+			<Pressable
+				style={styles.commentContent}
+				onLongPress={handleLongPress}
+				disabled={isEditing}
+			>
+				<View style={styles.commentAvatar}>
+					<Feather name="user" size={20} color={Colors.text} />
 				</View>
-				<Text style={styles.commentText}>{comment.text}</Text>
-			</View>
 
-			{showOptions && (
+				<View style={styles.commentBody}>
+					<View style={styles.commentHeader}>
+						<Text style={styles.commentUsername}>
+							{comment.user?.display_name || comment.user?.username}
+						</Text>
+						<Text style={styles.commentTime}>
+							{formatTimeAgo(comment.created_at)}
+						</Text>
+						{comment.updated_at &&
+							comment.updated_at !== comment.created_at && (
+								<Text style={styles.editedIndicator}>• editado</Text>
+							)}
+					</View>
+
+					{isEditing ? (
+						<View style={styles.editContainer}>
+							<TextInput
+								style={styles.editInput}
+								value={editText}
+								onChangeText={setEditText}
+								multiline
+								autoFocus
+								maxLength={500}
+								placeholder="Editar comentario..."
+								placeholderTextColor={Colors.textTertiary}
+							/>
+							<View style={styles.editActions}>
+								<TouchableOpacity
+									style={styles.editActionButton}
+									onPress={handleCancelEdit}
+								>
+									<Text style={styles.editCancelText}>Cancelar</Text>
+								</TouchableOpacity>
+								<TouchableOpacity
+									style={[styles.editActionButton, styles.editSaveButton]}
+									onPress={handleSaveEdit}
+								>
+									<Text style={styles.editSaveText}>Guardar</Text>
+								</TouchableOpacity>
+							</View>
+						</View>
+					) : (
+						<>
+							<Text style={styles.commentText}>{comment.text}</Text>
+
+							{!isReply && (
+								<View style={styles.commentActions}>
+									<TouchableOpacity
+										style={styles.replyButton}
+										onPress={handleReply}
+									>
+										<Text style={styles.replyButtonText}>Responder</Text>
+									</TouchableOpacity>
+								</View>
+							)}
+						</>
+					)}
+				</View>
+			</Pressable>
+
+			{showOptions && !isEditing && (
 				<View style={styles.commentOptions}>
 					{isOwn ? (
-						<TouchableOpacity
-							style={styles.commentOption}
-							onPress={handleDelete}
-						>
-							<Feather name="trash-2" size={16} color={Colors.error} />
-							<Text style={[styles.commentOptionText, styles.deleteText]}>
-								Eliminar
-							</Text>
-						</TouchableOpacity>
+						<>
+							<TouchableOpacity
+								style={styles.commentOption}
+								onPress={handleEdit}
+							>
+								<Feather name="edit-2" size={16} color={Colors.text} />
+								<Text style={styles.commentOptionText}>Editar</Text>
+							</TouchableOpacity>
+							<TouchableOpacity
+								style={styles.commentOption}
+								onPress={handleDelete}
+							>
+								<Feather name="trash-2" size={16} color={Colors.error} />
+								<Text style={[styles.commentOptionText, styles.deleteText]}>
+									Eliminar
+								</Text>
+							</TouchableOpacity>
+						</>
 					) : (
 						<TouchableOpacity
 							style={styles.commentOption}
@@ -110,7 +227,66 @@ const CommentItem: React.FC<CommentItemProps> = ({
 					</TouchableOpacity>
 				</View>
 			)}
-		</Pressable>
+
+			{/* Replies Section */}
+			{hasReplies && !isEditing && (
+				<View style={styles.repliesSection}>
+					<TouchableOpacity
+						style={styles.toggleRepliesButton}
+						onPress={() => onToggleReplies(comment.id)}
+					>
+						<Feather
+							name={showingReplies ? 'chevron-up' : 'chevron-down'}
+							size={16}
+							color={Colors.primary}
+						/>
+						<Text style={styles.toggleRepliesText}>
+							{showingReplies
+								? 'Ocultar respuestas'
+								: `Ver ${repliesCount} respuesta${
+										repliesCount !== 1 ? 's' : ''
+								  }`}
+						</Text>
+					</TouchableOpacity>
+
+					{showingReplies && (
+						<View style={styles.repliesContainer}>
+							{replies.map((reply) => (
+								<CommentItem
+									key={reply.id}
+									comment={reply}
+									currentUser={currentUser}
+									isReply={true}
+									onReport={onReport}
+									onDelete={onDelete}
+									onEdit={onEdit}
+									onReply={onReply}
+									onToggleReplies={onToggleReplies}
+									onLoadMoreReplies={onLoadMoreReplies}
+								/>
+							))}
+
+							{isLoadingReplies && (
+								<View style={styles.loadingReplies}>
+									<Text style={styles.loadingText}>Cargando respuestas...</Text>
+								</View>
+							)}
+
+							{hasMoreReplies && !isLoadingReplies && (
+								<TouchableOpacity
+									style={styles.loadMoreRepliesButton}
+									onPress={() => onLoadMoreReplies(comment.id)}
+								>
+									<Text style={styles.loadMoreRepliesText}>
+										Cargar más respuestas
+									</Text>
+								</TouchableOpacity>
+							)}
+						</View>
+					)}
+				</View>
+			)}
+		</View>
 	);
 };
 
@@ -126,6 +302,10 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 	const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 	const [commentText, setCommentText] = useState('');
 	const [keyboardHeight, setKeyboardHeight] = useState(0);
+	const [replyingTo, setReplyingTo] = useState<{
+		id: string;
+		username: string;
+	} | null>(null);
 	const flatListRef = useRef<FlatList>(null);
 
 	const {
@@ -134,11 +314,17 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 		isLoadingMore,
 		hasMore,
 		error,
+		loadedReplies,
+		loadingReplies,
+		repliesHasMore,
 		submitComment,
-		loadMoreComments,
+		editComment,
 		deleteComment,
 		reportComment,
 		retryLoad,
+		loadMoreComments,
+		toggleReplies,
+		loadMoreReplies,
 	} = useComments(video.id);
 
 	// Handle keyboard events
@@ -186,41 +372,51 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 		if (!commentText.trim()) return;
 
 		const trimmedText = commentText.trim();
+		const replyToId = replyingTo?.id;
+
 		setCommentText('');
+		setReplyingTo(null);
 
 		try {
-			const newComment = await submitComment(trimmedText);
-			if (newComment) {
+			const newComment = await submitComment(trimmedText, replyToId);
+			if (newComment && !replyToId) {
 				onCommentAdded(newComment);
-				// Scroll to top to show new comment
+				// Scroll to top only for new top-level comments
 				flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
 			}
 		} catch (error) {
 			console.error('Failed to submit comment:', error);
 		}
-	}, [commentText, submitComment, onCommentAdded]);
+	}, [commentText, replyingTo, submitComment, onCommentAdded]);
+
+	const handleEditComment = useCallback(
+		async (commentId: string, newText: string) => {
+			await editComment(commentId, newText);
+		},
+		[editComment],
+	);
 
 	const handleDeleteComment = useCallback(
-		async (commentId: string) => {
-			try {
-				await deleteComment(commentId);
-			} catch (error) {
-				console.error('Failed to delete comment:', error);
-			}
+		async (commentId: string, isReply = false, parentId?: string) => {
+			await deleteComment(commentId, isReply, parentId);
 		},
 		[deleteComment],
 	);
 
 	const handleReportComment = useCallback(
 		async (commentId: string) => {
-			try {
-				await reportComment(commentId, 'inappropriate');
-			} catch (error) {
-				console.error('Failed to report comment:', error);
-			}
+			await reportComment(commentId, 'inappropriate');
 		},
 		[reportComment],
 	);
+
+	const handleReply = useCallback((commentId: string, username: string) => {
+		setReplyingTo({ id: commentId, username });
+	}, []);
+
+	const handleCancelReply = useCallback(() => {
+		setReplyingTo(null);
+	}, []);
 
 	const renderCommentItem = useCallback(
 		({ item }: { item: Comment }) => (
@@ -229,9 +425,28 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 				currentUser={currentUser}
 				onReport={handleReportComment}
 				onDelete={handleDeleteComment}
+				onEdit={handleEditComment}
+				onReply={handleReply}
+				onToggleReplies={toggleReplies}
+				onLoadMoreReplies={loadMoreReplies}
+				replies={loadedReplies[item.id] || []}
+				repliesCount={item.replies_count || 0}
+				isLoadingReplies={loadingReplies[item.id] || false}
+				hasMoreReplies={repliesHasMore[item.id] || false}
 			/>
 		),
-		[currentUser, handleReportComment, handleDeleteComment],
+		[
+			currentUser,
+			handleReportComment,
+			handleDeleteComment,
+			handleEditComment,
+			handleReply,
+			toggleReplies,
+			loadMoreReplies,
+			loadedReplies,
+			loadingReplies,
+			repliesHasMore,
+		],
 	);
 
 	const renderEmptyState = () => (
@@ -316,11 +531,13 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 								contentContainerStyle={
 									comments.length === 0 && !isLoading
 										? styles.emptyListContainer
-										: undefined
+										: styles.listContainer
 								}
 								initialNumToRender={10}
 								maxToRenderPerBatch={10}
 								windowSize={10}
+								removeClippedSubviews={true}
+								keyboardShouldPersistTaps="handled"
 							/>
 						)}
 
@@ -333,13 +550,28 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 
 					{/* Comment Input */}
 					<View style={styles.commentInputContainer}>
+						{replyingTo && (
+							<View style={styles.replyingToContainer}>
+								<Text style={styles.replyingToText}>
+									Respondiendo a @{replyingTo.username}
+								</Text>
+								<TouchableOpacity onPress={handleCancelReply}>
+									<Feather name="x" size={16} color={Colors.textTertiary} />
+								</TouchableOpacity>
+							</View>
+						)}
+
 						<View style={styles.inputWrapper}>
 							<View style={styles.currentUserAvatar}>
 								<Feather name="user" size={20} color={Colors.text} />
 							</View>
 							<TextInput
 								style={styles.commentInput}
-								placeholder={t('video.addComment')}
+								placeholder={
+									replyingTo
+										? `Responder a @${replyingTo.username}...`
+										: t('video.addComment')
+								}
 								placeholderTextColor={Colors.textTertiary}
 								value={commentText}
 								onChangeText={setCommentText}
@@ -347,6 +579,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 								maxLength={500}
 								returnKeyType="send"
 								onSubmitEditing={handleSubmitComment}
+								blurOnSubmit={false}
 							/>
 							<TouchableOpacity
 								style={[
@@ -434,17 +667,28 @@ const styles = StyleSheet.create({
 	commentsList: {
 		flex: 1,
 	},
+	listContainer: {
+		paddingBottom: 16,
+	},
 	emptyListContainer: {
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
 	},
 	commentItem: {
-		flexDirection: 'row',
-		paddingHorizontal: 16,
-		paddingVertical: 12,
 		borderBottomWidth: 1,
 		borderBottomColor: Colors.borderSecondary,
+		paddingBottom: 12,
+	},
+	replyItem: {
+		marginLeft: 32,
+		borderBottomWidth: 0,
+		paddingBottom: 8,
+	},
+	commentContent: {
+		flexDirection: 'row',
+		paddingHorizontal: 16,
+		paddingTop: 12,
 	},
 	commentAvatar: {
 		width: 36,
@@ -455,7 +699,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		marginRight: 12,
 	},
-	commentContent: {
+	commentBody: {
 		flex: 1,
 	},
 	commentHeader: {
@@ -475,11 +719,66 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-Regular',
 		color: Colors.textTertiary,
 	},
+	editedIndicator: {
+		fontSize: 12,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textTertiary,
+		marginLeft: 4,
+	},
 	commentText: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
 		color: Colors.text,
 		lineHeight: 20,
+	},
+	commentActions: {
+		marginTop: 8,
+	},
+	replyButton: {
+		alignSelf: 'flex-start',
+	},
+	replyButtonText: {
+		fontSize: 12,
+		fontFamily: 'Inter-Medium',
+		color: Colors.textTertiary,
+	},
+	editContainer: {
+		marginTop: 4,
+	},
+	editInput: {
+		fontSize: 14,
+		fontFamily: 'Inter-Regular',
+		color: Colors.text,
+		backgroundColor: Colors.backgroundSecondary,
+		borderRadius: 8,
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		maxHeight: 100,
+		textAlignVertical: 'top',
+	},
+	editActions: {
+		flexDirection: 'row',
+		justifyContent: 'flex-end',
+		marginTop: 8,
+		gap: 12,
+	},
+	editActionButton: {
+		paddingHorizontal: 12,
+		paddingVertical: 6,
+		borderRadius: 6,
+	},
+	editSaveButton: {
+		backgroundColor: Colors.primary,
+	},
+	editCancelText: {
+		fontSize: 12,
+		fontFamily: 'Inter-Medium',
+		color: Colors.textTertiary,
+	},
+	editSaveText: {
+		fontSize: 12,
+		fontFamily: 'Inter-Medium',
+		color: Colors.text,
 	},
 	commentOptions: {
 		position: 'absolute',
@@ -491,6 +790,7 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		borderColor: Colors.borderSecondary,
 		minWidth: 120,
+		zIndex: 1000,
 	},
 	commentOption: {
 		flexDirection: 'row',
@@ -506,6 +806,38 @@ const styles = StyleSheet.create({
 	},
 	deleteText: {
 		color: Colors.error,
+	},
+	repliesSection: {
+		marginTop: 8,
+		marginLeft: 16,
+	},
+	toggleRepliesButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+		gap: 8,
+	},
+	toggleRepliesText: {
+		fontSize: 12,
+		fontFamily: 'Inter-Medium',
+		color: Colors.primary,
+	},
+	repliesContainer: {
+		marginTop: 4,
+	},
+	loadingReplies: {
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+	},
+	loadMoreRepliesButton: {
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+	},
+	loadMoreRepliesText: {
+		fontSize: 12,
+		fontFamily: 'Inter-Medium',
+		color: Colors.primary,
 	},
 	emptyState: {
 		flex: 1,
@@ -578,6 +910,21 @@ const styles = StyleSheet.create({
 		borderTopWidth: 1,
 		borderTopColor: Colors.borderSecondary,
 		backgroundColor: Colors.modalBackground,
+	},
+	replyingToContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		backgroundColor: Colors.backgroundSecondary,
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderRadius: 8,
+		marginBottom: 8,
+	},
+	replyingToText: {
+		fontSize: 12,
+		fontFamily: 'Inter-Medium',
+		color: Colors.primary,
 	},
 	inputWrapper: {
 		flexDirection: 'row',

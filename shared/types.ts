@@ -34,7 +34,10 @@ export type User = {
 export type Video = {
 	id: string;
 	user_id: string;
-	user?: Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url'| 'subscription_price'>;
+	user?: Pick<
+		User,
+		'id' | 'username' | 'display_name' | 'avatar_url' | 'subscription_price'
+	>;
 	title?: string;
 	description?: string;
 	hashtags?: string[];
@@ -50,7 +53,6 @@ export type Video = {
 	is_liked?: boolean;
 	is_following?: boolean;
 	is_subscribed?: boolean;
-	
 };
 
 export type Follow = {
@@ -87,7 +89,7 @@ export type Comment = {
 	user?: Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url'>;
 	text: string;
 	is_pinned?: boolean;
-	reply_to?: string;
+	reply_to?: string | null;
 	replies_count?: number;
 	created_at: string;
 	updated_at?: string;
@@ -110,7 +112,14 @@ export type Report = {
 export type Notification = {
 	id: string;
 	user_id: string;
-	type: 'like' | 'comment' | 'follow' | 'subscription' | 'milestone' | 'strike' | 'report_resolved';
+	type:
+		| 'like'
+		| 'comment'
+		| 'follow'
+		| 'subscription'
+		| 'milestone'
+		| 'strike'
+		| 'report_resolved';
 	title: string;
 	message: string;
 	data?: {
@@ -219,14 +228,14 @@ export interface PaginatedResponse<T> {
 	has_more: boolean;
 }
 
-export type FeedType =  'forYou' | 'following';
+export type FeedType = 'forYou' | 'following';
 
 export interface AppConfiguration {
-    default_commission_rate: number;
-    min_video_duration: number;
-    max_video_duration: number;
-    preview_duration: number;
-    supported_currencies: string[];
-    max_file_size: number;
-    supported_video_formats: string[];
+	default_commission_rate: number;
+	min_video_duration: number;
+	max_video_duration: number;
+	preview_duration: number;
+	supported_currencies: string[];
+	max_file_size: number;
+	supported_video_formats: string[];
 }

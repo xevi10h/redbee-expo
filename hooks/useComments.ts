@@ -13,6 +13,17 @@ export const useComments = (videoId: string) => {
 	const [error, setError] = useState<string | null>(null);
 	const [total, setTotal] = useState(0);
 
+	// State for replies
+	const [loadedReplies, setLoadedReplies] = useState<Record<string, Comment[]>>(
+		{},
+	);
+	const [loadingReplies, setLoadingReplies] = useState<Record<string, boolean>>(
+		{},
+	);
+	const [repliesHasMore, setRepliesHasMore] = useState<Record<string, boolean>>(
+		{},
+	);
+
 	// Load initial comments
 	const loadComments = useCallback(
 		async (refresh = false) => {
@@ -36,6 +47,7 @@ export const useComments = (videoId: string) => {
 					const dataPayload = result.data;
 					if (refresh) {
 						setComments(result.data.comments);
+						setLoadedReplies({}); // Clear loaded replies when refreshing
 					} else {
 						setComments((prev) => [...prev, ...dataPayload.comments]);
 					}
@@ -59,9 +71,51 @@ export const useComments = (videoId: string) => {
 		[videoId, page, hasMore, isLoadingMore],
 	);
 
-	// Submit new comment
+	// Load replies for a specific comment
+	const loadReplies = useCallback(
+		async (commentId: string, refresh = false): Promise<void> => {
+			const currentPage = refresh
+				? 0
+				: Math.floor((loadedReplies[commentId]?.length || 0) / 10);
+
+			setLoadingReplies((prev) => ({ ...prev, [commentId]: true }));
+
+			try {
+				const result = await CommentService.getCommentReplies(
+					commentId,
+					currentPage,
+					10,
+				);
+
+				if (result.success && result.data) {
+					const newReplies = result.data.replies;
+
+					setLoadedReplies((prev) => ({
+						...prev,
+						[commentId]: refresh
+							? newReplies
+							: [...(prev[commentId] || []), ...newReplies],
+					}));
+
+					setRepliesHasMore((prev) => ({
+						...prev,
+						[commentId]: result.data!.hasMore,
+					}));
+				} else {
+					console.error('Failed to load replies:', result.error);
+				}
+			} catch (error) {
+				console.error('Error loading replies:', error);
+			} finally {
+				setLoadingReplies((prev) => ({ ...prev, [commentId]: false }));
+			}
+		},
+		[loadedReplies],
+	);
+
+	// Submit new comment or reply
 	const submitComment = useCallback(
-		async (text: string): Promise<Comment | null> => {
+		async (text: string, replyTo?: string): Promise<Comment | null> => {
 			if (!text.trim()) return null;
 
 			setIsSubmitting(true);
@@ -71,13 +125,37 @@ export const useComments = (videoId: string) => {
 				const result = await CommentService.createComment({
 					video_id: videoId,
 					text: text.trim(),
+					reply_to: replyTo,
 				});
 
 				if (result.success && result.data) {
-					const dataPayload = result.data;
-					setComments((prev) => [dataPayload, ...prev]);
-					setTotal((prev) => prev + 1);
-					return dataPayload;
+					const newComment = result.data;
+
+					if (replyTo) {
+						// It's a reply - add to replies and update parent comment replies count
+						setLoadedReplies((prev) => ({
+							...prev,
+							[replyTo]: [...(prev[replyTo] || []), newComment],
+						}));
+
+						// Update parent comment's replies count
+						setComments((prev) =>
+							prev.map((comment) =>
+								comment.id === replyTo
+									? {
+											...comment,
+											replies_count: (comment.replies_count || 0) + 1,
+									  }
+									: comment,
+							),
+						);
+					} else {
+						// It's a top-level comment
+						setComments((prev) => [newComment, ...prev]);
+						setTotal((prev) => prev + 1);
+					}
+
+					return newComment;
 				} else {
 					const errorMessage = result.error || 'Failed to submit comment';
 					setError(errorMessage);
@@ -98,37 +176,149 @@ export const useComments = (videoId: string) => {
 		[videoId],
 	);
 
-	// Delete comment
-	const deleteComment = useCallback(
-		async (commentId: string): Promise<boolean> => {
+	// Edit comment
+	const editComment = useCallback(
+		async (commentId: string, newText: string): Promise<boolean> => {
+			if (!newText.trim()) return false;
+
 			try {
-				// Optimistic update
-				const originalComments = comments;
-				setComments((prev) => prev.filter((c) => c.id !== commentId));
-				setTotal((prev) => prev - 1);
+				const result = await CommentService.updateComment(
+					commentId,
+					newText.trim(),
+				);
 
-				const result = await CommentService.deleteComment(commentId);
+				if (result.success && result.data) {
+					const updatedComment = result.data;
 
-				if (result.success) {
-					Alert.alert('Éxito', 'Comentario eliminado correctamente');
+					// Update in comments list
+					setComments((prev) =>
+						prev.map((comment) =>
+							comment.id === commentId ? updatedComment : comment,
+						),
+					);
+
+					// Update in replies if it's a reply
+					setLoadedReplies((prev) => {
+						const newReplies = { ...prev };
+						Object.keys(newReplies).forEach((parentId) => {
+							newReplies[parentId] = newReplies[parentId].map((reply) =>
+								reply.id === commentId ? updatedComment : reply,
+							);
+						});
+						return newReplies;
+					});
+
 					return true;
 				} else {
-					// Revert optimistic update
-					setComments(originalComments);
-					setTotal((prev) => prev + 1);
-
-					const errorMessage = result.error || 'Failed to delete comment';
+					const errorMessage = result.error || 'Failed to edit comment';
 					Alert.alert('Error', errorMessage);
 					return false;
 				}
 			} catch (error) {
-				// Revert optimistic update
-				setComments((prev) => [
-					...prev.filter((c) => c.id !== commentId),
-					...comments.filter((c) => c.id === commentId),
-				]);
-				setTotal((prev) => prev + 1);
+				const errorMessage =
+					error instanceof Error ? error.message : 'Failed to edit comment';
+				console.error('Error editing comment:', error);
+				Alert.alert('Error', errorMessage);
+				return false;
+			}
+		},
+		[],
+	);
 
+	// Delete comment
+	const deleteComment = useCallback(
+		async (
+			commentId: string,
+			isReply = false,
+			parentId?: string,
+		): Promise<boolean> => {
+			try {
+				// Show confirmation dialog
+				return new Promise((resolve) => {
+					Alert.alert(
+						'Eliminar comentario',
+						'¿Estás seguro de que quieres eliminar este comentario?',
+						[
+							{
+								text: 'Cancelar',
+								style: 'cancel',
+								onPress: () => resolve(false),
+							},
+							{
+								text: 'Eliminar',
+								style: 'destructive',
+								onPress: async () => {
+									try {
+										const result = await CommentService.deleteComment(
+											commentId,
+										);
+
+										if (result.success) {
+											if (isReply && parentId) {
+												// Remove from replies and update parent count
+												setLoadedReplies((prev) => ({
+													...prev,
+													[parentId]:
+														prev[parentId]?.filter(
+															(reply) => reply.id !== commentId,
+														) || [],
+												}));
+
+												// Update parent comment's replies count
+												setComments((prev) =>
+													prev.map((comment) =>
+														comment.id === parentId
+															? {
+																	...comment,
+																	replies_count: Math.max(
+																		0,
+																		(comment.replies_count || 0) - 1,
+																	),
+															  }
+															: comment,
+													),
+												);
+											} else {
+												// Remove top-level comment
+												setComments((prev) =>
+													prev.filter((c) => c.id !== commentId),
+												);
+												setTotal((prev) => Math.max(0, prev - 1));
+
+												// Remove any loaded replies for this comment
+												setLoadedReplies((prev) => {
+													const newReplies = { ...prev };
+													delete newReplies[commentId];
+													return newReplies;
+												});
+											}
+
+											Alert.alert(
+												'Éxito',
+												'Comentario eliminado correctamente',
+											);
+											resolve(true);
+										} else {
+											const errorMessage =
+												result.error || 'Failed to delete comment';
+											Alert.alert('Error', errorMessage);
+											resolve(false);
+										}
+									} catch (error) {
+										const errorMessage =
+											error instanceof Error
+												? error.message
+												: 'Failed to delete comment';
+										console.error('Error deleting comment:', error);
+										Alert.alert('Error', errorMessage);
+										resolve(false);
+									}
+								},
+							},
+						],
+					);
+				});
+			} catch (error) {
 				const errorMessage =
 					error instanceof Error ? error.message : 'Failed to delete comment';
 				console.error('Error deleting comment:', error);
@@ -136,7 +326,7 @@ export const useComments = (videoId: string) => {
 				return false;
 			}
 		},
-		[comments],
+		[],
 	);
 
 	// Report comment
@@ -182,6 +372,34 @@ export const useComments = (videoId: string) => {
 		[],
 	);
 
+	// Toggle replies visibility
+	const toggleReplies = useCallback(
+		async (commentId: string) => {
+			if (!loadedReplies[commentId]) {
+				// Load replies for the first time
+				await loadReplies(commentId, true);
+			} else {
+				// Toggle visibility by removing from state
+				setLoadedReplies((prev) => {
+					const newReplies = { ...prev };
+					delete newReplies[commentId];
+					return newReplies;
+				});
+			}
+		},
+		[loadReplies, loadedReplies],
+	);
+
+	// Load more replies for a comment
+	const loadMoreReplies = useCallback(
+		async (commentId: string) => {
+			if (!loadingReplies[commentId] && repliesHasMore[commentId]) {
+				await loadReplies(commentId, false);
+			}
+		},
+		[loadReplies, loadingReplies, repliesHasMore],
+	);
+
 	// Load more comments (pagination)
 	const loadMoreComments = useCallback(() => {
 		if (!isLoadingMore && hasMore) {
@@ -211,6 +429,7 @@ export const useComments = (videoId: string) => {
 	useEffect(() => {
 		if (videoId) {
 			setComments([]);
+			setLoadedReplies({});
 			setPage(0);
 			setHasMore(true);
 			setError(null);
@@ -261,15 +480,26 @@ export const useComments = (videoId: string) => {
 		total,
 		page,
 
+		// Replies state
+		loadedReplies,
+		loadingReplies,
+		repliesHasMore,
+
 		// Actions
 		loadComments: loadComments,
 		submitComment,
+		editComment,
 		deleteComment,
 		reportComment,
 		loadMoreComments,
 		refreshComments,
 		retryLoad,
 		clearError,
+
+		// Replies actions
+		loadReplies,
+		toggleReplies,
+		loadMoreReplies,
 
 		// Manual operations (for external state management)
 		addComment,
