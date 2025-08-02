@@ -117,6 +117,14 @@ export default function HomeScreen() {
 		}
 	}, [error, t, clearError, handleRefresh]);
 
+	// Handle comment added from modal
+	const handleVideoCommentAdded = useCallback(
+		(videoId: string, comment: Comment) => {
+			handleCommentAdded(videoId); // Solo pasamos el videoId ya que el hook solo incrementa el contador
+		},
+		[handleCommentAdded],
+	);
+
 	// Render individual video item
 	const renderVideoItem = useCallback(
 		({ item, index }: { item: any; index: number }) => {
@@ -134,9 +142,11 @@ export default function HomeScreen() {
 						onSubscribe={() =>
 							item.user?.id && handleUserSubscribe(item.user.id)
 						}
-						onReport={(reason) => handleVideoReport(item.id, reason)}
+						onReport={() => handleVideoReport(item.id, 'inappropriate')}
 						onUserPress={() => item.user?.id && handleUserPress(item.user.id)}
-						onCommentAdded={(comment: Comment) => handleCommentAdded(item.id)}
+						onCommentAdded={(comment: Comment) =>
+							handleVideoCommentAdded(item.id, comment)
+						}
 					/>
 				</View>
 			);
@@ -150,7 +160,7 @@ export default function HomeScreen() {
 			handleUserSubscribe,
 			handleVideoReport,
 			handleUserPress,
-			handleCommentAdded,
+			handleVideoCommentAdded,
 		],
 	);
 

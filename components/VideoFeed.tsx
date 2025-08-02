@@ -12,7 +12,7 @@ import {
 
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
-import { User, Video } from '@/shared/types';
+import { Comment, User, Video } from '@/shared/types';
 import VideoPlayer from './VideoPlayer';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -31,6 +31,7 @@ interface VideoFeedProps {
 	onUserSubscribe: (userId: string) => void;
 	onVideoReport: (videoId: string, reason: string) => void;
 	onUserPress: (userId: string) => void;
+	onCommentAdded: (comment: Comment) => void;
 }
 
 interface VideoItemProps {
@@ -43,6 +44,7 @@ interface VideoItemProps {
 	onSubscribe: () => void;
 	onReport: () => void;
 	onUserPress: () => void;
+	onCommentAdded: (comment: Comment) => void;
 }
 
 const VideoItemComponent: React.FC<VideoItemProps> = ({
@@ -55,6 +57,7 @@ const VideoItemComponent: React.FC<VideoItemProps> = ({
 	onSubscribe,
 	onReport,
 	onUserPress,
+	onCommentAdded,
 }) => {
 	return (
 		<View style={styles.videoItem}>
@@ -68,6 +71,7 @@ const VideoItemComponent: React.FC<VideoItemProps> = ({
 				onSubscribe={onSubscribe}
 				onReport={onReport}
 				onUserPress={onUserPress}
+				onCommentAdded={onCommentAdded}
 			/>
 		</View>
 	);
@@ -89,6 +93,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({
 	onUserSubscribe,
 	onVideoReport,
 	onUserPress,
+	onCommentAdded,
 }) => {
 	const { t } = useTranslation();
 	const flashListRef = useRef<FlashList<Video>>(null);
@@ -142,6 +147,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({
 					onSubscribe={() => item.user?.id && onUserSubscribe(item.user.id)}
 					onReport={() => onVideoReport(item.id, 'inappropriate')}
 					onUserPress={() => item.user?.id && onUserPress(item.user.id)}
+					onCommentAdded={onCommentAdded}
 				/>
 			);
 		},
@@ -154,6 +160,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({
 			onUserSubscribe,
 			onVideoReport,
 			onUserPress,
+			onCommentAdded,
 		],
 	);
 
@@ -469,6 +476,20 @@ export const useVideoFeed = (feedType: 'forYou' | 'following') => {
 		}
 	}, []);
 
+	const handleCommentAdded = useCallback((comment: Comment) => {
+		setVideos((prev) =>
+			prev.map((video) => {
+				if (video.id === comment.video_id) {
+					return {
+						...video,
+						comments_count: video.comments_count + 1,
+					};
+				}
+				return video;
+			}),
+		);
+	}, []);
+
 	const handleVideoComment = useCallback((videoId: string) => {
 		// TODO: Navigate to comments screen or open comment modal
 		console.log('Open comments for video:', videoId);
@@ -512,6 +533,7 @@ export const useVideoFeed = (feedType: 'forYou' | 'following') => {
 		handleUserSubscribe,
 		handleVideoReport,
 		handleUserPress,
+		handleCommentAdded,
 	};
 };
 
@@ -525,6 +547,7 @@ export default function VideoFeedComponent(
 		| 'onUserSubscribe'
 		| 'onVideoReport'
 		| 'onUserPress'
+		| 'onCommentAdded'
 	>,
 ) {
 	const feedHook = useVideoFeed(props.feedType);
@@ -541,6 +564,7 @@ export default function VideoFeedComponent(
 			onUserSubscribe={feedHook.handleUserSubscribe}
 			onVideoReport={feedHook.handleVideoReport}
 			onUserPress={feedHook.handleUserPress}
+			onCommentAdded={feedHook.handleCommentAdded}
 		/>
 	);
 }

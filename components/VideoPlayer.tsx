@@ -19,7 +19,8 @@ import {
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatNumber, formatTimeAgo } from '@/shared/functions/utils';
-import { User, Video as VideoType } from '@/shared/types';
+import { Comment, User, Video as VideoType } from '@/shared/types';
+import CommentsModal from './CommentsModal';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -33,6 +34,7 @@ interface VideoPlayerProps {
 	onSubscribe: () => void;
 	onReport: () => void;
 	onUserPress: () => void;
+	onCommentAdded: (comment: Comment) => void;
 }
 
 interface VideoControlsProps {
@@ -44,6 +46,7 @@ interface VideoControlsProps {
 	onSubscribe: () => void;
 	onReport: () => void;
 	onUserPress: () => void;
+	onCommentAdded: (comment: Comment) => void;
 }
 
 const PremiumModal: React.FC<{
@@ -186,9 +189,11 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 	onSubscribe,
 	onReport,
 	onUserPress,
+	onCommentAdded,
 }) => {
 	const { t } = useTranslation();
 	const [showPremiumModal, setShowPremiumModal] = useState(false);
+	const [showCommentsModal, setShowCommentsModal] = useState(false);
 
 	const handleShare = async () => {
 		try {
@@ -212,7 +217,15 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 			setShowPremiumModal(true);
 			return;
 		}
-		onComment();
+		setShowCommentsModal(true);
+	};
+
+	const handleCommentsModalClose = () => {
+		setShowCommentsModal(false);
+	};
+
+	const handleCommentAdded = (comment: Comment) => {
+		onCommentAdded(comment);
 	};
 
 	const handleReport = () => {
@@ -368,6 +381,14 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 					onSubscribe();
 				}}
 			/>
+
+			<CommentsModal
+				isVisible={showCommentsModal}
+				video={video}
+				currentUser={currentUser}
+				onClose={handleCommentsModalClose}
+				onCommentAdded={handleCommentAdded}
+			/>
 		</>
 	);
 };
@@ -382,6 +403,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	onSubscribe,
 	onReport,
 	onUserPress,
+	onCommentAdded,
 }) => {
 	const [hasError, setHasError] = useState(false);
 	const [showControls, setShowControls] = useState(true);
@@ -577,6 +599,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						onSubscribe={onSubscribe}
 						onReport={onReport}
 						onUserPress={onUserPress}
+						onCommentAdded={onCommentAdded}
 					/>
 				</Animated.View>
 			)}
@@ -800,6 +823,11 @@ const styles = StyleSheet.create({
 		alignSelf: 'flex-start',
 		overflow: 'hidden',
 	},
+	modalSubscribeButton: {
+		borderRadius: 8,
+		alignSelf: 'flex-start',
+		overflow: 'hidden',
+	},
 	subscribeGradient: {
 		flexDirection: 'row',
 		alignItems: 'center',
@@ -983,11 +1011,6 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-Regular',
 		color: Colors.premium,
 		marginLeft: 4,
-	},
-	modalSubscribeButton: {
-		borderRadius: 12,
-		overflow: 'hidden',
-		marginBottom: 16,
 	},
 	disclaimer: {
 		fontSize: 12,

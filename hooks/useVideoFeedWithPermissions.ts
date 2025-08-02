@@ -40,11 +40,12 @@ export const useVideoFeedWithPermissions = (
 				});
 
 				if (result.success && result.data) {
+					const dataPayload = result.data;
 					if (refresh) {
 						setVideos(result.data.videos);
 						setPage(1);
 					} else {
-						setVideos((prev) => [...prev, ...result.data.videos]);
+						setVideos((prev) => [...prev, ...dataPayload.videos]);
 						setPage((prev) => prev + 1);
 					}
 

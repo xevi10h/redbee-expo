@@ -133,7 +133,19 @@
 			"supportCreator": "Apoyar directamente al creador",
 			"qualityContent": "Disfrutar de contenido de mayor calidad"
 		},
-		"subscriptionDisclaimer": "Puedes cancelar en cualquier momento"
+		"subscriptionDisclaimer": "Puedes cancelar en cualquier momento",
+		"commentAdded": "Comentario añadido",
+		"commentDeleted": "Comentario eliminado",
+		"commentReported": "Comentario reportado",
+		"failedToAddComment": "Error al añadir comentario",
+		"failedToDeleteComment": "Error al eliminar comentario",
+		"failedToReportComment": "Error al reportar comentario",
+		"commentTooLong": "El comentario es demasiado largo",
+		"commentEmpty": "El comentario no puede estar vacío",
+		"loadingComments": "Cargando comentarios...",
+		"loadingMoreComments": "Cargando más comentarios...",
+		"failedToLoadComments": "Error al cargar comentarios",
+		"retryLoadComments": "Reintentar cargar comentarios"
 	},
 	"profile": {
 		"followers": "Seguidores",
