@@ -1,4 +1,4 @@
-import { PerformanceMonitor } from '@/components/VideoPlayerWrapper';
+import { PerformanceMonitor } from '@/components/video/VideoPlayerWrapper';
 import { useCallback, useEffect, useRef } from 'react';
 
 export const usePerformanceMonitoring = (componentName: string) => {

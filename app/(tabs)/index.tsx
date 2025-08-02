@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { VideoPlayer } from '@/components/VideoPlayer';
+import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';

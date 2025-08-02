@@ -55,11 +55,13 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 	} | null>(null);
 	const flatListRef = useRef<FlatList>(null);
 
-	// Animation values for swipe to close
+	// ✅ Simplified animation state - solo lo esencial
 	const translateY = useRef(new Animated.Value(0)).current;
-	const opacity = useRef(new Animated.Value(1)).current;
-	const [isClosing, setIsClosing] = useState(false);
-	const [isSwipeClosing, setIsSwipeClosing] = useState(false);
+	const [isManuallyClosing, setIsManuallyClosing] = useState(false);
+	const [isScrolling, setIsScrolling] = useState(false);
+
+	// ✅ Ref para prevenir múltiples llamadas a onClose
+	const hasCalledOnClose = useRef(false);
 
 	const {
 		comments,
@@ -78,109 +80,115 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 		loadMoreComments,
 		toggleReplies,
 		loadMoreReplies,
+		toggleCommentLike,
 	} = useComments(video.id, currentUser.id);
 
-	// Keyboard handling
+	// ✅ Reset states cuando el modal se abre/cierra
 	useEffect(() => {
-		if (!isVisible) return;
-
-		const keyboardWillShow = Keyboard.addListener(
-			Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-			(event) => {
-				setKeyboardHeight(event.endCoordinates.height);
-			},
-		);
-
-		const keyboardWillHide = Keyboard.addListener(
-			Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-			() => {
-				setKeyboardHeight(0);
-			},
-		);
-
-		return () => {
-			keyboardWillShow?.remove();
-			keyboardWillHide?.remove();
-		};
-	}, [isVisible]);
-
-	// Reset state when modal closes
-	useEffect(() => {
-		if (!isVisible) {
+		if (isVisible) {
+			// Reset al abrir
 			setCommentText('');
 			setReplyingTo(null);
 			setKeyboardHeight(0);
-			setIsClosing(false);
-			setIsSwipeClosing(false);
-			// Reset animation values
+			setIsManuallyClosing(false);
+			setIsScrolling(false);
+			hasCalledOnClose.current = false;
 			translateY.setValue(0);
-			opacity.setValue(1);
 		}
-	}, [isVisible, translateY, opacity]);
+	}, [isVisible, translateY]);
 
-	// Handle swipe down gesture to close modal - CORREGIDO
+	// ✅ Keyboard handling simplificado
+	useEffect(() => {
+		if (!isVisible) return;
+
+		const keyboardDidShow = Keyboard.addListener('keyboardDidShow', (event) => {
+			setKeyboardHeight(event.endCoordinates.height);
+		});
+
+		const keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
+			setKeyboardHeight(0);
+		});
+
+		return () => {
+			keyboardDidShow?.remove();
+			keyboardDidHide?.remove();
+		};
+	}, [isVisible]);
+
+	// ✅ Función de cierre más robusta
+	const handleSafeClose = useCallback(() => {
+		if (hasCalledOnClose.current || isManuallyClosing) {
+			return;
+		}
+
+		hasCalledOnClose.current = true;
+		setIsManuallyClosing(true);
+
+		// Log para debugging
+		console.log('CommentsModal: Closing modal');
+
+		onClose();
+	}, [onClose, isManuallyClosing]);
+
+	// ✅ Gesture handler mucho más restrictivo
 	const handleSwipeGesture = useCallback(
 		(event: PanGestureHandlerGestureEvent) => {
 			const { translationY, velocityY, state } = event.nativeEvent;
 
-			// Don't handle gesture if already closing
-			if (isClosing) return;
+			// No procesar si ya se está cerrando, hay teclado activo, o se está scrolleando
+			if (isManuallyClosing || keyboardHeight > 0 || isScrolling) {
+				return;
+			}
 
 			if (state === State.ACTIVE) {
-				// Only allow downward movement
-				if (translationY > 0) {
+				// Solo permitir movimiento hacia abajo con threshold alto
+				if (translationY > 50) {
 					translateY.setValue(translationY);
-					// Add some opacity fade effect for visual feedback
-					const fadeProgress = Math.min(translationY / 200, 1);
-					opacity.setValue(1 - fadeProgress * 0.2);
 				}
 			} else if (state === State.END) {
-				// Determine if we should close the modal
-				const shouldClose = translationY > 100 || velocityY > 1000;
+				// Condiciones MUY estrictas para cerrar
+				const shouldClose = translationY > 200 && velocityY > 1200;
 
-				if (shouldClose && !isClosing) {
-					// Set states to prevent multiple calls and indicate swipe closing
-					setIsClosing(true);
-					setIsSwipeClosing(true);
+				if (shouldClose) {
+					console.log('CommentsModal: Swipe to close triggered');
+					setIsManuallyClosing(true);
 
-					// Animate out completely, then close without Modal animation
-					Animated.parallel([
-						Animated.timing(translateY, {
-							toValue: SCREEN_HEIGHT,
-							duration: 300,
-							useNativeDriver: true,
-						}),
-						Animated.timing(opacity, {
-							toValue: 0,
-							duration: 300,
-							useNativeDriver: true,
-						}),
-					]).start(() => {
-						// Call onClose immediately after our animation
-						// Modal animation will be disabled due to isSwipeClosing
-						onClose();
+					Animated.timing(translateY, {
+						toValue: SCREEN_HEIGHT,
+						duration: 300,
+						useNativeDriver: true,
+					}).start(() => {
+						handleSafeClose();
 					});
 				} else {
-					// Animate back to original position
-					Animated.parallel([
-						Animated.spring(translateY, {
-							toValue: 0,
-							useNativeDriver: true,
-							tension: 100,
-							friction: 8,
-						}),
-						Animated.spring(opacity, {
-							toValue: 1,
-							useNativeDriver: true,
-							tension: 100,
-							friction: 8,
-						}),
-					]).start();
+					// Volver a posición original
+					Animated.spring(translateY, {
+						toValue: 0,
+						useNativeDriver: true,
+						tension: 100,
+						friction: 8,
+					}).start();
 				}
 			}
 		},
-		[translateY, opacity, onClose, isClosing],
+		[
+			translateY,
+			isManuallyClosing,
+			keyboardHeight,
+			isScrolling,
+			handleSafeClose,
+		],
 	);
+
+	// ✅ Scroll handlers simplificados
+	const handleScrollBeginDrag = useCallback(() => {
+		setIsScrolling(true);
+	}, []);
+
+	const handleScrollEndDrag = useCallback(() => {
+		// Delay para asegurar que el scroll termine completamente
+		setTimeout(() => setIsScrolling(false), 100);
+	}, []);
 
 	const handleSubmitComment = useCallback(async () => {
 		if (!commentText.trim()) return;
@@ -195,7 +203,6 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 			const newComment = await submitComment(trimmedText, replyToId);
 			if (newComment && !replyToId) {
 				onCommentAdded(newComment);
-				// Scroll to top only for new top-level comments
 				flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
 			}
 		} catch (error) {
@@ -232,12 +239,16 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 		setReplyingTo(null);
 	}, []);
 
-	// Safe close function that prevents multiple calls
-	const handleSafeClose = useCallback(() => {
-		if (!isClosing && !isSwipeClosing) {
-			onClose();
-		}
-	}, [onClose, isClosing, isSwipeClosing]);
+	const handleCommentLike = useCallback(
+		async (commentId: string, isReply = false, parentId?: string) => {
+			try {
+				await toggleCommentLike(commentId, isReply, parentId);
+			} catch (error) {
+				console.error('Failed to like comment:', error);
+			}
+		},
+		[toggleCommentLike],
+	);
 
 	const renderCommentItem = useCallback(
 		({ item }: { item: Comment }) => (
@@ -254,7 +265,9 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 				repliesCount={item.replies_count || 0}
 				isLoadingReplies={loadingReplies[item.id] || false}
 				hasMoreReplies={repliesHasMore[item.id] || false}
-				onLike={() => {}}
+				onLike={(commentId, isReply, parentId) =>
+					handleCommentLike(commentId, isReply, parentId)
+				}
 			/>
 		),
 		[
@@ -268,6 +281,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 			loadedReplies,
 			loadingReplies,
 			repliesHasMore,
+			handleCommentLike,
 		],
 	);
 
@@ -299,24 +313,18 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 		</View>
 	);
 
+	// ✅ No usar animationType si se está cerrando manualmente
 	return (
 		<Modal
 			visible={isVisible}
-			animationType={isSwipeClosing ? 'none' : 'slide'}
+			animationType={isManuallyClosing ? 'none' : 'slide'}
 			transparent={true}
 			statusBarTranslucent={true}
 			onRequestClose={handleSafeClose}
 		>
 			<GestureHandlerRootView style={{ flex: 1 }}>
-				<Animated.View
-					style={[
-						styles.modalOverlay,
-						{
-							opacity: opacity,
-						},
-					]}
-				>
-					{/* Safe backdrop area that doesn't interfere with scroll */}
+				<View style={styles.modalOverlay}>
+					{/* ✅ Backdrop muy pequeño para evitar toques accidentales */}
 					<TouchableOpacity
 						style={styles.backdropArea}
 						activeOpacity={1}
@@ -336,12 +344,13 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 								},
 							]}
 						>
-							{/* Header with Swipe Gesture - This is the swipe area */}
+							{/* ✅ Header con swipe MUY restrictivo */}
 							<PanGestureHandler
 								onGestureEvent={handleSwipeGesture}
 								onHandlerStateChange={handleSwipeGesture}
-								activeOffsetY={10}
-								failOffsetX={[-50, 50]}
+								activeOffsetY={50} // ✅ Threshold muy alto
+								failOffsetX={[-20, 20]} // ✅ Más restrictivo
+								enabled={!isManuallyClosing && keyboardHeight === 0} // ✅ Solo cuando es seguro
 							>
 								<Animated.View style={styles.swipeArea}>
 									<View style={styles.modalHeader}>
@@ -365,7 +374,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 								</Animated.View>
 							</PanGestureHandler>
 
-							{/* Comments List - Normal scroll, no swipe to close */}
+							{/* ✅ Comments List simplificado */}
 							<View style={styles.commentsContainer}>
 								{error ? (
 									renderError()
@@ -393,9 +402,9 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 										keyboardShouldPersistTaps="handled"
 										scrollEnabled={true}
 										nestedScrollEnabled={true}
-										// These handlers ensure scroll works within the list
-										onTouchStart={() => {}}
-										onScrollBeginDrag={() => {}}
+										// ✅ Solo los handlers esenciales
+										onScrollBeginDrag={handleScrollBeginDrag}
+										onScrollEndDrag={handleScrollEndDrag}
 									/>
 								)}
 
@@ -418,7 +427,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 							/>
 						</Animated.View>
 					</KeyboardAvoidingView>
-				</Animated.View>
+				</View>
 			</GestureHandlerRootView>
 		</Modal>
 	);
@@ -430,13 +439,13 @@ const styles = StyleSheet.create({
 		backgroundColor: Colors.modalOverlay,
 		justifyContent: 'flex-end',
 	},
-	// Backdrop that doesn't interfere with modal content
+	// ✅ Backdrop mínimo para evitar cierres accidentales
 	backdropArea: {
 		position: 'absolute',
 		top: 0,
 		left: 0,
 		right: 0,
-		height: SCREEN_HEIGHT * 0.3, // Only covers top portion
+		height: SCREEN_HEIGHT * 0.15, // ✅ Reducido aún más
 	},
 	keyboardAvoid: {
 		justifyContent: 'flex-end',
@@ -450,14 +459,14 @@ const styles = StyleSheet.create({
 		minHeight: SCREEN_HEIGHT * 0.6,
 		flex: 1,
 	},
-	// Swipe area that contains the header
 	swipeArea: {
 		backgroundColor: Colors.modalBackground,
 		borderTopLeftRadius: 20,
 		borderTopRightRadius: 20,
+		paddingTop: 12,
+		paddingBottom: 4, // ✅ Área mínima para swipe
 	},
 	modalHeader: {
-		paddingTop: 12,
 		paddingHorizontal: 16,
 		paddingBottom: 16,
 		borderBottomWidth: 1,
@@ -486,7 +495,6 @@ const styles = StyleSheet.create({
 	closeButton: {
 		padding: 4,
 	},
-	// Comments container that properly contains scroll
 	commentsContainer: {
 		flex: 1,
 		backgroundColor: Colors.modalBackground,
