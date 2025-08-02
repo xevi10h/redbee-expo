@@ -1,4 +1,4 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEvent, useEventListener } from 'expo';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -283,13 +283,32 @@ const VideoControls: React.FC<VideoControlsProps> = ({
 				</View>
 
 				<View style={styles.actionButtonsContainer}>
-					{!video.is_following && video.user?.id !== currentUser.id && (
+					{video.user?.id !== currentUser.id && (
 						<TouchableOpacity
-							style={styles.followButton}
+							style={[
+								styles.followButton,
+								video.is_following && {
+									borderColor: Colors.primaryDark,
+								},
+							]}
 							onPress={onFollow}
 							activeOpacity={0.8}
 						>
-							<Text style={styles.followButtonText}>{t('video.follow')}</Text>
+							<MaterialCommunityIcons
+								name={video.is_following ? 'check' : 'plus'}
+								size={12}
+								color={video.is_following ? Colors.primaryDark : Colors.primary}
+							/>
+							<Text
+								style={[
+									styles.followButtonText,
+									video.is_following && {
+										color: Colors.primaryDark,
+									},
+								]}
+							>
+								{video.is_following ? t('video.following') : t('video.follow')}
+							</Text>
 						</TouchableOpacity>
 					)}
 
@@ -747,6 +766,7 @@ const styles = StyleSheet.create({
 		left: 16,
 		bottom: 100,
 		maxWidth: SCREEN_WIDTH * 0.65,
+		alignItems: 'flex-start',
 	},
 	userInfoContainer: {
 		flexDirection: 'row',
@@ -811,7 +831,11 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		borderWidth: 1,
 		borderColor: Colors.primary,
-		alignSelf: 'flex-start',
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexDirection: 'row',
+		width: 'auto',
+		gap: 4,
 	},
 	followButtonText: {
 		fontSize: 14,

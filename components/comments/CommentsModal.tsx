@@ -59,6 +59,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 	const translateY = useRef(new Animated.Value(0)).current;
 	const opacity = useRef(new Animated.Value(1)).current;
 	const [isClosing, setIsClosing] = useState(false);
+	const [isSwipeClosing, setIsSwipeClosing] = useState(false);
 
 	const {
 		comments,
@@ -110,13 +111,14 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 			setReplyingTo(null);
 			setKeyboardHeight(0);
 			setIsClosing(false);
+			setIsSwipeClosing(false);
 			// Reset animation values
 			translateY.setValue(0);
 			opacity.setValue(1);
 		}
 	}, [isVisible, translateY, opacity]);
 
-	// Handle swipe down gesture to close modal
+	// Handle swipe down gesture to close modal - CORREGIDO
 	const handleSwipeGesture = useCallback(
 		(event: PanGestureHandlerGestureEvent) => {
 			const { translationY, velocityY, state } = event.nativeEvent;
@@ -137,9 +139,27 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 				const shouldClose = translationY > 100 || velocityY > 1000;
 
 				if (shouldClose && !isClosing) {
-					// Set closing state and immediately close - let modal handle animation
+					// Set states to prevent multiple calls and indicate swipe closing
 					setIsClosing(true);
-					onClose();
+					setIsSwipeClosing(true);
+
+					// Animate out completely, then close without Modal animation
+					Animated.parallel([
+						Animated.timing(translateY, {
+							toValue: SCREEN_HEIGHT,
+							duration: 300,
+							useNativeDriver: true,
+						}),
+						Animated.timing(opacity, {
+							toValue: 0,
+							duration: 300,
+							useNativeDriver: true,
+						}),
+					]).start(() => {
+						// Call onClose immediately after our animation
+						// Modal animation will be disabled due to isSwipeClosing
+						onClose();
+					});
 				} else {
 					// Animate back to original position
 					Animated.parallel([
@@ -214,10 +234,10 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 
 	// Safe close function that prevents multiple calls
 	const handleSafeClose = useCallback(() => {
-		if (!isClosing) {
+		if (!isClosing && !isSwipeClosing) {
 			onClose();
 		}
-	}, [onClose, isClosing]);
+	}, [onClose, isClosing, isSwipeClosing]);
 
 	const renderCommentItem = useCallback(
 		({ item }: { item: Comment }) => (
@@ -281,7 +301,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 	return (
 		<Modal
 			visible={isVisible}
-			animationType="slide"
+			animationType={isSwipeClosing ? 'none' : 'slide'}
 			transparent={true}
 			statusBarTranslucent={true}
 			onRequestClose={handleSafeClose}
@@ -429,7 +449,7 @@ const styles = StyleSheet.create({
 		minHeight: SCREEN_HEIGHT * 0.6,
 		flex: 1,
 	},
-	// NEW: Swipe area that contains the header
+	// Swipe area that contains the header
 	swipeArea: {
 		backgroundColor: Colors.modalBackground,
 		borderTopLeftRadius: 20,

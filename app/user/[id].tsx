@@ -1,6 +1,7 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -25,6 +26,47 @@ import { Video } from '@/shared/types';
 
 const { width } = Dimensions.get('window');
 const videoWidth = (width - 32 - 16) / 3; // Account for padding and gaps
+
+// Avatar component with proper image handling
+const UserAvatar: React.FC<{
+	avatarUrl?: string;
+	size?: number;
+	username?: string;
+}> = ({ avatarUrl, size = 64, username }) => {
+	const [imageError, setImageError] = useState(false);
+
+	if (!avatarUrl || imageError) {
+		return (
+			<View style={[styles.avatarContainer, { width: size, height: size }]}>
+				<LinearGradient
+					colors={Colors.gradientPrimary}
+					style={[
+						styles.avatarGradient,
+						{ width: size, height: size, borderRadius: size / 2 },
+					]}
+					start={{ x: 0, y: 0 }}
+					end={{ x: 1, y: 0 }}
+				>
+					<Feather name="user" size={size * 0.4} color={Colors.text} />
+				</LinearGradient>
+			</View>
+		);
+	}
+
+	return (
+		<View style={[styles.avatarContainer, { width: size, height: size }]}>
+			<Image
+				source={{ uri: avatarUrl }}
+				style={[
+					styles.avatarImage,
+					{ width: size, height: size, borderRadius: size / 2 },
+				]}
+				contentFit="cover"
+				onError={() => setImageError(true)}
+			/>
+		</View>
+	);
+};
 
 // Placeholder component for video thumbnail
 const VideoThumbnail: React.FC<{ video: Video; onPress: () => void }> = ({
@@ -248,85 +290,105 @@ export default function UserProfileScreen() {
 				style={styles.scrollContainer}
 				showsVerticalScrollIndicator={false}
 			>
-				{/* Header */}
+				{/* Header - Compact version */}
 				<View style={styles.header}>
-					<View style={styles.avatarContainer}>
-						<LinearGradient
-							colors={Colors.gradientPrimary}
-							style={styles.avatarGradient}
-							start={{ x: 0, y: 0 }}
-							end={{ x: 1, y: 0 }}
-						>
-							{userProfile.avatar_url ? (
-								// TODO: Add Image component when avatar is available
-								<Feather name="user" size={32} color={Colors.text} />
-							) : (
-								<Feather name="user" size={32} color={Colors.text} />
-							)}
-						</LinearGradient>
-					</View>
+					<View style={styles.topSection}>
+						<UserAvatar
+							avatarUrl={userProfile.avatar_url}
+							size={72}
+							username={userProfile.username}
+						/>
 
-					<Text style={styles.displayName}>
-						{userProfile.display_name || userProfile.username}
-					</Text>
-					<Text style={styles.username}>@{userProfile.username}</Text>
+						<View style={styles.userInfo}>
+							<Text style={styles.displayName}>
+								{userProfile.display_name || userProfile.username}
+							</Text>
+							<Text style={styles.username}>@{userProfile.username}</Text>
+
+							{/* Stats */}
+							<View style={styles.statsContainer}>
+								<View style={styles.stat}>
+									<Text style={styles.statNumber}>
+										{formatNumber(userProfile.videos_count)}
+									</Text>
+									<Text style={styles.statLabel}>{t('profile.videos')}</Text>
+								</View>
+								<View style={styles.stat}>
+									<Text style={styles.statNumber}>
+										{formatNumber(userProfile.followers_count)}
+									</Text>
+									<Text style={styles.statLabel}>{t('profile.followers')}</Text>
+								</View>
+								<View style={styles.stat}>
+									<Text style={styles.statNumber}>
+										{formatNumber(userProfile.subscribers_count)}
+									</Text>
+									<Text style={styles.statLabel}>Suscriptores</Text>
+								</View>
+							</View>
+						</View>
+					</View>
 
 					{userProfile.bio && <Text style={styles.bio}>{userProfile.bio}</Text>}
-
-					{/* Stats */}
-					<View style={styles.statsContainer}>
-						<View style={styles.stat}>
-							<Text style={styles.statNumber}>
-								{formatNumber(userProfile.videos_count)}
-							</Text>
-							<Text style={styles.statLabel}>{t('profile.videos')}</Text>
-						</View>
-						<View style={styles.stat}>
-							<Text style={styles.statNumber}>
-								{formatNumber(userProfile.followers_count)}
-							</Text>
-							<Text style={styles.statLabel}>{t('profile.followers')}</Text>
-						</View>
-						<View style={styles.stat}>
-							<Text style={styles.statNumber}>
-								{formatNumber(userProfile.subscribers_count)}
-							</Text>
-							<Text style={styles.statLabel}>Suscriptores</Text>
-						</View>
-					</View>
-
-					{/* Subscription Info */}
-					{userProfile.subscription_price > 0 && (
-						<View style={styles.subscriptionContainer}>
-							<Text style={styles.subscriptionPrice}>
-								{formatCurrency(
-									userProfile.subscription_price,
-									userProfile.subscription_currency,
-								)}
-								<Text style={styles.subscriptionPeriod}>/mes</Text>
-							</Text>
-							<Text style={styles.subscriptionLabel}>
-								{t('profile.monthlySubscription')}
-							</Text>
-						</View>
-					)}
 
 					{/* Action Buttons */}
 					{!isOwnProfile && (
 						<View style={styles.actionButtons}>
-							<Button
-								title={isFollowing ? 'Siguiendo' : 'Seguir'}
-								onPress={handleFollowPress}
-								variant={isFollowing ? 'outline' : 'primary'}
+							<TouchableOpacity
 								style={styles.followButton}
-							/>
-							{userProfile.subscription_price > 0 && (
-								<Button
-									title={isSubscribed ? 'Suscrito' : 'Suscribirse'}
-									onPress={handleSubscribePress}
-									variant={isSubscribed ? 'outline' : 'secondary'}
-									style={styles.subscribeButton}
+								onPress={handleFollowPress}
+								activeOpacity={0.8}
+							>
+								<MaterialCommunityIcons
+									name={isFollowing ? 'check' : 'plus'}
+									size={16}
+									color={Colors.textSecondary}
 								/>
+								<Text style={styles.followButtonText}>
+									{isFollowing ? 'Siguiendo' : 'Seguir'}
+								</Text>
+							</TouchableOpacity>
+
+							{userProfile.subscription_price > 0 && (
+								<TouchableOpacity
+									style={styles.subscribeButton}
+									onPress={handleSubscribePress}
+									activeOpacity={0.8}
+								>
+									<LinearGradient
+										colors={
+											isSubscribed
+												? [
+														Colors.backgroundSecondary,
+														Colors.backgroundSecondary,
+												  ]
+												: Colors.gradientPrimary
+										}
+										style={styles.subscribeGradient}
+										start={{ x: 0, y: 0 }}
+										end={{ x: 1, y: 0 }}
+									>
+										<MaterialCommunityIcons
+											name="crown"
+											size={16}
+											color={Colors.text}
+										/>
+										<View style={styles.subscribeTextContainer}>
+											<Text style={styles.subscribeText}>
+												{isSubscribed ? 'Suscrito' : 'Suscribirse'}
+											</Text>
+											{!isSubscribed && (
+												<Text style={styles.subscribePrice}>
+													{formatCurrency(
+														userProfile.subscription_price,
+														userProfile.subscription_currency,
+													)}
+													/mes
+												</Text>
+											)}
+										</View>
+									</LinearGradient>
+								</TouchableOpacity>
 							)}
 						</View>
 					)}
@@ -459,101 +521,121 @@ const styles = StyleSheet.create({
 		padding: 4,
 	},
 	header: {
-		alignItems: 'center',
-		paddingHorizontal: 24,
-		paddingVertical: 24,
+		paddingHorizontal: 20,
+		paddingVertical: 16, // Reduced from 24
 		borderBottomWidth: 1,
 		borderBottomColor: Colors.borderSecondary,
 	},
+	topSection: {
+		flexDirection: 'row',
+		alignItems: 'flex-start',
+		marginBottom: 12, // Reduced from 16
+	},
 	avatarContainer: {
-		marginBottom: 16,
+		marginRight: 16,
+	},
+	avatarImage: {
+		backgroundColor: Colors.backgroundSecondary,
 	},
 	avatarGradient: {
-		width: 80,
-		height: 80,
-		borderRadius: 40,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
+	userInfo: {
+		flex: 1,
+	},
 	displayName: {
-		fontSize: 24,
+		fontSize: 20, // Reduced from 24
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
-		marginBottom: 4,
-		textAlign: 'center',
+		marginBottom: 2,
 	},
 	username: {
-		fontSize: 16,
+		fontSize: 14, // Reduced from 16
 		fontFamily: 'Inter-Regular',
 		color: Colors.textSecondary,
-		marginBottom: 16,
-		textAlign: 'center',
+		marginBottom: 12, // Reduced from 16
 	},
 	bio: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
 		color: Colors.text,
-		textAlign: 'center',
-		lineHeight: 20,
-		marginBottom: 20,
+		lineHeight: 18,
+		marginTop: 10,
 	},
 	statsContainer: {
 		flexDirection: 'row',
-		gap: 32,
-		marginBottom: 20,
+		gap: 24, // Reduced from 32
 	},
 	stat: {
 		alignItems: 'center',
 	},
 	statNumber: {
-		fontSize: 20,
+		fontSize: 18, // Reduced from 20
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
-		marginBottom: 4,
+		marginBottom: 2, // Reduced from 4
 	},
 	statLabel: {
-		fontSize: 12,
+		fontSize: 11, // Reduced from 12
 		fontFamily: 'Inter-Regular',
 		color: Colors.textTertiary,
-	},
-	subscriptionContainer: {
-		alignItems: 'center',
-		backgroundColor: Colors.premiumBackground,
-		borderRadius: 12,
-		paddingVertical: 12,
-		paddingHorizontal: 20,
-		marginBottom: 20,
-	},
-	subscriptionPrice: {
-		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
-		fontWeight: '600',
-		color: Colors.premium,
-	},
-	subscriptionPeriod: {
-		fontSize: 14,
-		fontFamily: 'Inter-Regular',
-		color: Colors.premium,
-	},
-	subscriptionLabel: {
-		fontSize: 12,
-		fontFamily: 'Inter-Regular',
-		color: Colors.premium,
-		marginTop: 4,
 	},
 	actionButtons: {
 		flexDirection: 'row',
 		gap: 12,
-		width: '100%',
-		maxWidth: 300,
+		marginTop: 16,
+		height: 50,
 	},
 	followButton: {
 		flex: 1,
+		width: '50%',
+		backgroundColor: Colors.backgroundSecondary,
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: Colors.borderSecondary,
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexDirection: 'row',
+		gap: 4,
+	},
+	followButtonText: {
+		fontSize: 14,
+		fontFamily: 'Inter-SemiBold',
+		fontWeight: '500',
+		color: Colors.textSecondary,
 	},
 	subscribeButton: {
 		flex: 1,
+		width: '50%',
+		borderRadius: 8,
+		overflow: 'hidden',
+	},
+	subscribeGradient: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingHorizontal: 16,
+		paddingVertical: 10,
+		gap: 8,
+	},
+	subscribeTextContainer: {
+		alignItems: 'center',
+	},
+	subscribeText: {
+		fontSize: 14,
+		fontFamily: 'Inter-SemiBold',
+		fontWeight: '600',
+		color: Colors.text,
+	},
+	subscribePrice: {
+		fontSize: 10,
+		fontFamily: 'Inter-Regular',
+		color: Colors.text,
+		opacity: 0.8,
+		marginTop: 1,
 	},
 	tabsContainer: {
 		flexDirection: 'row',
