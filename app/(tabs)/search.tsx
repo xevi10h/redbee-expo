@@ -1,7 +1,9 @@
 import { Feather } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+	Alert,
 	FlatList,
 	StyleSheet,
 	Text,
@@ -13,136 +15,207 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '@/components/ui/Input';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
+import { useSearch } from '@/hooks/useSearch';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useUserInteractions } from '@/hooks/useUserInteractions';
+import { formatNumber } from '@/shared/functions/utils';
 import { UserProfile } from '@/shared/types';
 
-// Placeholder component for user item
-const UserItem: React.FC<{ user: UserProfile }> = ({ user }) => {
+// Component for user item
+const UserItem: React.FC<{
+	user: UserProfile;
+	onPress: () => void;
+	onFollowPress: () => void;
+	isFollowLoading: boolean;
+}> = ({ user, onPress, onFollowPress, isFollowLoading }) => {
 	return (
-		<TouchableOpacity style={styles.userItem}>
+		<TouchableOpacity style={styles.userItem} onPress={onPress}>
 			<View style={styles.userAvatar}>
 				<Feather name="user" size={24} color={Colors.textTertiary} />
 			</View>
 			<View style={styles.userInfo}>
 				<Text style={styles.username}>@{user.username}</Text>
-				<Text style={styles.displayName}>{user.display_name}</Text>
-				<Text style={styles.followers}>{user.followers_count} seguidores</Text>
+				<Text style={styles.displayName}>
+					{user.display_name || user.username}
+				</Text>
+				<Text style={styles.followers}>
+					{formatNumber(user.followers_count)} seguidores
+				</Text>
 			</View>
-			<TouchableOpacity style={styles.followButton}>
-				<Text style={styles.followButtonText}>
-					{user.is_following ? 'Siguiendo' : 'Seguir'}
+			<TouchableOpacity
+				style={[
+					styles.followButton,
+					user.is_following && styles.followingButton,
+					isFollowLoading && styles.loadingButton,
+				]}
+				onPress={onFollowPress}
+				disabled={isFollowLoading}
+			>
+				<Text
+					style={[
+						styles.followButtonText,
+						user.is_following && styles.followingButtonText,
+					]}
+				>
+					{isFollowLoading
+						? 'Cargando...'
+						: user.is_following
+						? 'Siguiendo'
+						: 'Seguir'}
 				</Text>
 			</TouchableOpacity>
 		</TouchableOpacity>
 	);
 };
 
-// Placeholder component for hashtag item
-const HashtagItem: React.FC<{ hashtag: string; count: number }> = ({
-	hashtag,
-	count,
-}) => {
+// Component for hashtag item
+const HashtagItem: React.FC<{
+	hashtag: string;
+	count: number;
+	onPress: () => void;
+}> = ({ hashtag, count, onPress }) => {
 	return (
-		<TouchableOpacity style={styles.hashtagItem}>
+		<TouchableOpacity style={styles.hashtagItem} onPress={onPress}>
 			<View style={styles.hashtagIcon}>
 				<Feather name="hash" size={24} color={Colors.primary} />
 			</View>
 			<View style={styles.hashtagInfo}>
 				<Text style={styles.hashtagName}>#{hashtag}</Text>
-				<Text style={styles.hashtagCount}>{count} videos</Text>
+				<Text style={styles.hashtagCount}>{formatNumber(count)} videos</Text>
 			</View>
 		</TouchableOpacity>
+	);
+};
+
+// Component for search suggestions
+const SearchSuggestions: React.FC<{
+	suggestions: string[];
+	onSuggestionPress: (suggestion: string) => void;
+}> = ({ suggestions, onSuggestionPress }) => {
+	if (suggestions.length === 0) return null;
+
+	return (
+		<View style={styles.suggestionsContainer}>
+			<Text style={styles.suggestionsTitle}>Sugerencias</Text>
+			{suggestions.map((suggestion, index) => (
+				<TouchableOpacity
+					key={index}
+					style={styles.suggestionItem}
+					onPress={() => onSuggestionPress(suggestion)}
+				>
+					<Feather
+						name={suggestion.startsWith('@') ? 'user' : 'hash'}
+						size={16}
+						color={Colors.textTertiary}
+					/>
+					<Text style={styles.suggestionText}>{suggestion}</Text>
+				</TouchableOpacity>
+			))}
+		</View>
 	);
 };
 
 export default function SearchScreen() {
 	const { t } = useTranslation();
 	const { user } = useRequireAuth();
+	const { handleFollow } = useUserInteractions();
 
-	const [searchQuery, setSearchQuery] = useState('');
 	const [currentTab, setCurrentTab] = useState<'users' | 'hashtags'>('users');
-	const [isSearching, setIsSearching] = useState(false);
 
-	// Mock data
-	const mockUsers: UserProfile[] = [
-		{
-			id: '1',
-			email: 'user1@example.com',
-			username: 'creator1',
-			display_name: 'Creative Creator',
-			bio: 'Digital content creator',
-			avatar_url: undefined,
-			subscription_price: 4.99,
-			subscription_currency: 'USD',
-			followers_count: 1250,
-			subscribers_count: 89,
-			videos_count: 45,
-			created_at: new Date().toISOString(),
-			is_following: false,
-			is_subscribed: false,
-		},
-		{
-			id: '2',
-			email: 'user2@example.com',
-			username: 'premium_creator',
-			display_name: 'Premium Creator',
-			bio: 'Premium content specialist',
-			avatar_url: undefined,
-			subscription_price: 9.99,
-			subscription_currency: 'USD',
-			followers_count: 5600,
-			subscribers_count: 234,
-			videos_count: 89,
-			created_at: new Date().toISOString(),
-			is_following: true,
-			is_subscribed: false,
-		},
-	];
+	const {
+		query,
+		isSearching,
+		results,
+		suggestions,
+		error,
+		hasMore,
+		handleSearch,
+		handleLoadMore,
+		clearSearch,
+		isEmpty,
+		hasQuery,
+		canLoadMore,
+		updateUserInResults,
+	} = useSearch(currentTab, user?.id);
 
-	const mockHashtags = [
-		{ hashtag: 'vertical', count: 1250 },
-		{ hashtag: 'creative', count: 890 },
-		{ hashtag: 'premium', count: 456 },
-		{ hashtag: 'content', count: 2340 },
-	];
+	// Handle user press - navigate to profile
+	const handleUserPress = useCallback((userId: string) => {
+		router.push(`/user/${userId}`);
+	}, []);
 
-	const handleSearch = async (query: string) => {
-		setSearchQuery(query);
+	// Handle hashtag press - search for hashtag
+	const handleHashtagPress = useCallback((hashtag: string) => {
+		// TODO: Navigate to hashtag feed or search videos with this hashtag
+		Alert.alert('Hashtag', `Buscar videos con #${hashtag}`, [
+			{ text: 'Cancelar', style: 'cancel' },
+			{
+				text: 'Buscar',
+				onPress: () => {
+					// TODO: Implement hashtag video search
+					console.log('Search videos with hashtag:', hashtag);
+				},
+			},
+		]);
+	}, []);
 
-		if (query.length > 2) {
-			setIsSearching(true);
-
+	// Handle follow user
+	const handleFollowUser = useCallback(
+		async (userId: string) => {
 			try {
-				// TODO: Implement actual search API call
-				// const result = await SearchService.search({
-				//   query,
-				//   type: currentTab,
-				//   limit: 20,
-				// });
-
-				// Simulate API call
-				await new Promise((resolve) => setTimeout(resolve, 500));
+				const isNowFollowing = await handleFollow(userId);
+				const currentUser = results.users.find((u) => u.id === userId);
+				if (currentUser) {
+					updateUserInResults(userId, {
+						is_following: isNowFollowing,
+						followers_count:
+							currentUser.followers_count + (isNowFollowing ? 1 : -1),
+					});
+				}
 			} catch (error) {
-				console.error('Search error:', error);
-			} finally {
-				setIsSearching(false);
+				console.error('Follow error:', error);
+				Alert.alert('Error', 'No se pudo procesar la acción');
 			}
-		}
-	};
-
-	const renderUserItem = ({ item }: { item: UserProfile }) => (
-		<UserItem user={item} />
+		},
+		[handleFollow, updateUserInResults, results.users],
 	);
 
+	// Handle suggestion press
+	const handleSuggestionPress = useCallback(
+		(suggestion: string) => {
+			// Remove @ or # prefix for search
+			const cleanSuggestion = suggestion.replace(/^[@#]/, '');
+			handleSearch(cleanSuggestion);
+		},
+		[handleSearch],
+	);
+
+	// Render user item
+	const renderUserItem = ({ item }: { item: UserProfile }) => (
+		<UserItem
+			user={item}
+			onPress={() => handleUserPress(item.id)}
+			onFollowPress={() => handleFollowUser(item.id)}
+			isFollowLoading={false} // You can add loading state per user if needed
+		/>
+	);
+
+	// Render hashtag item
 	const renderHashtagItem = ({
 		item,
 	}: {
 		item: { hashtag: string; count: number };
-	}) => <HashtagItem hashtag={item.hashtag} count={item.count} />;
+	}) => (
+		<HashtagItem
+			hashtag={item.hashtag}
+			count={item.count}
+			onPress={() => handleHashtagPress(item.hashtag)}
+		/>
+	);
 
+	// Render empty state
 	const renderEmptyState = () => (
 		<View style={styles.emptyState}>
-			{searchQuery.length === 0 ? (
+			{!hasQuery ? (
 				<>
 					<Feather name="search" size={48} color={Colors.textTertiary} />
 					<Text style={styles.emptyTitle}>{t('search.searchPlaceholder')}</Text>
@@ -153,7 +226,11 @@ export default function SearchScreen() {
 			) : (
 				<>
 					<Feather name="inbox" size={48} color={Colors.textTertiary} />
-					<Text style={styles.emptyTitle}>{t('search.noUsersFound')}</Text>
+					<Text style={styles.emptyTitle}>
+						{currentTab === 'users'
+							? t('search.noUsersFound')
+							: 'No se encontraron hashtags'}
+					</Text>
 					<Text style={styles.emptySubtitle}>
 						Intenta con una búsqueda diferente
 					</Text>
@@ -161,6 +238,17 @@ export default function SearchScreen() {
 			)}
 		</View>
 	);
+
+	// Render loading footer
+	const renderFooter = () => {
+		if (!isSearching || !canLoadMore) return null;
+
+		return (
+			<View style={styles.loadingFooter}>
+				<Text style={styles.loadingText}>Cargando más resultados...</Text>
+			</View>
+		);
+	};
 
 	if (!user) {
 		return null; // useRequireAuth will handle redirect
@@ -173,17 +261,26 @@ export default function SearchScreen() {
 			{/* Header */}
 			<View style={styles.header}>
 				<Input
-					value={searchQuery}
+					value={query}
 					onChangeText={handleSearch}
 					placeholder={t('search.searchPlaceholder')}
 					leftIcon="search"
+					rightIcon={hasQuery ? 'x' : undefined}
+					onRightIconPress={hasQuery ? clearSearch : undefined}
 					containerStyle={styles.searchContainer}
 					autoCapitalize="none"
 					autoCorrect={false}
 					returnKeyType="search"
-					clearButtonMode="while-editing"
 					isLoading={isSearching}
 				/>
+
+				{/* Show suggestions when typing */}
+				{suggestions.length > 0 && hasQuery && (
+					<SearchSuggestions
+						suggestions={suggestions}
+						onSuggestionPress={handleSuggestionPress}
+					/>
+				)}
 
 				{/* Tabs */}
 				<View style={styles.tabContainer}>
@@ -221,24 +318,37 @@ export default function SearchScreen() {
 			<View style={styles.content}>
 				{currentTab === 'users' ? (
 					<FlatList
-						data={searchQuery.length > 2 ? mockUsers : []}
+						data={results.users}
 						renderItem={renderUserItem}
 						keyExtractor={(item) => item.id}
 						style={styles.list}
 						showsVerticalScrollIndicator={false}
 						ListEmptyComponent={renderEmptyState}
+						ListFooterComponent={renderFooter}
+						onEndReached={canLoadMore ? handleLoadMore : undefined}
+						onEndReachedThreshold={0.5}
 					/>
 				) : (
 					<FlatList
-						data={searchQuery.length > 2 ? mockHashtags : []}
+						data={results.hashtags}
 						renderItem={renderHashtagItem}
 						keyExtractor={(item) => item.hashtag}
 						style={styles.list}
 						showsVerticalScrollIndicator={false}
 						ListEmptyComponent={renderEmptyState}
+						ListFooterComponent={renderFooter}
+						onEndReached={canLoadMore ? handleLoadMore : undefined}
+						onEndReachedThreshold={0.5}
 					/>
 				)}
 			</View>
+
+			{/* Error message */}
+			{error && (
+				<View style={styles.errorContainer}>
+					<Text style={styles.errorText}>{error}</Text>
+				</View>
+			)}
 		</SafeAreaView>
 	);
 }
@@ -254,9 +364,47 @@ const styles = StyleSheet.create({
 		backgroundColor: Colors.background,
 		borderBottomWidth: 1,
 		borderBottomColor: Colors.borderSecondary,
+		position: 'relative',
+		zIndex: 10,
 	},
 	searchContainer: {
 		marginBottom: 16,
+	},
+	suggestionsContainer: {
+		backgroundColor: Colors.backgroundSecondary,
+		borderRadius: 8,
+		padding: 12,
+		marginBottom: 16,
+		position: 'absolute',
+		top: 70,
+		left: 16,
+		right: 16,
+		zIndex: 20,
+		shadowColor: '#000',
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.25,
+		shadowRadius: 3.84,
+		elevation: 5,
+	},
+	suggestionsTitle: {
+		fontSize: 14,
+		fontFamily: 'Inter-SemiBold',
+		color: Colors.textSecondary,
+		marginBottom: 8,
+	},
+	suggestionItem: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		paddingVertical: 8,
+		gap: 8,
+	},
+	suggestionText: {
+		fontSize: 14,
+		fontFamily: 'Inter-Regular',
+		color: Colors.text,
 	},
 	tabContainer: {
 		flexDirection: 'row',
@@ -331,12 +479,22 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		borderWidth: 1,
 		borderColor: Colors.primary,
+		backgroundColor: 'transparent',
+	},
+	followingButton: {
+		backgroundColor: Colors.primary,
+	},
+	loadingButton: {
+		opacity: 0.6,
 	},
 	followButtonText: {
 		fontSize: 14,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
 		color: Colors.primary,
+	},
+	followingButtonText: {
+		color: Colors.text,
 	},
 	hashtagItem: {
 		flexDirection: 'row',
@@ -375,6 +533,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		paddingHorizontal: 32,
+		marginTop: 20,
 	},
 	emptyTitle: {
 		fontSize: 18,
@@ -391,5 +550,29 @@ const styles = StyleSheet.create({
 		color: Colors.textSecondary,
 		textAlign: 'center',
 		lineHeight: 20,
+	},
+	loadingFooter: {
+		paddingVertical: 16,
+		alignItems: 'center',
+	},
+	loadingText: {
+		fontSize: 14,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textSecondary,
+	},
+	errorContainer: {
+		position: 'absolute',
+		bottom: 100,
+		left: 16,
+		right: 16,
+		backgroundColor: Colors.error,
+		borderRadius: 8,
+		padding: 12,
+	},
+	errorText: {
+		fontSize: 14,
+		fontFamily: 'Inter-Regular',
+		color: Colors.text,
+		textAlign: 'center',
 	},
 });

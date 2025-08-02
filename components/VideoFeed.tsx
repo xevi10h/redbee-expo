@@ -13,6 +13,7 @@ import {
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Comment, User, Video } from '@/shared/types';
+import { router } from 'expo-router';
 import VideoPlayer from './VideoPlayer';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -516,8 +517,7 @@ export const useVideoFeed = (feedType: 'forYou' | 'following') => {
 	);
 
 	const handleUserPress = useCallback((userId: string) => {
-		// TODO: Navigate to user profile
-		console.log('Navigate to user profile:', userId);
+		router.push(`/user/${userId}`);
 	}, []);
 
 	return {

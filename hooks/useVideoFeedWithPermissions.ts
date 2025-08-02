@@ -1,5 +1,6 @@
 import { VideoService } from '@/services/videoService';
 import { FeedType, User, Video } from '@/shared/types';
+import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 
 export const useVideoFeedWithPermissions = (
@@ -293,8 +294,7 @@ export const useVideoFeedWithPermissions = (
 	}, []);
 
 	const handleUserPress = useCallback((userId: string) => {
-		// TODO: Navigate to user profile
-		console.log('Navigate to user profile:', userId);
+		router.push(`/user/${userId}`);
 	}, []);
 
 	// Initial load and reload on feed type change

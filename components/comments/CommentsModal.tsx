@@ -58,6 +58,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 	// Animation values for swipe to close
 	const translateY = useRef(new Animated.Value(0)).current;
 	const opacity = useRef(new Animated.Value(1)).current;
+	const [isClosing, setIsClosing] = useState(false);
 
 	const {
 		comments,
@@ -108,6 +109,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 			setCommentText('');
 			setReplyingTo(null);
 			setKeyboardHeight(0);
+			setIsClosing(false);
 			// Reset animation values
 			translateY.setValue(0);
 			opacity.setValue(1);
@@ -119,34 +121,25 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 		(event: PanGestureHandlerGestureEvent) => {
 			const { translationY, velocityY, state } = event.nativeEvent;
 
+			// Don't handle gesture if already closing
+			if (isClosing) return;
+
 			if (state === State.ACTIVE) {
 				// Only allow downward movement
 				if (translationY > 0) {
 					translateY.setValue(translationY);
-					// Add some opacity fade effect
+					// Add some opacity fade effect for visual feedback
 					const fadeProgress = Math.min(translationY / 200, 1);
-					opacity.setValue(1 - fadeProgress * 0.3);
+					opacity.setValue(1 - fadeProgress * 0.2);
 				}
 			} else if (state === State.END) {
 				// Determine if we should close the modal
 				const shouldClose = translationY > 100 || velocityY > 1000;
 
-				if (shouldClose) {
-					// Animate close
-					Animated.parallel([
-						Animated.timing(translateY, {
-							toValue: SCREEN_HEIGHT,
-							duration: 250,
-							useNativeDriver: true,
-						}),
-						Animated.timing(opacity, {
-							toValue: 0,
-							duration: 250,
-							useNativeDriver: true,
-						}),
-					]).start(() => {
-						onClose();
-					});
+				if (shouldClose && !isClosing) {
+					// Set closing state and immediately close - let modal handle animation
+					setIsClosing(true);
+					onClose();
 				} else {
 					// Animate back to original position
 					Animated.parallel([
@@ -166,7 +159,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 				}
 			}
 		},
-		[translateY, opacity, onClose],
+		[translateY, opacity, onClose, isClosing],
 	);
 
 	const handleSubmitComment = useCallback(async () => {
@@ -218,6 +211,13 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 	const handleCancelReply = useCallback(() => {
 		setReplyingTo(null);
 	}, []);
+
+	// Safe close function that prevents multiple calls
+	const handleSafeClose = useCallback(() => {
+		if (!isClosing) {
+			onClose();
+		}
+	}, [onClose, isClosing]);
 
 	const renderCommentItem = useCallback(
 		({ item }: { item: Comment }) => (
@@ -284,7 +284,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 			animationType="slide"
 			transparent={true}
 			statusBarTranslucent={true}
-			onRequestClose={onClose}
+			onRequestClose={handleSafeClose}
 		>
 			<GestureHandlerRootView style={{ flex: 1 }}>
 				<Animated.View
@@ -299,7 +299,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 					<TouchableOpacity
 						style={styles.backdropArea}
 						activeOpacity={1}
-						onPress={onClose}
+						onPress={handleSafeClose}
 					/>
 
 					<KeyboardAvoidingView
@@ -334,7 +334,7 @@ export const CommentsModal: React.FC<CommentsModalProps> = ({
 													: 'Comentarios'}
 											</Text>
 											<TouchableOpacity
-												onPress={onClose}
+												onPress={handleSafeClose}
 												style={styles.closeButton}
 											>
 												<Feather name="x" size={24} color={Colors.text} />
