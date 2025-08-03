@@ -1,0 +1,292 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+	Alert,
+	Dimensions,
+	FlatList,
+	RefreshControl,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+	ViewToken,
+} from 'react-native';
+
+import { VideoPlayer } from '@/components/video/VideoPlayer';
+import { Colors } from '@/constants/Colors';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useVideoFeedWithPermissions } from '@/hooks/useVideoFeedWithPermissions';
+import { Comment, User } from '@/shared/types';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+interface FollowingScreenProps {
+	user: User;
+	isActive?: boolean;
+}
+
+export const FollowingScreen: React.FC<FollowingScreenProps> = ({
+	user,
+	isActive = true,
+}) => {
+	const { t } = useTranslation();
+
+	// State management
+	const [activeVideoIndex, setActiveVideoIndex] = useState(0);
+
+	// Refs
+	const flatListRef = useRef<FlatList>(null);
+
+	// Use the improved video feed hook with permissions
+	const {
+		videos,
+		isLoading,
+		isRefreshing,
+		hasMore,
+		error,
+		handleVideoLike,
+		handleUserFollow,
+		handleUserSubscribe,
+		handleVideoComment,
+		handleVideoReport,
+		handleCommentAdded,
+		handleUserPress,
+		handleRefresh,
+		handleLoadMore,
+		clearError,
+	} = useVideoFeedWithPermissions('following', user);
+
+	// Handle viewable items change for video playback
+	const onViewableItemsChanged = useCallback(
+		({ viewableItems }: { viewableItems: ViewToken[] }) => {
+			if (viewableItems.length > 0) {
+				const activeItem = viewableItems.find(
+					(item) => item.isViewable && item.index !== null,
+				);
+				if (activeItem && activeItem.index !== null) {
+					setActiveVideoIndex(activeItem.index);
+
+					// Track video view (solo si el usuario puede ver el video)
+					const video = videos[activeItem.index];
+					if (video) {
+						// La función incrementViewCount ahora verifica permisos internamente
+						import('@/services/videoService').then(({ VideoService }) => {
+							VideoService.incrementViewCount(video.id, user?.id);
+						});
+					}
+				}
+			}
+		},
+		[videos, user?.id],
+	);
+
+	const viewabilityConfig = {
+		itemVisiblePercentThreshold: 50,
+		minimumViewTime: 500,
+	};
+
+	// Show error alert when error state changes
+	useEffect(() => {
+		if (error) {
+			Alert.alert(t('common.error'), error, [
+				{
+					text: t('common.ok'),
+					onPress: clearError,
+				},
+				{
+					text: 'Reintentar',
+					onPress: () => {
+						clearError();
+						handleRefresh();
+					},
+				},
+			]);
+		}
+	}, [error, t, clearError, handleRefresh]);
+
+	// Handle comment added from modal
+	const handleVideoCommentAdded = useCallback(
+		(videoId: string, comment: Comment) => {
+			handleCommentAdded(videoId); // Solo pasamos el videoId ya que el hook solo incrementa el contador
+		},
+		[handleCommentAdded],
+	);
+
+	// Render individual video item
+	const renderVideoItem = useCallback(
+		({ item, index }: { item: any; index: number }) => {
+			const isVideoActive = isActive && index === activeVideoIndex;
+
+			return (
+				<View style={styles.videoItem}>
+					<VideoPlayer
+						video={item}
+						isActive={isVideoActive}
+						currentUser={user}
+						onLike={() => handleVideoLike(item.id)}
+						onComment={() => handleVideoComment(item.id)}
+						onFollow={() => item.user?.id && handleUserFollow(item.user.id)}
+						onSubscribe={() =>
+							item.user?.id && handleUserSubscribe(item.user.id)
+						}
+						onReport={() => handleVideoReport(item.id, 'inappropriate')}
+						onUserPress={() => item.user?.id && handleUserPress(item.user.id)}
+						onCommentAdded={(comment: Comment) =>
+							handleVideoCommentAdded(item.id, comment)
+						}
+					/>
+				</View>
+			);
+		},
+		[
+			isActive,
+			activeVideoIndex,
+			user,
+			handleVideoLike,
+			handleVideoComment,
+			handleUserFollow,
+			handleUserSubscribe,
+			handleVideoReport,
+			handleUserPress,
+			handleVideoCommentAdded,
+		],
+	);
+
+	// Render empty state
+	const renderEmptyState = () => (
+		<View style={styles.emptyState}>
+			<Text style={styles.emptyTitle}>
+				{error ? 'Error al cargar videos' : 'No hay videos de tus seguidos'}
+			</Text>
+			<Text style={styles.emptySubtitle}>
+				{error
+					? 'Verifica tu conexión e inténtalo de nuevo'
+					: 'Sigue a más creadores para ver su contenido aquí'}
+			</Text>
+			{error && (
+				<TouchableOpacity
+					style={styles.retryButton}
+					onPress={() => {
+						clearError();
+						handleRefresh();
+					}}
+				>
+					<Text style={styles.retryText}>Reintentar</Text>
+				</TouchableOpacity>
+			)}
+		</View>
+	);
+
+	// Loading footer component
+	const renderFooter = () => {
+		if (!isLoading || isRefreshing) return null;
+
+		return (
+			<View style={styles.loadingFooter}>
+				<Text style={styles.loadingText}>Cargando más videos...</Text>
+			</View>
+		);
+	};
+
+	// Key extractor
+	const keyExtractor = useCallback((item: any) => item.id, []);
+
+	return (
+		<View style={styles.container}>
+			{/* Video Feed */}
+			<FlatList
+				ref={flatListRef}
+				data={videos}
+				renderItem={renderVideoItem}
+				keyExtractor={keyExtractor}
+				style={styles.feedContainer}
+				showsVerticalScrollIndicator={false}
+				refreshControl={
+					<RefreshControl
+						refreshing={isRefreshing}
+						onRefresh={handleRefresh}
+						tintColor={Colors.primary}
+						colors={[Colors.primary]}
+					/>
+				}
+				onEndReached={handleLoadMore}
+				onEndReachedThreshold={0.5}
+				ListEmptyComponent={renderEmptyState}
+				ListFooterComponent={renderFooter}
+				pagingEnabled
+				snapToInterval={SCREEN_HEIGHT}
+				snapToAlignment="start"
+				decelerationRate="fast"
+				onViewableItemsChanged={onViewableItemsChanged}
+				viewabilityConfig={viewabilityConfig}
+				removeClippedSubviews={true}
+				windowSize={3}
+				initialNumToRender={2}
+				maxToRenderPerBatch={2}
+				getItemLayout={(_, index) => ({
+					length: SCREEN_HEIGHT,
+					offset: SCREEN_HEIGHT * index,
+					index,
+				})}
+			/>
+		</View>
+	);
+};
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		backgroundColor: Colors.background,
+	},
+	feedContainer: {
+		flex: 1,
+	},
+	videoItem: {
+		width: '100%',
+		height: SCREEN_HEIGHT,
+	},
+	emptyState: {
+		height: SCREEN_HEIGHT,
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingHorizontal: 32,
+		backgroundColor: Colors.background,
+	},
+	emptyTitle: {
+		fontSize: 20,
+		fontFamily: 'Poppins-SemiBold',
+		fontWeight: '600',
+		color: Colors.text,
+		marginBottom: 8,
+		textAlign: 'center',
+	},
+	emptySubtitle: {
+		fontSize: 16,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textSecondary,
+		textAlign: 'center',
+		lineHeight: 24,
+		marginBottom: 24,
+	},
+	retryButton: {
+		paddingHorizontal: 24,
+		paddingVertical: 12,
+		backgroundColor: Colors.primary,
+		borderRadius: 8,
+	},
+	retryText: {
+		fontSize: 16,
+		fontFamily: 'Inter-SemiBold',
+		color: Colors.text,
+	},
+	loadingFooter: {
+		height: 60,
+		justifyContent: 'center',
+		alignItems: 'center',
+		backgroundColor: Colors.background,
+	},
+	loadingText: {
+		fontSize: 14,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textSecondary,
+	},
+});
