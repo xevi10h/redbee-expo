@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { VideoPlayer } from '@/components/video/VideoPlayer';
+import { VideoFeedLoader } from '@/components/ui/VideoFeedLoader';
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useVideoFeedWithPermissions } from '@/hooks/useVideoFeedWithPermissions';
@@ -93,7 +94,7 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 					onPress: clearError,
 				},
 				{
-					text: 'Reintentar',
+					text: t('common.retry'),
 					onPress: () => {
 						clearError();
 						handleRefresh();
@@ -155,11 +156,11 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 	const renderEmptyState = () => (
 		<View style={styles.emptyState}>
 			<Text style={styles.emptyTitle}>
-				{error ? 'Error al cargar videos' : t('home.noVideos')}
+				{error ? t('errors.somethingWentWrong') : t('home.noVideos')}
 			</Text>
 			<Text style={styles.emptySubtitle}>
 				{error
-					? 'Verifica tu conexión e inténtalo de nuevo'
+					? t('errors.tryAgainLater')
 					: t('home.refreshToSeeNew')}
 			</Text>
 			{error && (
@@ -170,7 +171,7 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 						handleRefresh();
 					}}
 				>
-					<Text style={styles.retryText}>Reintentar</Text>
+					<Text style={styles.retryText}>{t('common.retry')}</Text>
 				</TouchableOpacity>
 			)}
 		</View>
@@ -182,13 +183,16 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 
 		return (
 			<View style={styles.loadingFooter}>
-				<Text style={styles.loadingText}>Cargando más videos...</Text>
+				<Text style={styles.loadingText}>{t('home.loadingMoreVideos')}</Text>
 			</View>
 		);
 	};
 
 	// Key extractor
 	const keyExtractor = useCallback((item: any) => item.id, []);
+
+	// Mostrar loader estético cuando está cargando por primera vez
+	const showMainLoader = isLoading && videos.length === 0 && !error;
 
 	return (
 		<View style={styles.container}>
@@ -210,7 +214,7 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 				}
 				onEndReached={handleLoadMore}
 				onEndReachedThreshold={0.5}
-				ListEmptyComponent={renderEmptyState}
+				ListEmptyComponent={showMainLoader ? null : renderEmptyState}
 				ListFooterComponent={renderFooter}
 				pagingEnabled
 				snapToInterval={SCREEN_HEIGHT}
@@ -228,6 +232,14 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 					index,
 				})}
 			/>
+
+			{/* Loader principal estético */}
+			{showMainLoader && (
+				<VideoFeedLoader 
+					message={t('common.loading')}
+					showIcon={true}
+				/>
+			)}
 		</View>
 	);
 };

@@ -1,12 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
-import {
-	Dimensions,
-	StyleSheet,
-	Text,
-	TouchableOpacity,
-	View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FollowingScreen, ForYouScreen } from '@/components/screens';
@@ -14,20 +8,18 @@ import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export default function HomeScreen() {
 	const { t } = useTranslation();
 	const { user } = useRequireAuth();
 	const [activeTab, setActiveTab] = useState<'forYou' | 'following'>('forYou');
 
-	if (!user) {
-		return null;
-	}
-
 	const handleTabChange = useCallback((tab: 'forYou' | 'following') => {
 		setActiveTab(tab);
 	}, []);
+
+	if (!user) {
+		return null;
+	}
 
 	return (
 		<SafeAreaView style={styles.container} edges={['top']}>
@@ -39,11 +31,13 @@ export default function HomeScreen() {
 
 			{/* Content - Full Screen */}
 			<View style={styles.content}>
-				{activeTab === 'forYou' ? (
-					<ForYouScreen user={user} isActive={true} />
-				) : (
-					<FollowingScreen user={user} isActive={true} />
-				)}
+				{/* Mantener ambos componentes montados para evitar recargas */}
+				<View style={[styles.screenContainer, { opacity: activeTab === 'forYou' ? 1 : 0 }]}>
+					<ForYouScreen user={user} isActive={activeTab === 'forYou'} />
+				</View>
+				<View style={[styles.screenContainer, { opacity: activeTab === 'following' ? 1 : 0 }]}>
+					<FollowingScreen user={user} isActive={activeTab === 'following'} />
+				</View>
 			</View>
 
 			{/* Floating Tab Header with Overlay */}
@@ -99,6 +93,13 @@ const styles = StyleSheet.create({
 	content: {
 		flex: 1,
 		// El contenido ocupa toda la pantalla
+	},
+	screenContainer: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
 	},
 	tabHeader: {
 		position: 'absolute',

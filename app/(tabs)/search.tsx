@@ -12,14 +12,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { HashtagVideoGrid } from '@/components/hashtag/HashtagVideoGrid';
 import { Input } from '@/components/ui/Input';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
+import { useHashtagSearch, useHashtagVideos } from '@/hooks/useHashtagSearch';
 import { useSearch } from '@/hooks/useSearch';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useUserInteractions } from '@/hooks/useUserInteractions';
 import { formatNumber } from '@/shared/functions/utils';
-import { UserProfile } from '@/shared/types';
+import { UserProfile, Video } from '@/shared/types';
 
 // Component for user item
 const UserItem: React.FC<{
@@ -138,24 +140,27 @@ export default function SearchScreen() {
 		updateUserInResults,
 	} = useSearch(currentTab, user?.id);
 
+	// Hashtag trending hook
+	const {
+		trendingHashtags,
+		isLoadingTrending,
+		trendingError,
+		loadTrendingHashtags,
+	} = useHashtagSearch(user?.id);
+
 	// Handle user press - navigate to profile
 	const handleUserPress = useCallback((userId: string) => {
 		router.push(`/user/${userId}`);
 	}, []);
 
-	// Handle hashtag press - search for hashtag
+	// Handle hashtag press - navigate directly to hashtag screen
 	const handleHashtagPress = useCallback((hashtag: string) => {
-		// TODO: Navigate to hashtag feed or search videos with this hashtag
-		Alert.alert('Hashtag', `Buscar videos con #${hashtag}`, [
-			{ text: 'Cancelar', style: 'cancel' },
-			{
-				text: 'Buscar',
-				onPress: () => {
-					// TODO: Implement hashtag video search
-					console.log('Search videos with hashtag:', hashtag);
-				},
+		router.push({
+			pathname: '/hashtag/[hashtag]',
+			params: { 
+				hashtag: encodeURIComponent(hashtag)
 			},
-		]);
+		});
 	}, []);
 
 	// Handle follow user
@@ -237,6 +242,31 @@ export default function SearchScreen() {
 				</>
 			)}
 		</View>
+	);
+
+	// Render trending hashtags when no search query
+	const renderTrendingHashtags = () => (
+		<FlatList
+			data={trendingHashtags}
+			renderItem={({ item }) => (
+				<HashtagItem
+					hashtag={item.hashtag}
+					count={item.count}
+					onPress={() => handleHashtagPress(item.hashtag)}
+				/>
+			)}
+			keyExtractor={(item) => item.hashtag}
+			style={styles.list}
+			showsVerticalScrollIndicator={false}
+			ListHeaderComponent={() => (
+				<View style={styles.trendingHeader}>
+					<Feather name="trending-up" size={20} color={Colors.primary} />
+					<Text style={styles.trendingTitle}>Hashtags trending</Text>
+				</View>
+			)}
+			refreshing={isLoadingTrending}
+			onRefresh={loadTrendingHashtags}
+		/>
 	);
 
 	// Render loading footer
@@ -328,7 +358,8 @@ export default function SearchScreen() {
 						onEndReached={canLoadMore ? handleLoadMore : undefined}
 						onEndReachedThreshold={0.5}
 					/>
-				) : (
+				) : hasQuery ? (
+					// Show search results for hashtags
 					<FlatList
 						data={results.hashtags}
 						renderItem={renderHashtagItem}
@@ -340,6 +371,9 @@ export default function SearchScreen() {
 						onEndReached={canLoadMore ? handleLoadMore : undefined}
 						onEndReachedThreshold={0.5}
 					/>
+				) : (
+					// Show trending hashtags when no search query
+					renderTrendingHashtags()
 				)}
 			</View>
 
@@ -574,5 +608,46 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-Regular',
 		color: Colors.text,
 		textAlign: 'center',
+	},
+	trendingHeader: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		paddingHorizontal: 16,
+		paddingVertical: 16,
+		gap: 8,
+	},
+	trendingTitle: {
+		fontSize: 18,
+		fontFamily: 'Inter-Bold',
+		fontWeight: 'bold',
+		color: Colors.text,
+	},
+	hashtagVideosContainer: {
+		flex: 1,
+	},
+	hashtagVideosHeader: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		backgroundColor: Colors.backgroundSecondary,
+		borderBottomWidth: 1,
+		borderBottomColor: Colors.borderSecondary,
+		gap: 12,
+	},
+	backButton: {
+		width: 32,
+		height: 32,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderRadius: 16,
+		backgroundColor: Colors.background,
+	},
+	hashtagVideosTitle: {
+		fontSize: 18,
+		fontFamily: 'Inter-Bold',
+		fontWeight: 'bold',
+		color: Colors.text,
+		flex: 1,
 	},
 });

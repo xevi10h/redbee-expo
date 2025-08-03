@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
 	Alert,
 	ScrollView,
@@ -16,6 +16,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { useAuth, useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
+import {
+	NotificationPreferences,
+	NotificationService,
+} from '@/services/notificationService';
 import { Language } from '@/shared/types';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -165,6 +169,8 @@ export default function SettingsScreen() {
 
 	const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 	const [darkModeEnabled, setDarkModeEnabled] = useState(true);
+	const [notificationPreferences, setNotificationPreferences] =
+		useState<NotificationPreferences | null>(null);
 
 	const handleEditProfile = () => {
 		console.log('Navigate to edit profile');
@@ -193,8 +199,8 @@ export default function SettingsScreen() {
 
 	const handleDownloadData = () => {
 		Alert.alert(
-			'Descargar datos',
-			'Te enviaremos un correo con todos tus datos en 24-48 horas.',
+			t('settings.downloadData'),
+			t('settings.downloadDataDescription'),
 			[
 				{ text: t('common.cancel'), style: 'cancel' },
 				{
@@ -221,31 +227,27 @@ export default function SettingsScreen() {
 	};
 
 	const handleSignOut = () => {
-		Alert.alert(
-			t('settings.logout'),
-			'¿Estás seguro de que quieres cerrar sesión?',
-			[
-				{ text: t('common.cancel'), style: 'cancel' },
-				{
-					text: t('settings.logout'),
-					style: 'destructive',
-					onPress: async () => {
-						try {
-							await signOut();
-							router.replace('/auth/sign-in');
-						} catch (error) {
-							console.error('Sign out error:', error);
-						}
-					},
+		Alert.alert(t('settings.logout'), t('settings.logoutConfirmation'), [
+			{ text: t('common.cancel'), style: 'cancel' },
+			{
+				text: t('settings.logout'),
+				style: 'destructive',
+				onPress: async () => {
+					try {
+						await signOut();
+						router.replace('/auth/sign-in');
+					} catch (error) {
+						console.error('Sign out error:', error);
+					}
 				},
-			],
-		);
+			},
+		]);
 	};
 
 	const handleDeleteAccount = () => {
 		Alert.alert(
 			t('settings.deleteAccount'),
-			'Esta acción no se puede deshacer. Se eliminarán todos tus datos permanentemente.',
+			t('settings.deleteAccountWarning'),
 			[
 				{ text: t('common.cancel'), style: 'cancel' },
 				{
@@ -254,12 +256,12 @@ export default function SettingsScreen() {
 					onPress: () => {
 						// Second confirmation
 						Alert.alert(
-							'¿Estás absolutamente seguro?',
-							'Escribe "ELIMINAR" para confirmar la eliminación permanente de tu cuenta.',
+							t('settings.deleteAccountConfirmTitle'),
+							t('settings.deleteAccountConfirmDescription'),
 							[
 								{ text: t('common.cancel'), style: 'cancel' },
 								{
-									text: 'Confirmar eliminación',
+									text: t('settings.confirmDeletion'),
 									style: 'destructive',
 									onPress: () => console.log('Delete account confirmed'),
 								},
@@ -276,6 +278,49 @@ export default function SettingsScreen() {
 		// TODO: Also update in backend if needed
 	};
 
+	const loadNotificationPreferences = async () => {
+		if (!user?.id) return;
+
+		try {
+			const { data, error } = await NotificationService.getPreferences(user.id);
+			if (data && !error) {
+				setNotificationPreferences(data);
+				setNotificationsEnabled(data.push_notifications_enabled);
+			}
+		} catch (error) {
+			console.error('Error loading notification preferences:', error);
+		}
+	};
+
+	const updateNotificationPreference = async (
+		key: keyof NotificationPreferences,
+		value: boolean,
+	) => {
+		if (!user?.id || !notificationPreferences) return;
+
+		try {
+			const { error } = await NotificationService.updatePreferences(user.id, {
+				[key]: value,
+			});
+
+			if (!error) {
+				setNotificationPreferences((prev) =>
+					prev ? { ...prev, [key]: value } : null,
+				);
+
+				if (key === 'push_notifications_enabled') {
+					setNotificationsEnabled(value);
+				}
+			}
+		} catch (error) {
+			console.error('Error updating notification preference:', error);
+		}
+	};
+
+	useEffect(() => {
+		loadNotificationPreferences();
+	}, [user?.id]);
+
 	if (!user) {
 		return null; // useRequireAuth will handle redirect
 	}
@@ -286,24 +331,33 @@ export default function SettingsScreen() {
 
 			{/* Header */}
 			<View style={styles.header}>
-				<Text style={styles.title}>{t('settings.accountSettings')}</Text>
+				<TouchableOpacity
+					style={styles.backButton}
+					onPress={() => router.back()}
+				>
+					<Feather name="arrow-left" size={24} color={Colors.text} />
+				</TouchableOpacity>
+				<Text style={styles.title}>{t('navigation.settings')}</Text>
+				<View style={styles.headerSpacer} />
 			</View>
 
 			<ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
 				{/* Account Section */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Cuenta</Text>
+					<Text style={styles.sectionTitle}>
+						{t('settings.accountSettings')}
+					</Text>
 
 					<SettingsItem
 						title={t('settings.editProfile')}
-						subtitle="Nombre, bio, foto de perfil"
+						subtitle={t('profile.editProfile')}
 						icon="user"
 						onPress={handleEditProfile}
 					/>
 
 					<SettingsItem
 						title={t('settings.changePassword')}
-						subtitle="Actualizar tu contraseña"
+						subtitle={t('settings.changePassword')}
 						icon="lock"
 						onPress={handleChangePassword}
 					/>
@@ -311,7 +365,7 @@ export default function SettingsScreen() {
 
 				{/* Preferences Section */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Preferencias</Text>
+					<Text style={styles.sectionTitle}>{t('settings.preferences')}</Text>
 
 					<LanguageSelector
 						currentLanguage={user.language}
@@ -320,13 +374,17 @@ export default function SettingsScreen() {
 
 					<SettingsItem
 						title={t('settings.notifications')}
-						subtitle="Gestionar notificaciones"
+						subtitle={t('notifications.preferences.pushNotificationsSubtitle')}
 						icon="bell"
-						onPress={handleNotificationSettings}
 						rightComponent={
 							<Switch
 								value={notificationsEnabled}
-								onValueChange={setNotificationsEnabled}
+								onValueChange={(value) =>
+									updateNotificationPreference(
+										'push_notifications_enabled',
+										value,
+									)
+								}
 								trackColor={{
 									false: Colors.textTertiary,
 									true: Colors.primary,
@@ -337,9 +395,126 @@ export default function SettingsScreen() {
 						showArrow={false}
 					/>
 
+					{/* Detailed notification preferences */}
+					{notificationPreferences && (
+						<>
+							<SettingsItem
+								title={t('notifications.preferences.videoLikes')}
+								subtitle={t('notifications.preferences.videoLikesSubtitle')}
+								icon="heart"
+								rightComponent={
+									<Switch
+										value={notificationPreferences.video_likes_enabled}
+										onValueChange={(value) =>
+											updateNotificationPreference('video_likes_enabled', value)
+										}
+										trackColor={{
+											false: Colors.textTertiary,
+											true: Colors.primary,
+										}}
+										thumbColor={Colors.text}
+									/>
+								}
+								showArrow={false}
+							/>
+
+							<SettingsItem
+								title={t('notifications.preferences.newFollowers')}
+								subtitle={t('notifications.preferences.newFollowersSubtitle')}
+								icon="user-plus"
+								rightComponent={
+									<Switch
+										value={notificationPreferences.new_followers_enabled}
+										onValueChange={(value) =>
+											updateNotificationPreference(
+												'new_followers_enabled',
+												value,
+											)
+										}
+										trackColor={{
+											false: Colors.textTertiary,
+											true: Colors.primary,
+										}}
+										thumbColor={Colors.text}
+									/>
+								}
+								showArrow={false}
+							/>
+
+							<SettingsItem
+								title={t('notifications.preferences.commentLikes')}
+								subtitle={t('notifications.preferences.commentLikesSubtitle')}
+								icon="thumbs-up"
+								rightComponent={
+									<Switch
+										value={notificationPreferences.comment_likes_enabled}
+										onValueChange={(value) =>
+											updateNotificationPreference(
+												'comment_likes_enabled',
+												value,
+											)
+										}
+										trackColor={{
+											false: Colors.textTertiary,
+											true: Colors.primary,
+										}}
+										thumbColor={Colors.text}
+									/>
+								}
+								showArrow={false}
+							/>
+
+							<SettingsItem
+								title={t('notifications.preferences.videoComments')}
+								subtitle={t('notifications.preferences.videoCommentsSubtitle')}
+								icon="message-circle"
+								rightComponent={
+									<Switch
+										value={notificationPreferences.video_comments_enabled}
+										onValueChange={(value) =>
+											updateNotificationPreference(
+												'video_comments_enabled',
+												value,
+											)
+										}
+										trackColor={{
+											false: Colors.textTertiary,
+											true: Colors.primary,
+										}}
+										thumbColor={Colors.text}
+									/>
+								}
+								showArrow={false}
+							/>
+
+							<SettingsItem
+								title={t('notifications.preferences.commentReplies')}
+								subtitle={t('notifications.preferences.commentRepliesSubtitle')}
+								icon="corner-up-left"
+								rightComponent={
+									<Switch
+										value={notificationPreferences.comment_replies_enabled}
+										onValueChange={(value) =>
+											updateNotificationPreference(
+												'comment_replies_enabled',
+												value,
+											)
+										}
+										trackColor={{
+											false: Colors.textTertiary,
+											true: Colors.primary,
+										}}
+										thumbColor={Colors.text}
+									/>
+								}
+								showArrow={false}
+							/>
+						</>
+					)}
+
 					<SettingsItem
-						title="Modo oscuro"
-						subtitle="Tema de la aplicación"
+						title={t('settings.darkMode')}
+						subtitle={t('settings.darkModeSubtitle')}
 						icon="moon"
 						rightComponent={
 							<Switch
@@ -361,22 +536,22 @@ export default function SettingsScreen() {
 					<Text style={styles.sectionTitle}>{t('settings.privacy')}</Text>
 
 					<SettingsItem
-						title="Configuración de privacidad"
-						subtitle="Controla quien puede verte"
+						title={t('settings.privacySettings')}
+						subtitle={t('settings.privacySettingsSubtitle')}
 						icon="shield"
 						onPress={handlePrivacySettings}
 					/>
 
 					<SettingsItem
 						title={t('settings.blockedUsers')}
-						subtitle="Usuarios que has bloqueado"
+						subtitle={t('settings.blockedUsersSubtitle')}
 						icon="user-x"
 						onPress={handleBlockedUsers}
 					/>
 
 					<SettingsItem
 						title={t('settings.downloadData')}
-						subtitle="Descargar una copia de tus datos"
+						subtitle={t('settings.downloadDataSubtitle')}
 						icon="download"
 						onPress={handleDownloadData}
 					/>
@@ -384,25 +559,25 @@ export default function SettingsScreen() {
 
 				{/* Support Section */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Soporte</Text>
+					<Text style={styles.sectionTitle}>{t('settings.support')}</Text>
 
 					<SettingsItem
 						title={t('settings.help')}
-						subtitle="Centro de ayuda y FAQ"
+						subtitle={t('settings.helpSubtitle')}
 						icon="help-circle"
 						onPress={handleHelp}
 					/>
 
 					<SettingsItem
 						title={t('settings.termsOfService')}
-						subtitle="Términos y condiciones"
+						subtitle={t('settings.termsOfServiceSubtitle')}
 						icon="file-text"
 						onPress={handleTermsOfService}
 					/>
 
 					<SettingsItem
 						title={t('settings.privacyPolicy')}
-						subtitle="Política de privacidad"
+						subtitle={t('settings.privacyPolicySubtitle')}
 						icon="shield"
 						onPress={handlePrivacyPolicy}
 					/>
@@ -410,7 +585,7 @@ export default function SettingsScreen() {
 
 				{/* App Info */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Aplicación</Text>
+					<Text style={styles.sectionTitle}>{t('settings.application')}</Text>
 
 					<SettingsItem
 						title={t('settings.version')}
@@ -422,11 +597,11 @@ export default function SettingsScreen() {
 
 				{/* Danger Zone */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Zona de peligro</Text>
+					<Text style={styles.sectionTitle}>{t('settings.dangerZone')}</Text>
 
 					<SettingsItem
 						title={t('settings.logout')}
-						subtitle="Cerrar sesión en este dispositivo"
+						subtitle={t('settings.logoutSubtitle')}
 						icon="log-out"
 						onPress={handleSignOut}
 						destructive
@@ -434,7 +609,7 @@ export default function SettingsScreen() {
 
 					<SettingsItem
 						title={t('settings.deleteAccount')}
-						subtitle="Eliminar permanentemente tu cuenta"
+						subtitle={t('settings.deleteAccountSubtitle')}
 						icon="trash-2"
 						onPress={handleDeleteAccount}
 						destructive
@@ -454,14 +629,27 @@ const styles = StyleSheet.create({
 		backgroundColor: Colors.background,
 	},
 	header: {
+		flexDirection: 'row',
+		alignItems: 'center',
 		paddingHorizontal: 16,
 		paddingVertical: 16,
 		backgroundColor: Colors.background,
 		borderBottomWidth: 1,
 		borderBottomColor: Colors.borderSecondary,
 	},
+	backButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	headerSpacer: {
+		width: 40,
+	},
 	title: {
-		fontSize: 24,
+		flex: 1,
+		fontSize: 20,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,

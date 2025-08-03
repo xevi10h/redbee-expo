@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { VideoPlayer } from '@/components/video/VideoPlayer';
+import { VideoFeedLoader } from '@/components/ui/VideoFeedLoader';
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useVideoFeedWithPermissions } from '@/hooks/useVideoFeedWithPermissions';
@@ -93,7 +94,7 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 					onPress: clearError,
 				},
 				{
-					text: 'Reintentar',
+					text: t('common.retry'),
 					onPress: () => {
 						clearError();
 						handleRefresh();
@@ -155,12 +156,12 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 	const renderEmptyState = () => (
 		<View style={styles.emptyState}>
 			<Text style={styles.emptyTitle}>
-				{error ? 'Error al cargar videos' : 'No hay videos de tus seguidos'}
+				{error ? t('errors.somethingWentWrong') : t('home.noVideos')}
 			</Text>
 			<Text style={styles.emptySubtitle}>
 				{error
-					? 'Verifica tu conexión e inténtalo de nuevo'
-					: 'Sigue a más creadores para ver su contenido aquí'}
+					? t('errors.tryAgainLater')
+					: t('home.followCreatorsMessage')}
 			</Text>
 			{error && (
 				<TouchableOpacity
@@ -170,7 +171,7 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 						handleRefresh();
 					}}
 				>
-					<Text style={styles.retryText}>Reintentar</Text>
+					<Text style={styles.retryText}>{t('common.retry')}</Text>
 				</TouchableOpacity>
 			)}
 		</View>
@@ -182,13 +183,16 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 
 		return (
 			<View style={styles.loadingFooter}>
-				<Text style={styles.loadingText}>Cargando más videos...</Text>
+				<Text style={styles.loadingText}>{t('home.loadingMoreVideos')}</Text>
 			</View>
 		);
 	};
 
 	// Key extractor
 	const keyExtractor = useCallback((item: any) => item.id, []);
+
+	// Mostrar loader estético cuando está cargando por primera vez
+	const showMainLoader = isLoading && videos.length === 0 && !error;
 
 	return (
 		<View style={styles.container}>
@@ -210,7 +214,7 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 				}
 				onEndReached={handleLoadMore}
 				onEndReachedThreshold={0.5}
-				ListEmptyComponent={renderEmptyState}
+				ListEmptyComponent={showMainLoader ? null : renderEmptyState}
 				ListFooterComponent={renderFooter}
 				pagingEnabled
 				snapToInterval={SCREEN_HEIGHT}
@@ -228,6 +232,14 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 					index,
 				})}
 			/>
+
+			{/* Loader principal estético */}
+			{showMainLoader && (
+				<VideoFeedLoader 
+					message={t('common.loading')}
+					showIcon={true}
+				/>
+			)}
 		</View>
 	);
 };

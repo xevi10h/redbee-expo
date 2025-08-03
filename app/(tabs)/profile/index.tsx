@@ -1,5 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
@@ -105,6 +106,10 @@ export default function ProfileScreen() {
 		// TODO: Navigate to edit profile screen
 	};
 
+	const handleSettings = () => {
+		router.push('/(tabs)/profile/settings');
+	};
+
 	const renderVideoItem = ({ item }: { item: Video }) => (
 		<VideoThumbnail video={item} onPress={() => handleVideoPress(item)} />
 	);
@@ -130,6 +135,17 @@ export default function ProfileScreen() {
 	return (
 		<SafeAreaView style={styles.container} edges={['top']}>
 			<StatusBar style="light" />
+
+			{/* Header with Settings Button */}
+			<View style={styles.headerContainer}>
+				<View style={styles.headerSpacer} />
+				<TouchableOpacity
+					style={styles.headerSettingsButton}
+					onPress={handleSettings}
+				>
+					<Feather name="settings" size={24} color={Colors.text} />
+				</TouchableOpacity>
+			</View>
 
 			<ScrollView
 				style={styles.scrollContainer}
@@ -250,6 +266,7 @@ export default function ProfileScreen() {
 							{t('profile.likes')}
 						</Text>
 					</TouchableOpacity>
+
 				</View>
 
 				{/* Video Grid */}
@@ -277,6 +294,25 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1,
 		backgroundColor: Colors.background,
+	},
+	headerContainer: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+		backgroundColor: Colors.background,
+	},
+	headerSpacer: {
+		width: 44, // Same width as settings button for centering
+	},
+	headerSettingsButton: {
+		width: 44,
+		height: 44,
+		borderRadius: 22,
+		backgroundColor: Colors.backgroundSecondary,
+		alignItems: 'center',
+		justifyContent: 'center',
 	},
 	scrollContainer: {
 		flex: 1,

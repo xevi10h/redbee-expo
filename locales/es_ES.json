@@ -81,6 +81,7 @@
 		"home": "Inicio",
 		"search": "Buscar",
 		"upload": "Subir",
+		"notifications": "Notificaciones",
 		"profile": "Perfil",
 		"settings": "Configuración"
 	},
@@ -88,7 +89,9 @@
 		"forYou": "Para ti",
 		"following": "Siguiendo",
 		"noVideos": "No hay videos disponibles",
-		"refreshToSeeNew": "Desliza hacia abajo para ver nuevos videos"
+		"refreshToSeeNew": "Desliza hacia abajo para ver nuevos videos",
+		"followCreatorsMessage": "Sigue a más creadores para ver su contenido aquí",
+		"loadingMoreVideos": "Cargando más videos..."
 	},
 	"video": {
 		"like": "Me gusta",
@@ -221,6 +224,27 @@
 		"termsOfService": "Términos de servicio",
 		"privacyPolicy": "Política de privacidad",
 		"version": "Versión",
+		"darkMode": "Modo oscuro",
+		"darkModeSubtitle": "Tema de la aplicación",
+		"privacySettings": "Configuración de privacidad",
+		"privacySettingsSubtitle": "Controla quien puede verte",
+		"blockedUsersSubtitle": "Usuarios que has bloqueado",
+		"downloadDataSubtitle": "Descargar una copia de tus datos",
+		"downloadDataDescription": "Te enviaremos un correo con todos tus datos en 24-48 horas.",
+		"support": "Soporte",
+		"helpSubtitle": "Centro de ayuda y FAQ",
+		"termsOfServiceSubtitle": "Términos y condiciones",
+		"privacyPolicySubtitle": "Política de privacidad",
+		"application": "Aplicación",
+		"dangerZone": "Zona de peligro",
+		"logoutSubtitle": "Cerrar sesión en este dispositivo",
+		"logoutConfirmation": "¿Estás seguro de que quieres cerrar sesión?",
+		"deleteAccountSubtitle": "Eliminar permanentemente tu cuenta",
+		"deleteAccountWarning": "Esta acción no se puede deshacer. Se eliminarán todos tus datos permanentemente.",
+		"deleteAccountConfirmTitle": "¿Estás absolutamente seguro?",
+		"deleteAccountConfirmDescription": "Escribe \"ELIMINAR\" para confirmar la eliminación permanente de tu cuenta.",
+		"confirmDeletion": "Confirmar eliminación",
+		"preferences": "Preferencias",
 		"languages": {
 			"es_ES": "Español",
 			"ca_ES": "Catalán",
@@ -264,5 +288,36 @@
 		"tooManyRequests": "Demasiadas solicitudes",
 		"maintenance": "Mantenimiento programado",
 		"updateRequired": "Actualización requerida"
+	},
+	"notifications": {
+		"title": "Notificaciones",
+		"markAllRead": "Marcar todo como leído",
+		"noNotifications": "No hay notificaciones",
+		"noNotificationsSubtitle": "Tus notificaciones aparecerán aquí",
+		"videoLike": "le gustó tu video",
+		"follow": "comenzó a seguirte",
+		"commentLike": "le gustó tu comentario",
+		"videoComment": "comentó en tu video",
+		"commentReply": "respondió a tu comentario",
+		"interactedWithContent": "interactuó con tu contenido",
+		"justNow": "Ahora mismo",
+		"minutesAgo": "h",
+		"hoursAgo": "h",
+		"daysAgo": "d",
+		"weeksAgo": "sem",
+		"preferences": {
+			"videoLikes": "Me gusta en videos",
+			"videoLikesSubtitle": "Cuando alguien le da me gusta a tus videos",
+			"newFollowers": "Nuevos seguidores",
+			"newFollowersSubtitle": "Cuando alguien comienza a seguirte",
+			"commentLikes": "Me gusta en comentarios",
+			"commentLikesSubtitle": "Cuando alguien le da me gusta a tus comentarios",
+			"videoComments": "Comentarios en videos",
+			"videoCommentsSubtitle": "Cuando alguien comenta en tus videos",
+			"commentReplies": "Respuestas a comentarios",
+			"commentRepliesSubtitle": "Cuando alguien responde a tus comentarios",
+			"pushNotifications": "Notificaciones push",
+			"pushNotificationsSubtitle": "Recibir notificaciones en tu dispositivo"
+		}
 	}
 }

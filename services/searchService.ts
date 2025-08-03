@@ -165,6 +165,50 @@ export class SearchService {
 	}
 
 	/**
+	 * Get videos by hashtag for hashtag feed
+	 */
+	static async getVideosByHashtag(
+		hashtag: string,
+		viewerId?: string,
+		limit = 20,
+		offset = 0,
+	): Promise<
+		AuthResponse<{
+			videos: Video[];
+			hasMore: boolean;
+			total: number;
+		}>
+	> {
+		try {
+			if (!hashtag) {
+				return {
+					success: true,
+					data: {
+						videos: [],
+						hasMore: false,
+						total: 0,
+					},
+				};
+			}
+
+			// Search for videos containing this hashtag
+			const { VideoService } = await import('./videoService');
+			return await VideoService.searchVideos(
+				`#${hashtag}`,
+				viewerId,
+				Math.floor(offset / limit),
+				limit,
+			);
+		} catch (error) {
+			return {
+				success: false,
+				error:
+					error instanceof Error ? error.message : 'Failed to get hashtag videos',
+			};
+		}
+	}
+
+	/**
 	 * Search for videos
 	 */
 	static async searchVideos(

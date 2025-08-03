@@ -18,6 +18,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { Comment, User, Video as VideoType } from '@/shared/types';
 import { CommentsModal } from '../comments/CommentsModal';
 import { VideoControls } from '../video/VideoControls';
+import { VideoProgressSlider } from '../video/VideoProgressSlider';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -66,20 +67,36 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const [currentTime, setCurrentTime] = useState(0);
 	const [duration, setDuration] = useState(0);
 	const [isLoaded, setIsLoaded] = useState(false);
+	const [isSeeking, setIsSeeking] = useState(false);
 
 	useEventListener(player, 'timeUpdate', ({ currentTime: time }) => {
-		setCurrentTime(time);
-		setDuration(player.duration);
+		if (!isSeeking) {
+			setCurrentTime(time);
+		}
+		const videoDuration = player.duration;
+		if (videoDuration !== duration) {
+			console.log('Video duration updated:', videoDuration);
+			setDuration(videoDuration);
+		}
 	});
 
 	useEventListener(player, 'statusChange', ({ status, error }) => {
+		console.log('Video status changed:', status, 'duration:', player.duration);
 		if (status === 'error') {
 			console.error('Video load error:', error);
 			setHasError(true);
 			setIsLoaded(false);
+			setIsSeeking(false);
 		} else if (status === 'readyToPlay') {
 			setHasError(false);
 			setIsLoaded(true);
+			setIsSeeking(false);
+			// Asegurar que obtenemos la duración cuando el video está listo
+			const videoDuration = player.duration;
+			console.log('Video ready, duration:', videoDuration);
+			if (videoDuration > 0) {
+				setDuration(videoDuration);
+			}
 		} else if (status === 'loading') {
 			setIsLoaded(false);
 		}
@@ -111,6 +128,25 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		}
 	}, [isActive, isLoaded, player]);
 
+	// Polling para asegurar que obtenemos la duración
+	useEffect(() => {
+		if (isLoaded && duration === 0) {
+			const interval = setInterval(() => {
+				const videoDuration = player.duration;
+				console.log('Polling duration:', videoDuration);
+				if (videoDuration > 0) {
+					setDuration(videoDuration);
+					clearInterval(interval);
+				}
+			}, 500);
+
+			// Limpiar después de 10 segundos para evitar polling infinito
+			setTimeout(() => clearInterval(interval), 10000);
+
+			return () => clearInterval(interval);
+		}
+	}, [isLoaded, duration, player]);
+
 	const handleVideoPress = () => {
 		if (!showControls) {
 			setShowControls(true);
@@ -131,6 +167,26 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 			player.play();
 		}
 	};
+
+	const handleSeek = useCallback((time: number) => {
+		console.log('Seeking to:', time, 'seconds');
+		setIsSeeking(true);
+		
+		try {
+			// Asegurar que el tiempo está en el rango válido
+			const clampedTime = Math.max(0, Math.min(duration || 0, time));
+			player.currentTime = clampedTime;
+			setCurrentTime(clampedTime);
+			
+			// Resetear el estado después de un breve delay
+			setTimeout(() => {
+				setIsSeeking(false);
+			}, 200);
+		} catch (error) {
+			console.error('Error seeking video:', error);
+			setIsSeeking(false);
+		}
+	}, [player, duration]);
 
 	const handleCommentPress = useCallback(() => {
 		setShowCommentsModal(true);
@@ -228,15 +284,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 					</Animated.View>
 				)}
 
-				{isLoaded && progress > 0 && (
-					<View style={styles.progressContainer}>
-						<View style={styles.progressBar}>
-							<View
-								style={[styles.progressFill, { width: `${progress * 100}%` }]}
-							/>
-						</View>
-					</View>
-				)}
 			</>
 		);
 	};
@@ -272,6 +319,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				currentUser={currentUser}
 				onClose={handleCommentsModalClose}
 				onCommentAdded={handleCommentAdded}
+			/>
+
+			{/* Slider de progreso siempre visible */}
+			<VideoProgressSlider
+				currentTime={currentTime}
+				duration={duration}
+				onSeek={handleSeek}
+				isActive={isActive && isLoaded}
+				isSeeking={isSeeking}
 			/>
 		</View>
 	);
@@ -378,24 +434,6 @@ const styles = StyleSheet.create({
 		backgroundColor: Colors.overlay,
 		justifyContent: 'center',
 		alignItems: 'center',
-	},
-	progressContainer: {
-		position: 'absolute',
-		bottom: 0,
-		left: 0,
-		right: 0,
-		paddingHorizontal: 16,
-		paddingBottom: 16,
-	},
-	progressBar: {
-		height: 2,
-		backgroundColor: Colors.videoProgressBackground,
-		borderRadius: 1,
-	},
-	progressFill: {
-		height: '100%',
-		backgroundColor: Colors.videoProgress,
-		borderRadius: 1,
 	},
 	controlsContainer: {
 		position: 'absolute',
