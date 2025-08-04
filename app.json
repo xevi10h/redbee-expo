@@ -53,7 +53,7 @@
 			[
 				"@stripe/stripe-react-native",
 				{
-					"merchantIdentifier": ["merchant.com.redbeeapp.mobile"],
+					"merchantIdentifier": ["com.redbeeapp.mobile"],
 					"enableGooglePay": true
 				}
 			],

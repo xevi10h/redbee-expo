@@ -1,3 +1,4 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -12,10 +13,24 @@ export default function HomeScreen() {
 	const { t } = useTranslation();
 	const { user } = useRequireAuth();
 	const [activeTab, setActiveTab] = useState<'forYou' | 'following'>('forYou');
+	const [isTabFocused, setIsTabFocused] = useState(true);
 
 	const handleTabChange = useCallback((tab: 'forYou' | 'following') => {
 		setActiveTab(tab);
 	}, []);
+
+	// Handle tab focus/blur to pause videos when navigating away
+	useFocusEffect(
+		useCallback(() => {
+			// Tab is focused - resume videos
+			setIsTabFocused(true);
+			
+			return () => {
+				// Tab is unfocused (user navigated to another tab) - pause all videos
+				setIsTabFocused(false);
+			};
+		}, [])
+	);
 
 	if (!user) {
 		return null;
@@ -33,10 +48,10 @@ export default function HomeScreen() {
 			<View style={styles.content}>
 				{/* Mantener ambos componentes montados para evitar recargas */}
 				<View style={[styles.screenContainer, { opacity: activeTab === 'forYou' ? 1 : 0 }]}>
-					<ForYouScreen user={user} isActive={activeTab === 'forYou'} />
+					<ForYouScreen user={user} isActive={isTabFocused && activeTab === 'forYou'} />
 				</View>
 				<View style={[styles.screenContainer, { opacity: activeTab === 'following' ? 1 : 0 }]}>
-					<FollowingScreen user={user} isActive={activeTab === 'following'} />
+					<FollowingScreen user={user} isActive={isTabFocused && activeTab === 'following'} />
 				</View>
 			</View>
 

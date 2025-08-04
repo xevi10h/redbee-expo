@@ -2,12 +2,22 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
+import { useCallback } from 'react';
 
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useUploadState } from '@/hooks/useUploadState';
 
 export default function TabLayout() {
 	const { t } = useTranslation();
+	const { isAnyProcessActive } = useUploadState();
+
+	// Prevent navigation when upload processes are active
+	const handleTabPress = useCallback((e: any) => {
+		if (isAnyProcessActive()) {
+			e.preventDefault();
+		}
+	}, [isAnyProcessActive]);
 
 	return (
 		<Tabs
@@ -21,6 +31,7 @@ export default function TabLayout() {
 					height: Platform.OS === 'ios' ? 90 : 70,
 					paddingBottom: Platform.OS === 'ios' ? 30 : 10,
 					paddingTop: 10,
+					opacity: isAnyProcessActive() ? 0.5 : 1,
 				},
 				tabBarLabelStyle: {
 					fontSize: 11,
@@ -41,6 +52,9 @@ export default function TabLayout() {
 						<Feather name="home" size={size} color={color} />
 					),
 				}}
+				listeners={{
+					tabPress: handleTabPress,
+				}}
 			/>
 			<Tabs.Screen
 				name="search"
@@ -49,6 +63,9 @@ export default function TabLayout() {
 					tabBarIcon: ({ color, size }) => (
 						<Feather name="search" size={size} color={color} />
 					),
+				}}
+				listeners={{
+					tabPress: handleTabPress,
 				}}
 			/>
 			<Tabs.Screen
@@ -90,6 +107,9 @@ export default function TabLayout() {
 						<Feather name="bell" size={size} color={color} />
 					),
 				}}
+				listeners={{
+					tabPress: handleTabPress,
+				}}
 			/>
 			<Tabs.Screen
 				name="profile"
@@ -98,6 +118,9 @@ export default function TabLayout() {
 					tabBarIcon: ({ color, size }) => (
 						<Feather name="user" size={size} color={color} />
 					),
+				}}
+				listeners={{
+					tabPress: handleTabPress,
 				}}
 			/>
 		</Tabs>

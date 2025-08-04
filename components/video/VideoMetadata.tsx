@@ -1,0 +1,369 @@
+import { Feather } from '@expo/vector-icons';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import React, { useState } from 'react';
+import {
+	Alert,
+	ScrollView,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Spinner } from '@/components/ui/Spinner';
+import { Colors } from '@/constants/Colors';
+import { useTranslation } from '@/hooks/useTranslation';
+
+interface VideoMetadataProps {
+	videoUri: string;
+	startTime: number;
+	endTime: number;
+	onSave: (data: {
+		title: string;
+		description: string;
+		hashtags: string[];
+		isPremium: boolean;
+	}) => void;
+	onBack: () => void;
+	isUploading?: boolean;
+}
+
+export function VideoMetadata({
+	videoUri,
+	startTime,
+	endTime,
+	onSave,
+	onBack,
+	isUploading = false,
+}: VideoMetadataProps) {
+	const { t } = useTranslation();
+
+	// Form state
+	const [title, setTitle] = useState('');
+	const [description, setDescription] = useState('');
+	const [hashtags, setHashtags] = useState('');
+	const [isPremium, setIsPremium] = useState(false);
+
+	// Video player for preview
+	const player = useVideoPlayer(videoUri, (player) => {
+		player.loop = true;
+		player.muted = true;
+		player.currentTime = startTime;
+		player.play();
+	});
+
+	const handleSave = () => {
+		if (!title.trim()) {
+			Alert.alert(t('common.error'), t('upload.titleRequired'));
+			return;
+		}
+
+		const processedHashtags = hashtags
+			.split('#')
+			.map((tag) => tag.trim())
+			.filter((tag) => tag.length > 0);
+
+		onSave({
+			title: title.trim(),
+			description: description.trim(),
+			hashtags: processedHashtags,
+			isPremium,
+		});
+	};
+
+	const formatTime = (timeInSeconds: number) => {
+		const minutes = Math.floor(timeInSeconds / 60);
+		const seconds = Math.floor(timeInSeconds % 60);
+		return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+	};
+
+	return (
+		<SafeAreaView style={styles.container} edges={['top']}>
+			{/* Header */}
+			<View style={styles.header}>
+				<TouchableOpacity onPress={onBack} disabled={isUploading}>
+					<Feather name="arrow-left" size={24} color={Colors.text} />
+				</TouchableOpacity>
+				<Text style={styles.title}>Compartir</Text>
+				<View style={{ width: 24 }} />
+			</View>
+
+			<ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+				{/* Video Preview */}
+				<View style={styles.previewContainer}>
+					<View style={styles.videoPreview}>
+						<VideoView
+							player={player}
+							style={styles.video}
+							contentFit="cover"
+							nativeControls={false}
+							allowsFullscreen={false}
+							allowsPictureInPicture={false}
+						/>
+						<View style={styles.videoOverlay}>
+							<Text style={styles.videoDuration}>
+								{formatTime(endTime - startTime)}
+							</Text>
+						</View>
+					</View>
+
+					<View style={styles.previewInfo}>
+						<Text style={styles.previewTitle}>Vista previa</Text>
+						<Text style={styles.previewSubtitle}>
+							Así se verá tu video
+						</Text>
+					</View>
+				</View>
+
+				{/* Form Fields */}
+				<View style={styles.formContainer}>
+					<Input
+						label={t('upload.videoTitle')}
+						value={title}
+						onChangeText={setTitle}
+						placeholder="Escribe un título llamativo..."
+						maxLength={100}
+						editable={!isUploading}
+					/>
+
+					<Input
+						label={t('upload.videoDescription')}
+						value={description}
+						onChangeText={setDescription}
+						placeholder="Describe tu video..."
+						multiline
+						numberOfLines={4}
+						style={styles.textArea}
+						maxLength={500}
+						editable={!isUploading}
+					/>
+
+					<Input
+						label={t('upload.addHashtags')}
+						value={hashtags}
+						onChangeText={setHashtags}
+						placeholder="#hashtag #otro #ejemplo"
+						maxLength={200}
+						editable={!isUploading}
+					/>
+
+					{/* Premium Toggle */}
+					<View style={styles.premiumContainer}>
+						<View style={styles.premiumInfo}>
+							<Text style={styles.premiumTitle}>
+								{t('upload.makePremium')}
+							</Text>
+							<Text style={styles.premiumDescription}>
+								{isPremium
+									? t('upload.premiumDescription')
+									: t('upload.publicDescription')}
+							</Text>
+						</View>
+						<TouchableOpacity
+							style={[styles.toggle, isPremium && styles.toggleActive]}
+							onPress={() => setIsPremium(!isPremium)}
+							disabled={isUploading}
+						>
+							<View
+								style={[
+									styles.toggleThumb,
+									isPremium && styles.toggleThumbActive,
+								]}
+							/>
+						</TouchableOpacity>
+					</View>
+				</View>
+
+				{/* Action Buttons */}
+				<View style={styles.actionButtons}>
+					<Button
+						title={t('common.cancel')}
+						onPress={onBack}
+						variant="outline"
+						style={styles.cancelButton}
+						disabled={isUploading}
+					/>
+					<Button
+						title={isUploading ? t('upload.uploading') : t('upload.share')}
+						onPress={handleSave}
+						style={styles.shareButton}
+						disabled={isUploading}
+						loading={isUploading}
+					/>
+				</View>
+			</ScrollView>
+
+			{/* Upload overlay */}
+			{isUploading && (
+				<View style={styles.uploadOverlay}>
+					<View style={styles.uploadContainer}>
+						<Spinner size={32} color={Colors.primary} />
+						<Text style={styles.uploadText}>{t('upload.uploadingVideo')}</Text>
+					</View>
+				</View>
+			)}
+		</SafeAreaView>
+	);
+}
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		backgroundColor: Colors.background,
+	},
+	header: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		paddingHorizontal: 16,
+		paddingVertical: 16,
+		borderBottomWidth: 1,
+		borderBottomColor: Colors.borderSecondary,
+	},
+	title: {
+		fontSize: 18,
+		fontFamily: 'Poppins-SemiBold',
+		fontWeight: '600',
+		color: Colors.text,
+	},
+	content: {
+		flex: 1,
+	},
+	previewContainer: {
+		flexDirection: 'row',
+		padding: 16,
+		gap: 16,
+		borderBottomWidth: 1,
+		borderBottomColor: Colors.borderSecondary,
+	},
+	videoPreview: {
+		width: 60,
+		height: 80,
+		borderRadius: 8,
+		overflow: 'hidden',
+		backgroundColor: Colors.backgroundSecondary,
+		position: 'relative',
+	},
+	video: {
+		width: '100%',
+		height: '100%',
+	},
+	videoOverlay: {
+		position: 'absolute',
+		bottom: 4,
+		right: 4,
+		backgroundColor: 'rgba(0, 0, 0, 0.7)',
+		paddingHorizontal: 4,
+		paddingVertical: 2,
+		borderRadius: 4,
+	},
+	videoDuration: {
+		fontSize: 10,
+		fontFamily: 'Inter-Medium',
+		color: Colors.text,
+	},
+	previewInfo: {
+		flex: 1,
+		justifyContent: 'center',
+	},
+	previewTitle: {
+		fontSize: 16,
+		fontFamily: 'Inter-SemiBold',
+		color: Colors.text,
+		marginBottom: 4,
+	},
+	previewSubtitle: {
+		fontSize: 14,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textSecondary,
+	},
+	formContainer: {
+		padding: 16,
+		gap: 16,
+	},
+	textArea: {
+		height: 100,
+		textAlignVertical: 'top',
+	},
+	premiumContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		backgroundColor: Colors.backgroundSecondary,
+		borderRadius: 12,
+		padding: 16,
+	},
+	premiumInfo: {
+		flex: 1,
+		marginRight: 16,
+	},
+	premiumTitle: {
+		fontSize: 16,
+		fontFamily: 'Inter-SemiBold',
+		fontWeight: '600',
+		color: Colors.text,
+		marginBottom: 4,
+	},
+	premiumDescription: {
+		fontSize: 14,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textSecondary,
+	},
+	toggle: {
+		width: 50,
+		height: 30,
+		borderRadius: 15,
+		backgroundColor: Colors.textTertiary,
+		justifyContent: 'center',
+		paddingHorizontal: 2,
+	},
+	toggleActive: {
+		backgroundColor: Colors.primary,
+	},
+	toggleThumb: {
+		width: 26,
+		height: 26,
+		borderRadius: 13,
+		backgroundColor: Colors.text,
+		alignSelf: 'flex-start',
+	},
+	toggleThumbActive: {
+		alignSelf: 'flex-end',
+	},
+	actionButtons: {
+		flexDirection: 'row',
+		gap: 12,
+		padding: 16,
+	},
+	cancelButton: {
+		flex: 1,
+	},
+	shareButton: {
+		flex: 1,
+	},
+	uploadOverlay: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		backgroundColor: 'rgba(0, 0, 0, 0.8)',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	uploadContainer: {
+		backgroundColor: Colors.backgroundSecondary,
+		padding: 24,
+		borderRadius: 12,
+		alignItems: 'center',
+	},
+	uploadText: {
+		fontSize: 16,
+		fontFamily: 'Inter-Medium',
+		fontWeight: '500',
+		color: Colors.text,
+		marginTop: 12,
+	},
+});

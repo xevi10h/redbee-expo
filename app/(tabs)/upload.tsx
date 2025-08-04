@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -12,118 +13,146 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { VideoEditor } from '@/components/video';
+import { Spinner } from '@/components/ui/Spinner';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useUploadState } from '@/hooks/useUploadState';
+import { VideoService } from '@/services/videoService';
+
+interface VideoData {
+	uri: string;
+	duration: number;
+}
 
 export default function UploadScreen() {
 	const { t } = useTranslation();
 	const { user } = useRequireAuth();
+	const { setSelecting, setUploading, setEditing } = useUploadState();
 
-	const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
-	const [videoTitle, setVideoTitle] = useState('');
-	const [videoDescription, setVideoDescription] = useState('');
-	const [hashtags, setHashtags] = useState('');
-	const [isPremium, setIsPremium] = useState(false);
+	const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
+	const [showEditor, setShowEditor] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
+	const [isSelectingVideo, setIsSelectingVideo] = useState(false);
 
 	const handleSelectFromGallery = async () => {
+		if (isSelectingVideo || isUploading) return;
+		
 		try {
-			// TODO: Implement video picker from gallery
-			// const result = await ImagePicker.launchImageLibraryAsync({
-			//   mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-			//   allowsEditing: true,
-			//   quality: 1,
-			//   videoMaxDuration: 300, // 5 minutes
-			// });
+			setIsSelectingVideo(true);
+			setSelecting(true);
+			
+			// Request permissions
+			const permissionResult =
+				await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-			Alert.alert(
-				t('common.info'),
-				'Video picker functionality will be implemented here',
-				[{ text: t('common.ok') }],
-			);
+			if (permissionResult.granted === false) {
+				Alert.alert(
+					t('common.error'),
+					t('upload.galleryPermissionRequired'),
+					[{ text: t('common.ok') }],
+				);
+				return;
+			}
+
+			// Launch image picker
+			const result = await ImagePicker.launchImageLibraryAsync({
+				mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+				allowsEditing: false, // We'll do our own editing
+				quality: 1,
+				videoMaxDuration: 300, // 5 minutes max
+			});
+
+			if (!result.canceled && result.assets[0]) {
+				const asset = result.assets[0];
+				const durationInSeconds = (asset.duration || 0) / 1000; // Convert to seconds
+				
+				// Validate minimum duration (15 seconds)
+				if (durationInSeconds < 15) {
+					Alert.alert(
+						t('common.error'),
+						t('upload.videoTooShort'),
+						[{ text: t('common.ok') }]
+					);
+					return;
+				}
+				
+				// Validate maximum duration (5 minutes = 300 seconds)
+				if (durationInSeconds > 300) {
+					Alert.alert(
+						t('common.error'),
+						t('upload.videoTooLong'),
+						[{ text: t('common.ok') }]
+					);
+					return;
+				}
+				
+				setSelectedVideo({
+					uri: asset.uri,
+					duration: asset.duration || 0,
+				});
+				setShowEditor(true);
+				setEditing(true);
+			}
 		} catch (error) {
 			console.error('Error selecting video:', error);
 			Alert.alert(t('common.error'), t('errors.somethingWentWrong'), [
 				{ text: t('common.ok') },
 			]);
+		} finally {
+			setIsSelectingVideo(false);
+			setSelecting(false);
 		}
 	};
 
-	const handleRecordVideo = async () => {
-		try {
-			// TODO: Implement camera recording
-			// const result = await ImagePicker.launchCameraAsync({
-			//   mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-			//   allowsEditing: true,
-			//   quality: 1,
-			//   videoMaxDuration: 300, // 5 minutes
-			// });
-
-			Alert.alert(
-				t('common.info'),
-				'Camera recording functionality will be implemented here',
-				[{ text: t('common.ok') }],
-			);
-		} catch (error) {
-			console.error('Error recording video:', error);
-			Alert.alert(t('common.error'), t('errors.somethingWentWrong'), [
-				{ text: t('common.ok') },
-			]);
-		}
-	};
-
-	const handlePublish = async () => {
-		if (!selectedVideo) {
-			Alert.alert(t('common.error'), 'Please select a video first', [
-				{ text: t('common.ok') },
-			]);
-			return;
-		}
-
-		if (!videoTitle.trim()) {
-			Alert.alert(t('common.error'), 'Please enter a video title', [
-				{ text: t('common.ok') },
-			]);
-			return;
-		}
+	const handleVideoEditorSave = async (data: {
+		startTime: number;
+		endTime: number;
+		title: string;
+		description: string;
+		hashtags: string[];
+		isPremium: boolean;
+	}) => {
+		if (!selectedVideo || !user) return;
 
 		setIsUploading(true);
+		setUploading(true);
+		setEditing(false);
 
 		try {
-			// TODO: Implement video upload
-			// const uploadData = {
-			//   video: selectedVideo,
-			//   title: videoTitle,
-			//   description: videoDescription,
-			//   hashtags: hashtags.split('#').filter(tag => tag.trim().length > 0),
-			//   is_premium: isPremium,
-			// };
+			// For now, we'll upload the original video
+			// In a production app, you'd want to trim the video on the device first
+			const uploadResult = await VideoService.uploadVideo({
+				videoUri: selectedVideo.uri,
+				title: data.title,
+				description: data.description,
+				hashtags: data.hashtags,
+				isPremium: data.isPremium,
+				userId: user.id,
+			});
 
-			// const result = await VideoService.uploadVideo(uploadData);
-
-			// Simulate upload
-			await new Promise((resolve) => setTimeout(resolve, 3000));
-
-			Alert.alert(
-				t('upload.uploadSuccess'),
-				'Your video has been uploaded successfully!',
-				[
-					{
-						text: t('common.ok'),
-						onPress: () => {
-							// Reset form
-							setSelectedVideo(null);
-							setVideoTitle('');
-							setVideoDescription('');
-							setHashtags('');
-							setIsPremium(false);
+			if (uploadResult.success) {
+				Alert.alert(
+					t('upload.uploadSuccess'),
+					'Your video has been uploaded successfully!',
+					[
+						{
+							text: t('common.ok'),
+							onPress: () => {
+								setSelectedVideo(null);
+								setShowEditor(false);
+							},
 						},
-					},
-				],
-			);
+					],
+				);
+			} else {
+				Alert.alert(
+					t('common.error'),
+					uploadResult.error || 'Failed to upload video',
+					[{ text: t('common.ok') }],
+				);
+			}
 		} catch (error) {
 			console.error('Upload error:', error);
 			Alert.alert(t('common.error'), t('upload.uploadFailed'), [
@@ -131,11 +160,31 @@ export default function UploadScreen() {
 			]);
 		} finally {
 			setIsUploading(false);
+			setUploading(false);
 		}
+	};
+
+	const handleVideoEditorCancel = () => {
+		setSelectedVideo(null);
+		setShowEditor(false);
+		setEditing(false);
 	};
 
 	if (!user) {
 		return null; // useRequireAuth will handle redirect
+	}
+
+	// Show video editor when video is selected
+	if (showEditor && selectedVideo) {
+		return (
+			<VideoEditor
+				videoUri={selectedVideo.uri}
+				duration={selectedVideo.duration / 1000} // Convert to seconds
+				onSave={handleVideoEditorSave}
+				onCancel={handleVideoEditorCancel}
+				isUploading={isUploading}
+			/>
+		);
 	}
 
 	return (
@@ -148,144 +197,72 @@ export default function UploadScreen() {
 			</View>
 
 			<ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-				{!selectedVideo ? (
-					/* Video Selection */
-					<View style={styles.selectionContainer}>
-						<View style={styles.selectionOptions}>
-							<TouchableOpacity
-								style={styles.selectionButton}
-								onPress={handleSelectFromGallery}
+				{/* Video Selection - Only Gallery Option */}
+				<View style={styles.selectionContainer}>
+					<View style={styles.selectionOptions}>
+						<TouchableOpacity
+							style={styles.selectionButton}
+							onPress={handleSelectFromGallery}
+							disabled={isUploading || isSelectingVideo}
+						>
+							<LinearGradient
+								colors={Colors.gradientPrimary}
+								style={styles.selectionButtonGradient}
+								start={{ x: 0, y: 0 }}
+								end={{ x: 1, y: 0 }}
 							>
-								<LinearGradient
-									colors={Colors.gradientPrimary}
-									style={styles.selectionButtonGradient}
-									start={{ x: 0, y: 0 }}
-									end={{ x: 1, y: 0 }}
-								>
+								{isSelectingVideo ? (
+									<Spinner size={32} color={Colors.text} />
+								) : (
 									<Feather name="image" size={32} color={Colors.text} />
-									<Text style={styles.selectionButtonText}>
-										{t('upload.fromGallery')}
-									</Text>
-								</LinearGradient>
-							</TouchableOpacity>
+								)}
+								<Text style={styles.selectionButtonText}>
+									{isSelectingVideo ? t('upload.selectingVideo') : t('upload.fromGallery')}
+								</Text>
+							</LinearGradient>
+						</TouchableOpacity>
+					</View>
 
-							<TouchableOpacity
-								style={styles.selectionButton}
-								onPress={handleRecordVideo}
-							>
-								<View style={styles.selectionButtonSecondary}>
-									<Feather name="camera" size={32} color={Colors.primary} />
-									<Text style={styles.selectionButtonSecondaryText}>
-										{t('upload.useCamera')}
-									</Text>
-								</View>
-							</TouchableOpacity>
+					<View style={styles.infoContainer}>
+						<View style={styles.infoItem}>
+							<Feather name="clock" size={16} color={Colors.textTertiary} />
+							<Text style={styles.infoText}>
+								Duración: 15 segundos - 5 minutos
+							</Text>
 						</View>
-
-						<View style={styles.infoContainer}>
-							<View style={styles.infoItem}>
-								<Feather name="clock" size={16} color={Colors.textTertiary} />
-								<Text style={styles.infoText}>
-									Duración: 15 segundos - 5 minutos
-								</Text>
-							</View>
-							<View style={styles.infoItem}>
-								<Feather
-									name="smartphone"
-									size={16}
-									color={Colors.textTertiary}
-								/>
-								<Text style={styles.infoText}>
-									Formato vertical recomendado (9:16)
-								</Text>
-							</View>
-							<View style={styles.infoItem}>
-								<Feather name="file" size={16} color={Colors.textTertiary} />
-								<Text style={styles.infoText}>Máximo 100MB por video</Text>
-							</View>
+						<View style={styles.infoItem}>
+							<Feather
+								name="smartphone"
+								size={16}
+								color={Colors.textTertiary}
+							/>
+							<Text style={styles.infoText}>
+								Formato vertical recomendado (9:16)
+							</Text>
+						</View>
+						<View style={styles.infoItem}>
+							<Feather name="file" size={16} color={Colors.textTertiary} />
+							<Text style={styles.infoText}>Máximo 100MB por video</Text>
+						</View>
+						<View style={styles.infoItem}>
+							<Feather name="edit-3" size={16} color={Colors.textTertiary} />
+							<Text style={styles.infoText}>
+								Podrás recortar y editar después de seleccionar
+							</Text>
 						</View>
 					</View>
-				) : (
-					/* Video Details Form */
-					<View style={styles.formContainer}>
-						{/* Video Preview Placeholder */}
-						<View style={styles.videoPreview}>
-							<Feather name="play-circle" size={48} color={Colors.primary} />
-							<Text style={styles.videoPreviewText}>Video seleccionado</Text>
-						</View>
-
-						{/* Form Fields */}
-						<Input
-							label={t('upload.videoTitle')}
-							value={videoTitle}
-							onChangeText={setVideoTitle}
-							placeholder="Escribe un título atractivo..."
-							maxLength={100}
-						/>
-
-						<Input
-							label={t('upload.videoDescription')}
-							value={videoDescription}
-							onChangeText={setVideoDescription}
-							placeholder="Describe tu video..."
-							multiline
-							numberOfLines={4}
-							style={styles.textArea}
-							maxLength={500}
-						/>
-
-						<Input
-							label={t('upload.addHashtags')}
-							value={hashtags}
-							onChangeText={setHashtags}
-							placeholder="#hashtag #otro #ejemplo"
-							maxLength={200}
-						/>
-
-						{/* Premium Toggle */}
-						<View style={styles.premiumContainer}>
-							<View style={styles.premiumInfo}>
-								<Text style={styles.premiumTitle}>
-									{t('upload.makePremium')}
-								</Text>
-								<Text style={styles.premiumDescription}>
-									{isPremium
-										? t('upload.premiumDescription')
-										: t('upload.publicDescription')}
-								</Text>
-							</View>
-							<TouchableOpacity
-								style={[styles.toggle, isPremium && styles.toggleActive]}
-								onPress={() => setIsPremium(!isPremium)}
-							>
-								<View
-									style={[
-										styles.toggleThumb,
-										isPremium && styles.toggleThumbActive,
-									]}
-								/>
-							</TouchableOpacity>
-						</View>
-
-						{/* Action Buttons */}
-						<View style={styles.actionButtons}>
-							<Button
-								title={t('common.cancel')}
-								onPress={() => setSelectedVideo(null)}
-								variant="outline"
-								style={styles.cancelButton}
-							/>
-							<Button
-								title={t('upload.publish')}
-								onPress={handlePublish}
-								loading={isUploading}
-								disabled={isUploading}
-								style={styles.publishButton}
-							/>
-						</View>
-					</View>
-				)}
+				</View>
 			</ScrollView>
+
+			{/* Loading overlay */}
+			{isUploading && (
+				<View style={styles.loadingOverlay}>
+					<View style={styles.loadingContainer}>
+						<Spinner size={32} color={Colors.primary} />
+						<Text style={styles.loadingText}>{t('upload.uploadingVideo')}</Text>
+					</View>
+				</View>
+			)}
 		</SafeAreaView>
 	);
 }
@@ -329,28 +306,11 @@ const styles = StyleSheet.create({
 		paddingVertical: 32,
 		paddingHorizontal: 24,
 	},
-	selectionButtonSecondary: {
-		alignItems: 'center',
-		justifyContent: 'center',
-		paddingVertical: 32,
-		paddingHorizontal: 24,
-		backgroundColor: Colors.backgroundSecondary,
-		borderRadius: 16,
-		borderWidth: 2,
-		borderColor: Colors.primary,
-	},
 	selectionButtonText: {
 		fontSize: 18,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
-		marginTop: 12,
-	},
-	selectionButtonSecondaryText: {
-		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
-		fontWeight: '600',
-		color: Colors.primary,
 		marginTop: 12,
 	},
 	infoContainer: {
@@ -445,5 +405,27 @@ const styles = StyleSheet.create({
 	},
 	publishButton: {
 		flex: 2,
+	},
+	loadingOverlay: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	loadingContainer: {
+		backgroundColor: Colors.backgroundSecondary,
+		padding: 24,
+		borderRadius: 12,
+		alignItems: 'center',
+	},
+	loadingText: {
+		fontSize: 16,
+		fontFamily: 'Inter-Medium',
+		fontWeight: '500',
+		color: Colors.text,
 	},
 });

@@ -516,4 +516,83 @@ export class VideoService {
 			// Don't throw error as this is not critical
 		}
 	}
+
+	/**
+	 * Upload a new video
+	 */
+	static async uploadVideo(data: {
+		videoUri: string;
+		title: string;
+		description?: string;
+		hashtags?: string[];
+		isPremium: boolean;
+		userId: string;
+	}): Promise<AuthResponse<{ videoId: string }>> {
+		try {
+			const { videoUri, title, description, hashtags, isPremium, userId } = data;
+
+			// Generate unique filename
+			const timestamp = Date.now();
+			const fileName = `video_${userId}_${timestamp}.mp4`;
+			
+			// Read video file
+			const response = await fetch(videoUri);
+			const blob = await response.blob();
+			const arrayBuffer = await blob.arrayBuffer();
+
+			// Upload video to Supabase Storage
+			const { data: uploadData, error: uploadError } = await supabase.storage
+				.from('videos')
+				.upload(fileName, arrayBuffer, {
+					contentType: 'video/mp4',
+					upsert: false
+				});
+
+			if (uploadError) {
+				return {
+					success: false,
+					error: `Failed to upload video: ${uploadError.message}`,
+				};
+			}
+
+			// Get public URL
+			const { data: urlData } = supabase.storage
+				.from('videos')
+				.getPublicUrl(fileName);
+
+			// Insert video record in database
+			const { data: videoData, error: dbError } = await supabase
+				.from('videos')
+				.insert({
+					user_id: userId,
+					title,
+					description: description || '',
+					hashtags: hashtags || [],
+					video_url: urlData.publicUrl,
+					is_premium: isPremium,
+					duration: 0, // Will be updated when we can calculate duration
+				})
+				.select('id')
+				.single();
+
+			if (dbError) {
+				// If database insert fails, clean up uploaded file
+				await supabase.storage.from('videos').remove([fileName]);
+				return {
+					success: false,
+					error: `Failed to save video record: ${dbError.message}`,
+				};
+			}
+
+			return {
+				success: true,
+				data: { videoId: videoData.id },
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to upload video',
+			};
+		}
+	}
 }
