@@ -109,6 +109,7 @@ export default function UploadScreen() {
 	const handleVideoEditorSave = async (data: {
 		startTime: number;
 		endTime: number;
+		thumbnailTime: number;
 		title: string;
 		description: string;
 		hashtags: string[];
@@ -130,6 +131,9 @@ export default function UploadScreen() {
 				hashtags: data.hashtags,
 				isPremium: data.isPremium,
 				userId: user.id,
+				startTime: data.startTime,
+				endTime: data.endTime,
+				thumbnailTime: data.thumbnailTime,
 			});
 
 			if (uploadResult.success) {

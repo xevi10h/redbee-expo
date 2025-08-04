@@ -9,6 +9,7 @@ interface VideoEditorProps {
 	onSave: (data: {
 		startTime: number;
 		endTime: number;
+		thumbnailTime: number;
 		title: string;
 		description: string;
 		hashtags: string[];
@@ -45,6 +46,7 @@ export function VideoEditor({
 		setEndTime(end);
 	};
 
+
 	const handleMetadataBack = () => {
 		setStep('trim');
 	};
@@ -54,6 +56,7 @@ export function VideoEditor({
 		description: string;
 		hashtags: string[];
 		isPremium: boolean;
+		thumbnailTime: number;
 	}) => {
 		onSave({
 			startTime,

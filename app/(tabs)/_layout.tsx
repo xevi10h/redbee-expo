@@ -24,14 +24,15 @@ export default function TabLayout() {
 			screenOptions={{
 				tabBarActiveTintColor: Colors.tabBarActive,
 				tabBarInactiveTintColor: Colors.tabBarInactive,
-				tabBarStyle: {
+				tabBarStyle: isAnyProcessActive() ? {
+					display: 'none',
+				} : {
 					backgroundColor: Colors.tabBarBackground,
 					borderTopWidth: 1,
 					borderTopColor: Colors.tabBarBorder,
 					height: Platform.OS === 'ios' ? 90 : 70,
 					paddingBottom: Platform.OS === 'ios' ? 30 : 10,
 					paddingTop: 10,
-					opacity: isAnyProcessActive() ? 0.5 : 1,
 				},
 				tabBarLabelStyle: {
 					fontSize: 11,

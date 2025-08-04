@@ -24,6 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
+import { VideoThumbnails } from './VideoThumbnails';
 
 const { width: screenWidth } = Dimensions.get('window');
 const TRIMMER_WIDTH = screenWidth - 32;
@@ -408,6 +409,7 @@ export function VideoTrimmer({
 							)}
 						</TouchableOpacity>
 					)}
+
 				</View>
 
 				{/* Time Display */}
@@ -423,8 +425,11 @@ export function VideoTrimmer({
 				{/* Video Trimmer */}
 				<View style={styles.trimmerContainer}>
 					<View style={styles.trimmerTrack}>
-						{/* Background track */}
-						<View style={styles.trackBackground} />
+						{/* Video thumbnails background */}
+						<VideoThumbnails 
+							videoUri={videoUri}
+							duration={duration}
+						/>
 
 						{/* Left overlay (before start) */}
 						<Animated.View style={[styles.overlay, leftOverlayStyle]} />
@@ -565,29 +570,27 @@ const styles = StyleSheet.create({
 	trimmerContainer: {
 		backgroundColor: Colors.backgroundSecondary,
 		paddingHorizontal: 16,
-		paddingVertical: 20,
+		paddingTop: 10,
+		paddingBottom: 16,
 	},
 	trimmerTrack: {
 		height: 60,
 		width: TRIMMER_WIDTH,
 		position: 'relative',
-		backgroundColor: Colors.backgroundTertiary,
 		borderRadius: 8,
 		overflow: 'hidden',
-	},
-	trackBackground: {
-		...StyleSheet.absoluteFillObject,
-		backgroundColor: Colors.backgroundTertiary,
+		backgroundColor: '#000', // Fallback while thumbnails load
 	},
 	overlay: {
 		position: 'absolute',
-		top: 0,
+		bottom: 0,
 		height: 60,
+		borderRadius: 8,
 		backgroundColor: 'rgba(0, 0, 0, 0.6)',
 	},
 	selectedRange: {
 		position: 'absolute',
-		top: 0,
+		bottom: 0,
 		height: 60,
 		backgroundColor: 'transparent',
 		borderTopWidth: 3,
@@ -597,7 +600,7 @@ const styles = StyleSheet.create({
 	},
 	currentTimeIndicator: {
 		position: 'absolute',
-		top: 0,
+		bottom: 0,
 		width: 3,
 		height: 60,
 		backgroundColor: Colors.warning,
@@ -627,10 +630,10 @@ const styles = StyleSheet.create({
 	currentTimeHandle: {
 		position: 'absolute',
 		width: 30, // Even larger touch area
-		height: 70, // Taller touch area
+		height: 60, // Match trimmer height
 		backgroundColor: 'transparent',
 		left: -13.5, // Center the touch area over the indicator
-		top: -10,
+		top: 0,
 	},
 	trimHandle: {
 		position: 'absolute',

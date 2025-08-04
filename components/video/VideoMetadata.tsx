@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
+import { ThumbnailSelector } from './ThumbnailSelector';
 
 interface VideoMetadataProps {
 	videoUri: string;
@@ -26,6 +27,7 @@ interface VideoMetadataProps {
 		description: string;
 		hashtags: string[];
 		isPremium: boolean;
+		thumbnailTime: number;
 	}) => void;
 	onBack: () => void;
 	isUploading?: boolean;
@@ -46,13 +48,14 @@ export function VideoMetadata({
 	const [description, setDescription] = useState('');
 	const [hashtags, setHashtags] = useState('');
 	const [isPremium, setIsPremium] = useState(false);
+	const [thumbnailTime, setThumbnailTime] = useState(startTime);
+	const [showThumbnailSelector, setShowThumbnailSelector] = useState(false);
 
-	// Video player for preview
+	// Video player for preview - show thumbnail frame
 	const player = useVideoPlayer(videoUri, (player) => {
-		player.loop = true;
+		player.loop = false;
 		player.muted = true;
-		player.currentTime = startTime;
-		player.play();
+		player.currentTime = thumbnailTime;
 	});
 
 	const handleSave = () => {
@@ -71,7 +74,18 @@ export function VideoMetadata({
 			description: description.trim(),
 			hashtags: processedHashtags,
 			isPremium,
+			thumbnailTime,
 		});
+	};
+
+	const handleThumbnailSelect = (time: number) => {
+		setThumbnailTime(time);
+		// Update video player to show new thumbnail
+		try {
+			player.currentTime = time;
+		} catch (error) {
+			console.warn('Error updating video time:', error);
+		}
 	};
 
 	const formatTime = (timeInSeconds: number) => {
@@ -94,7 +108,12 @@ export function VideoMetadata({
 			<ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
 				{/* Video Preview */}
 				<View style={styles.previewContainer}>
-					<View style={styles.videoPreview}>
+					<TouchableOpacity 
+						style={styles.videoPreview}
+						onPress={() => setShowThumbnailSelector(true)}
+						disabled={isUploading}
+						activeOpacity={0.8}
+					>
 						<VideoView
 							player={player}
 							style={styles.video}
@@ -108,12 +127,20 @@ export function VideoMetadata({
 								{formatTime(endTime - startTime)}
 							</Text>
 						</View>
-					</View>
+						<View style={styles.editOverlay}>
+							<View style={styles.editIcon}>
+								<Text style={styles.editIconText}>✏️</Text>
+							</View>
+						</View>
+					</TouchableOpacity>
 
 					<View style={styles.previewInfo}>
-						<Text style={styles.previewTitle}>Vista previa</Text>
+						<Text style={styles.previewTitle}>Portada del video</Text>
 						<Text style={styles.previewSubtitle}>
-							Así se verá tu video
+							Frame: {formatTime(thumbnailTime)}
+						</Text>
+						<Text style={styles.previewNote}>
+							Toca la imagen para cambiar la portada
 						</Text>
 					</View>
 				</View>
@@ -205,6 +232,17 @@ export function VideoMetadata({
 					</View>
 				</View>
 			)}
+
+			{/* Thumbnail Selector Modal */}
+			<ThumbnailSelector
+				visible={showThumbnailSelector}
+				videoUri={videoUri}
+				startTime={startTime}
+				endTime={endTime}
+				selectedTime={thumbnailTime}
+				onSelect={handleThumbnailSelect}
+				onClose={() => setShowThumbnailSelector(false)}
+			/>
 		</SafeAreaView>
 	);
 }
@@ -260,6 +298,23 @@ const styles = StyleSheet.create({
 		paddingVertical: 2,
 		borderRadius: 4,
 	},
+	editOverlay: {
+		position: 'absolute',
+		top: 4,
+		right: 4,
+		backgroundColor: 'rgba(0, 0, 0, 0.7)',
+		borderRadius: 4,
+		padding: 4,
+	},
+	editIcon: {
+		width: 24,
+		height: 24,
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+	editIconText: {
+		fontSize: 12,
+	},
 	videoDuration: {
 		fontSize: 10,
 		fontFamily: 'Inter-Medium',
@@ -277,8 +332,14 @@ const styles = StyleSheet.create({
 	},
 	previewSubtitle: {
 		fontSize: 14,
+		fontFamily: 'Inter-Medium',
+		color: Colors.primary,
+		marginBottom: 2,
+	},
+	previewNote: {
+		fontSize: 12,
 		fontFamily: 'Inter-Regular',
-		color: Colors.textSecondary,
+		color: Colors.textTertiary,
 	},
 	formContainer: {
 		padding: 16,
