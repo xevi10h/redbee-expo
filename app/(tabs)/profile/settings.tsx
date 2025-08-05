@@ -173,13 +173,11 @@ export default function SettingsScreen() {
 		useState<NotificationPreferences | null>(null);
 
 	const handleEditProfile = () => {
-		console.log('Navigate to edit profile');
-		// TODO: Implement navigation to edit profile screen
+		router.push('/(tabs)/profile/edit');
 	};
 
 	const handleChangePassword = () => {
-		console.log('Navigate to change password');
-		// TODO: Implement navigation to change password screen
+		router.push('/(tabs)/profile/change-password');
 	};
 
 	const handlePrivacySettings = () => {

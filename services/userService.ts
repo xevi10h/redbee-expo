@@ -70,6 +70,43 @@ export class UserService {
 	}
 
 	/**
+	 * Update user profile
+	 */
+	static async updateProfile(userId: string, updates: {
+		display_name?: string;
+		username?: string;
+		bio?: string;
+		subscription_price?: number;
+		avatar_url?: string;
+	}): Promise<AuthResponse<User>> {
+		try {
+			const { data, error } = await supabase
+				.from('profiles')
+				.update(updates)
+				.eq('id', userId)
+				.select()
+				.single();
+
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			return {
+				success: true,
+				data,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to update profile',
+			};
+		}
+	}
+
+	/**
 	 * Get user profile with interaction states
 	 */
 	static async getUserProfile(userId: string, viewerId?: string): Promise<AuthResponse<User & {

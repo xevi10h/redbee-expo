@@ -33,6 +33,15 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 	isActive,
 	isSeeking = false,
 }) => {
+	// Debug logging for props
+	React.useEffect(() => {
+		console.log('📊 VideoProgressSlider props:', {
+			currentTime: currentTime.toFixed(2),
+			duration: duration.toFixed(2),
+			isActive,
+			isSeeking
+		});
+	}, [currentTime, duration, isActive, isSeeking]);
 	const [isDragging, setIsDragging] = useState(false);
 	const [localProgress, setLocalProgress] = useState(0);
 	const thumbPosition = useRef(new Animated.Value(0)).current;
@@ -70,11 +79,22 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 			const clampedX = Math.max(0, Math.min(SLIDER_WIDTH, locationX));
 			const newProgress = clampedX / SLIDER_WIDTH;
 
+			console.log('Touch at:', locationX, 'clamped:', clampedX, 'progress:', newProgress);
+			
 			setLocalProgress(newProgress);
 			thumbPosition.setValue(clampedX);
 		},
 		[thumbPosition],
 	);
+
+	const durationRef = useRef(duration);
+	const onSeekRef = useRef(onSeek);
+	
+	// Keep refs up to date
+	React.useEffect(() => {
+		durationRef.current = duration;
+		onSeekRef.current = onSeek;
+	}, [duration, onSeek]);
 
 	const panResponder = useRef(
 		PanResponder.create({
@@ -91,56 +111,72 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 			},
 
 			onPanResponderRelease: (event) => {
+				// Use current refs to avoid stale closure values
+				const currentDuration = durationRef.current;
+				const currentOnSeek = onSeekRef.current;
+				
 				// Calcular el progreso basado en la posición actual del evento
 				const { locationX } = event.nativeEvent;
 				const clampedX = Math.max(0, Math.min(SLIDER_WIDTH, locationX));
 				const finalProgress = clampedX / SLIDER_WIDTH;
-				const newTime = finalProgress * duration;
+				const newTime = finalProgress * currentDuration;
 
 				console.log(
-					'Slider releasing at progress:',
-					finalProgress,
-					'time:',
-					newTime,
-					'locationX:',
-					locationX,
-					'duration:',
-					duration,
+					'🎯 Slider releasing at:',
+					'locationX:', locationX,
+					'clampedX:', clampedX,
+					'progress:', finalProgress,
+					'newTime:', newTime,
+					'currentDuration:', currentDuration,
 				);
 
 				// Solo hacer seek si tenemos una duración válida
-				if (duration > 0) {
-					onSeek(newTime);
+				if (currentDuration > 0 && newTime >= 0) {
+					console.log('✅ Calling onSeek with time:', newTime);
+					currentOnSeek(newTime);
 				} else {
-					console.warn('Cannot seek: duration is 0');
+					console.warn('❌ Cannot seek: invalid duration or time', { 
+						currentDuration, 
+						newTime,
+						originalDuration: duration 
+					});
 				}
+				
 				setIsDragging(false);
 			},
 
 			onPanResponderTerminate: (event) => {
+				// Use current refs to avoid stale closure values
+				const currentDuration = durationRef.current;
+				const currentOnSeek = onSeekRef.current;
+				
 				// Calcular el progreso basado en la posición actual del evento
 				const { locationX } = event.nativeEvent;
 				const clampedX = Math.max(0, Math.min(SLIDER_WIDTH, locationX));
 				const finalProgress = clampedX / SLIDER_WIDTH;
-				const newTime = finalProgress * duration;
+				const newTime = finalProgress * currentDuration;
 
 				console.log(
-					'Slider terminating at progress:',
-					finalProgress,
-					'time:',
-					newTime,
-					'locationX:',
-					locationX,
-					'duration:',
-					duration,
+					'🔄 Slider terminating at:',
+					'locationX:', locationX,
+					'clampedX:', clampedX, 
+					'progress:', finalProgress,
+					'newTime:', newTime,
+					'currentDuration:', currentDuration,
 				);
 
 				// Solo hacer seek si tenemos una duración válida
-				if (duration > 0) {
-					onSeek(newTime);
+				if (currentDuration > 0 && newTime >= 0) {
+					console.log('✅ Calling onSeek with time:', newTime);
+					currentOnSeek(newTime);
 				} else {
-					console.warn('Cannot seek: duration is 0');
+					console.warn('❌ Cannot seek: invalid duration or time', { 
+						currentDuration, 
+						newTime,
+						originalDuration: duration 
+					});
 				}
+				
 				setIsDragging(false);
 			},
 		}),
@@ -200,14 +236,14 @@ const styles = StyleSheet.create({
 		bottom: TAB_BAR_HEIGHT, // Justo tocando con los tabs pero sin quedar debajo
 		left: 0,
 		right: 0,
-		height: TRACK_HEIGHT + 10, // Altura mínima para permitir toques
+		height: TRACK_HEIGHT + 20, // Altura mínima para permitir toques
 		zIndex: 100,
 	},
 	sliderContainer: {
-		height: TRACK_HEIGHT + 10,
+		height: TRACK_HEIGHT + 20, // Más área de toque
 		justifyContent: 'center',
 		position: 'relative',
-		paddingVertical: 5, // Un poco de espacio para toques
+		paddingVertical: 10, // Más espacio para toques más fáciles
 	},
 	track: {
 		height: TRACK_HEIGHT,
@@ -232,7 +268,7 @@ const styles = StyleSheet.create({
 		borderRadius: THUMB_SIZE / 2,
 		backgroundColor: Colors.primary,
 		position: 'absolute',
-		top: (TRACK_HEIGHT + 10) / 2 - THUMB_SIZE / 2,
+		top: (TRACK_HEIGHT + 20) / 2 - THUMB_SIZE / 2,
 		marginLeft: -THUMB_SIZE / 2,
 		shadowColor: '#000',
 		shadowOffset: { width: 0, height: 2 },

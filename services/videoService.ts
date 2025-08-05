@@ -517,6 +517,7 @@ export class VideoService {
 		}
 	}
 
+
 	/**
 	 * Upload a new video
 	 */
@@ -535,25 +536,43 @@ export class VideoService {
 			const timestamp = Date.now();
 			const fileName = `video_${userId}_${timestamp}.mp4`;
 			
-			// Read video file
-			const response = await fetch(videoUri);
-			const blob = await response.blob();
-			const arrayBuffer = await blob.arrayBuffer();
-
-			// Upload video to Supabase Storage
-			const { data: uploadData, error: uploadError } = await supabase.storage
-				.from('videos')
-				.upload(fileName, arrayBuffer, {
-					contentType: 'video/mp4',
-					upsert: false
-				});
-
-			if (uploadError) {
-				return {
-					success: false,
-					error: `Failed to upload video: ${uploadError.message}`,
-				};
+			// Upload video to Supabase Storage - React Native compatible approach
+			// Create FormData for the upload
+			const formData = new FormData();
+			
+			// Add the video file to FormData
+			formData.append('file', {
+				uri: videoUri,
+				type: 'video/mp4',
+				name: fileName,
+			} as any);
+			
+			// Get Supabase URL and headers
+			const { data: { session } } = await supabase.auth.getSession();
+			const authToken = session?.access_token;
+			
+			if (!authToken) {
+				throw new Error('No authentication token found');
 			}
+			
+			// Upload using fetch directly to Supabase Storage API
+			const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+			const uploadUrl = `${supabaseUrl}/storage/v1/object/videos/${fileName}`;
+			
+			const uploadResponse = await fetch(uploadUrl, {
+				method: 'POST',
+				headers: {
+					'Authorization': `Bearer ${authToken}`,
+				},
+				body: formData,
+			});
+			
+			if (!uploadResponse.ok) {
+				const errorText = await uploadResponse.text();
+				throw new Error(`Upload failed: ${errorText}`);
+			}
+			
+			// Upload successful - no need to process response data
 
 			// Get public URL
 			const { data: urlData } = supabase.storage

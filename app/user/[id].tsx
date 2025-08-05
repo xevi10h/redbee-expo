@@ -127,8 +127,7 @@ export default function UserProfileScreen() {
 	}, [userProfile, loadUserVideos]);
 
 	const handleVideoPress = useCallback((video: Video) => {
-		console.log('Video pressed:', video.id);
-		// TODO: Navigate to video player
+		router.push(`/video/${video.id}`);
 	}, []);
 
 	const handleFollowPress = useCallback(async () => {

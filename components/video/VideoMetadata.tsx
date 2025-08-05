@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
+import { HashtagInput } from '@/components/ui/HashtagInput';
 import { Input } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Spinner';
 import { Colors } from '@/constants/Colors';
@@ -46,7 +47,7 @@ export function VideoMetadata({
 	// Form state
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
-	const [hashtags, setHashtags] = useState('');
+	const [hashtags, setHashtags] = useState<string[]>([]);
 	const [isPremium, setIsPremium] = useState(false);
 	const [thumbnailTime, setThumbnailTime] = useState(startTime);
 	const [showThumbnailSelector, setShowThumbnailSelector] = useState(false);
@@ -64,15 +65,10 @@ export function VideoMetadata({
 			return;
 		}
 
-		const processedHashtags = hashtags
-			.split('#')
-			.map((tag) => tag.trim())
-			.filter((tag) => tag.length > 0);
-
 		onSave({
 			title: title.trim(),
 			description: description.trim(),
-			hashtags: processedHashtags,
+			hashtags: hashtags,
 			isPremium,
 			thumbnailTime,
 		});
@@ -168,12 +164,12 @@ export function VideoMetadata({
 						editable={!isUploading}
 					/>
 
-					<Input
+					<HashtagInput
 						label={t('upload.addHashtags')}
-						value={hashtags}
-						onChangeText={setHashtags}
-						placeholder="#hashtag #otro #ejemplo"
-						maxLength={200}
+						hashtags={hashtags}
+						onHashtagsChange={setHashtags}
+						maxHashtags={10}
+						placeholder="Escribe hashtag y presiona Enter"
 						editable={!isUploading}
 					/>
 

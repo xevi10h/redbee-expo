@@ -4,8 +4,11 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import {
+	ActivityIndicator,
 	Dimensions,
 	FlatList,
+	Image,
+	RefreshControl,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -17,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
+import { useProfileVideos } from '@/hooks/useProfileVideos';
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatCurrency, formatNumber } from '@/shared/functions/utils';
 import { Video } from '@/shared/types';
@@ -58,75 +62,107 @@ export default function ProfileScreen() {
 	const { user } = useRequireAuth();
 
 	const [currentTab, setCurrentTab] = useState<'videos' | 'liked'>('videos');
+	const [isRefreshing, setIsRefreshing] = useState(false);
 
-	// Mock data for user videos
-	const mockVideos: Video[] = [
-		{
-			id: '1',
-			user_id: user?.id || '',
-			title: 'My first video',
-			video_url: '',
-			is_premium: false,
-			likes_count: 1250,
-			comments_count: 89,
-			views_count: 15600,
-			created_at: new Date().toISOString(),
-		},
-		{
-			id: '2',
-			user_id: user?.id || '',
-			title: 'Premium content',
-			video_url: '',
-			is_premium: true,
-			likes_count: 890,
-			comments_count: 45,
-			views_count: 5200,
-			created_at: new Date().toISOString(),
-		},
-		{
-			id: '3',
-			user_id: user?.id || '',
-			title: 'Another video',
-			video_url: '',
-			is_premium: false,
-			likes_count: 2100,
-			comments_count: 156,
-			views_count: 28900,
-			created_at: new Date().toISOString(),
-		},
-	] as Video[];
+	// Real data from the database
+	const {
+		userVideos,
+		likedVideos,
+		isLoadingVideos,
+		isLoadingLiked,
+		hasMoreVideos,
+		hasMoreLiked,
+		error,
+		loadMoreUserVideos,
+		loadMoreLikedVideos,
+		refreshVideos,
+	} = useProfileVideos(user?.id || '', user?.id);
 
 	const handleVideoPress = (video: Video) => {
-		console.log('Video pressed:', video.id);
-		// TODO: Navigate to video player
+		// Navigate to the video player screen
+		router.push(`/video/${video.id}`);
 	};
 
 	const handleEditProfile = () => {
-		console.log('Edit profile pressed');
-		// TODO: Navigate to edit profile screen
+		router.push('/(tabs)/profile/edit');
 	};
 
 	const handleSettings = () => {
 		router.push('/(tabs)/profile/settings');
 	};
 
-	const renderVideoItem = ({ item }: { item: Video }) => (
-		<VideoThumbnail video={item} onPress={() => handleVideoPress(item)} />
-	);
+	const renderVideoItem = ({ item, index }: { item: Video; index: number }) => {
+		const currentVideos = currentTab === 'videos' ? userVideos : likedVideos;
+		const hasMore = currentTab === 'videos' ? hasMoreVideos : hasMoreLiked;
+		const isLoading = currentTab === 'videos' ? isLoadingVideos : isLoadingLiked;
+		
+		// Load more when reaching near the end
+		if (index === currentVideos.length - 5 && hasMore && !isLoading) {
+			if (currentTab === 'videos') {
+				loadMoreUserVideos();
+			} else {
+				loadMoreLikedVideos();
+			}
+		}
 
-	const renderEmptyState = () => (
-		<View style={styles.emptyState}>
-			<Feather name="video" size={48} color={Colors.textTertiary} />
-			<Text style={styles.emptyTitle}>
-				{currentTab === 'videos' ? t('profile.noVideos') : 'No liked videos'}
-			</Text>
-			<Text style={styles.emptySubtitle}>
-				{currentTab === 'videos'
-					? 'Share your first video to get started'
-					: 'Videos you like will appear here'}
-			</Text>
-		</View>
-	);
+		return <VideoThumbnail video={item} onPress={() => handleVideoPress(item)} />;
+	};
+
+	const handleRefresh = async () => {
+		setIsRefreshing(true);
+		await refreshVideos();
+		setIsRefreshing(false);
+	};
+
+	const renderEmptyState = () => {
+		if (error) {
+			return (
+				<View style={styles.emptyState}>
+					<Feather name="alert-circle" size={48} color={Colors.error} />
+					<Text style={styles.emptyTitle}>Error loading videos</Text>
+					<Text style={styles.emptySubtitle}>{error}</Text>
+					<Button
+						title="Retry"
+						onPress={handleRefresh}
+						variant="outline"
+						style={{ marginTop: 16, maxWidth: 120 }}
+					/>
+				</View>
+			);
+		}
+
+		return (
+			<View style={styles.emptyState}>
+				<Feather 
+					name={currentTab === 'videos' ? 'video' : 'heart'} 
+					size={48} 
+					color={Colors.textTertiary} 
+				/>
+				<Text style={styles.emptyTitle}>
+					{currentTab === 'videos' ? t('profile.noVideos') : 'No liked videos'}
+				</Text>
+				<Text style={styles.emptySubtitle}>
+					{currentTab === 'videos'
+						? 'Share your first video to get started'
+						: 'Videos you like will appear here'}
+				</Text>
+			</View>
+		);
+	};
+
+	const renderLoadingFooter = () => {
+		const isLoading = currentTab === 'videos' ? isLoadingVideos : isLoadingLiked;
+		const hasMore = currentTab === 'videos' ? hasMoreVideos : hasMoreLiked;
+		
+		if (!isLoading || !hasMore) return null;
+		
+		return (
+			<View style={styles.loadingFooter}>
+				<ActivityIndicator size="small" color={Colors.primary} />
+			</View>
+		);
+	};
+
 
 	if (!user) {
 		return null; // useRequireAuth will handle redirect
@@ -150,6 +186,14 @@ export default function ProfileScreen() {
 			<ScrollView
 				style={styles.scrollContainer}
 				showsVerticalScrollIndicator={false}
+				refreshControl={
+					<RefreshControl
+						refreshing={isRefreshing}
+						onRefresh={handleRefresh}
+						tintColor={Colors.primary}
+						colors={[Colors.primary]}
+					/>
+				}
 			>
 				{/* Header */}
 				<View style={styles.header}>
@@ -161,8 +205,11 @@ export default function ProfileScreen() {
 							end={{ x: 1, y: 0 }}
 						>
 							{user.avatar_url ? (
-								// TODO: Add Image component when avatar is available
-								<Feather name="user" size={32} color={Colors.text} />
+								<Image 
+									source={{ uri: user.avatar_url }} 
+									style={styles.avatarImage}
+									resizeMode="cover"
+								/>
 							) : (
 								<Feather name="user" size={32} color={Colors.text} />
 							)}
@@ -272,7 +319,7 @@ export default function ProfileScreen() {
 				{/* Video Grid */}
 				<View style={styles.videosContainer}>
 					<FlatList
-						data={currentTab === 'videos' ? mockVideos : []}
+						data={currentTab === 'videos' ? userVideos : likedVideos}
 						renderItem={renderVideoItem}
 						keyExtractor={(item) => item.id}
 						numColumns={3}
@@ -283,6 +330,7 @@ export default function ProfileScreen() {
 						)}
 						columnWrapperStyle={styles.videoRow}
 						ListEmptyComponent={renderEmptyState}
+						ListFooterComponent={renderLoadingFooter}
 					/>
 				</View>
 			</ScrollView>
@@ -506,5 +554,38 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-Regular',
 		color: Colors.textTertiary,
 		textAlign: 'center',
+	},
+	avatarImage: {
+		width: 80,
+		height: 80,
+		borderRadius: 40,
+	},
+	thumbnailImage: {
+		width: '100%',
+		height: '100%',
+		borderRadius: 8,
+	},
+	placeholderThumbnail: {
+		width: '100%',
+		height: '100%',
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: Colors.backgroundSecondary,
+	},
+	playOverlay: {
+		position: 'absolute',
+		top: '50%',
+		left: '50%',
+		transform: [{ translateX: -10 }, { translateY: -10 }],
+		backgroundColor: 'rgba(0, 0, 0, 0.6)',
+		borderRadius: 20,
+		width: 40,
+		height: 40,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	loadingFooter: {
+		paddingVertical: 20,
+		alignItems: 'center',
 	},
 });

@@ -284,12 +284,51 @@ export class NotificationService {
 				.single();
 
 			if (error) {
+				// If no preferences exist, create default ones
+				if (error.code === 'PGRST116') {
+					return await this.createDefaultPreferences(userId);
+				}
 				throw error;
 			}
 
 			return { data, error: null };
 		} catch (error) {
 			console.error('Error fetching notification preferences:', error);
+			return { data: null, error: error as Error };
+		}
+	}
+
+	/**
+	 * Create default notification preferences for a user
+	 */
+	static async createDefaultPreferences(
+		userId: string
+	): Promise<{ data: NotificationPreferences | null; error: Error | null }> {
+		try {
+			const defaultPreferences = {
+				user_id: userId,
+				push_notifications_enabled: true,
+				video_likes_enabled: true,
+				new_followers_enabled: true,
+				comment_likes_enabled: true,
+				video_comments_enabled: true,
+				comment_replies_enabled: true,
+				email_notifications_enabled: false,
+			};
+
+			const { data, error } = await supabase
+				.from('notification_preferences')
+				.insert(defaultPreferences)
+				.select()
+				.single();
+
+			if (error) {
+				throw error;
+			}
+
+			return { data, error: null };
+		} catch (error) {
+			console.error('Error creating default preferences:', error);
 			return { data: null, error: error as Error };
 		}
 	}

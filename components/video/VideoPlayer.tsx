@@ -56,8 +56,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const player = useVideoPlayer(video.video_url, (player) => {
 		player.loop = true;
 		player.muted = false;
-		player.timeUpdateEventInterval = 0.5;
+		player.timeUpdateEventInterval = 0.1; // More frequent updates to catch duration sooner
 		player.audioMixingMode = 'mixWithOthers';
+		
+		// Try to get duration immediately
+		console.log('🎥 Player created, initial duration:', player.duration);
 	});
 
 	const { isPlaying } = useEvent(player, 'playingChange', {
@@ -70,34 +73,47 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const [isSeeking, setIsSeeking] = useState(false);
 
 	useEventListener(player, 'timeUpdate', ({ currentTime: time }) => {
+		// Only update currentTime if we're not currently seeking to avoid conflicts
 		if (!isSeeking) {
 			setCurrentTime(time);
 		}
+		
+		// Update duration if it has changed
 		const videoDuration = player.duration;
-		if (videoDuration !== duration) {
-			console.log('Video duration updated:', videoDuration);
+		if (videoDuration !== duration && videoDuration > 0) {
+			console.log('📏 Duration updated during timeUpdate:', videoDuration, 'previous:', duration);
 			setDuration(videoDuration);
+		}
+		
+		// Debug logging every few seconds
+		if (Math.floor(time) % 5 === 0 && time > 0) {
+			console.log('⏰ Time update - current:', time.toFixed(2), 'duration:', videoDuration, 'state duration:', duration);
 		}
 	});
 
 	useEventListener(player, 'statusChange', ({ status, error }) => {
-		console.log('Video status changed:', status, 'duration:', player.duration);
+		console.log('🎬 Video status changed:', status, 'player.duration:', player.duration);
 		if (status === 'error') {
-			console.error('Video load error:', error);
+			console.error('❌ Video load error:', error);
 			setHasError(true);
 			setIsLoaded(false);
 			setIsSeeking(false);
 		} else if (status === 'readyToPlay') {
+			console.log('✅ Video ready to play');
 			setHasError(false);
 			setIsLoaded(true);
 			setIsSeeking(false);
 			// Asegurar que obtenemos la duración cuando el video está listo
 			const videoDuration = player.duration;
-			console.log('Video ready, duration:', videoDuration);
+			console.log('📏 Video ready, player.duration:', videoDuration, 'current state duration:', duration);
 			if (videoDuration > 0) {
+				console.log('✅ Setting duration to:', videoDuration);
 				setDuration(videoDuration);
+			} else {
+				console.warn('⚠️ Player duration is still 0 when ready');
 			}
 		} else if (status === 'loading') {
+			console.log('⏳ Video loading...');
 			setIsLoaded(false);
 		}
 	});
@@ -128,22 +144,30 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		}
 	}, [isActive, isLoaded, player]);
 
-	// Polling para asegurar que obtenemos la duración
+	// Polling más agresivo para asegurar que obtenemos la duración
 	useEffect(() => {
 		if (isLoaded && duration === 0) {
+			console.log('🔄 Starting duration polling - isLoaded:', isLoaded, 'current duration:', duration);
 			const interval = setInterval(() => {
 				const videoDuration = player.duration;
-				console.log('Polling duration:', videoDuration);
-				if (videoDuration > 0) {
+				console.log('🔍 Polling duration:', videoDuration, 'NaN?', isNaN(videoDuration));
+				if (videoDuration > 0 && !isNaN(videoDuration)) {
+					console.log('✅ Duration found via polling:', videoDuration);
 					setDuration(videoDuration);
 					clearInterval(interval);
 				}
-			}, 500);
+			}, 200); // Poll more frequently
 
-			// Limpiar después de 10 segundos para evitar polling infinito
-			setTimeout(() => clearInterval(interval), 10000);
+			// Limpiar después de 15 segundos para evitar polling infinito
+			const timeout = setTimeout(() => {
+				console.log('🛑 Duration polling timeout');
+				clearInterval(interval);
+			}, 15000);
 
-			return () => clearInterval(interval);
+			return () => {
+				clearInterval(interval);
+				clearTimeout(timeout);
+			};
 		}
 	}, [isLoaded, duration, player]);
 
@@ -169,24 +193,36 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	};
 
 	const handleSeek = useCallback((time: number) => {
-		console.log('Seeking to:', time, 'seconds');
+		console.log('Seeking to:', time, 'seconds', 'duration:', duration);
+		
+		if (!isLoaded || duration <= 0) {
+			console.warn('Cannot seek: video not loaded or invalid duration');
+			return;
+		}
+		
 		setIsSeeking(true);
 		
 		try {
 			// Asegurar que el tiempo está en el rango válido
-			const clampedTime = Math.max(0, Math.min(duration || 0, time));
+			const clampedTime = Math.max(0, Math.min(duration, time));
+			console.log('Clamped time:', clampedTime);
+			
+			// Set the player time directly (this should work based on VideoTrimmer implementation)
 			player.currentTime = clampedTime;
+			
+			// Update our local state immediately for better UX
 			setCurrentTime(clampedTime);
 			
-			// Resetear el estado después de un breve delay
+			// Reset seeking state after a short delay
 			setTimeout(() => {
 				setIsSeeking(false);
-			}, 200);
+			}, 300);
+			
 		} catch (error) {
 			console.error('Error seeking video:', error);
 			setIsSeeking(false);
 		}
-	}, [player, duration]);
+	}, [player, duration, isLoaded]);
 
 	const handleCommentPress = useCallback(() => {
 		setShowCommentsModal(true);
@@ -205,7 +241,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		[onCommentAdded],
 	);
 
-	const progress = duration > 0 ? currentTime / duration : 0;
+	// Progress calculation is now handled by VideoProgressSlider internally
 
 	const renderVideoContent = () => {
 		if (hasError) {
@@ -322,13 +358,32 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 			/>
 
 			{/* Slider de progreso siempre visible */}
-			<VideoProgressSlider
-				currentTime={currentTime}
-				duration={duration}
-				onSeek={handleSeek}
-				isActive={isActive && isLoaded}
-				isSeeking={isSeeking}
-			/>
+			{(() => {
+				console.log('🔄 Passing props to VideoProgressSlider:', {
+					currentTime: currentTime.toFixed(2),
+					duration: duration.toFixed(2),
+					isActive: isActive && isLoaded,
+					isSeeking
+				});
+				return (
+					<VideoProgressSlider
+						currentTime={currentTime}
+						duration={duration}
+						onSeek={handleSeek}
+						isActive={isActive && isLoaded}
+						isSeeking={isSeeking}
+					/>
+				);
+			})()}
+			
+			{/* Debug info */}
+			{__DEV__ && (
+				<View style={{ position: 'absolute', top: 50, left: 10, backgroundColor: 'rgba(0,0,0,0.7)', padding: 8, borderRadius: 4 }}>
+					<Text style={{ color: 'white', fontSize: 12 }}>
+						Duration: {duration.toFixed(2)}s | Current: {currentTime.toFixed(2)}s | Loaded: {isLoaded ? 'Yes' : 'No'}
+					</Text>
+				</View>
+			)}
 		</View>
 	);
 };
