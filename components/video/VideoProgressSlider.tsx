@@ -16,7 +16,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SLIDER_WIDTH = SCREEN_WIDTH; // Sin padding, de borde a borde
 const THUMB_SIZE = 16;
 const TRACK_HEIGHT = 3;
-const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 90 : 70; // Altura de la barra de tabs
+const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 40 : 30; // Espacio adecuado para estar justo encima de las tabs
+const FULLSCREEN_BOTTOM_MARGIN = Platform.OS === 'ios' ? 50 : 45; // Espacio aumentado para evitar solaparse con info del video
 
 interface VideoProgressSliderProps {
 	currentTime: number;
@@ -24,6 +25,7 @@ interface VideoProgressSliderProps {
 	onSeek: (time: number) => void;
 	isActive: boolean;
 	isSeeking?: boolean;
+	isFullscreen?: boolean; // Para detectar si estamos en pantalla completa
 }
 
 export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
@@ -32,16 +34,14 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 	onSeek,
 	isActive,
 	isSeeking = false,
+	isFullscreen = false,
 }) => {
-	// Debug logging for props
+	// Debug logging for props (only when duration changes)
 	React.useEffect(() => {
-		console.log('📊 VideoProgressSlider props:', {
-			currentTime: currentTime.toFixed(2),
-			duration: duration.toFixed(2),
-			isActive,
-			isSeeking
-		});
-	}, [currentTime, duration, isActive, isSeeking]);
+		if (duration > 0) {
+			console.log('📊 VideoProgressSlider duration set:', duration.toFixed(2));
+		}
+	}, [duration]);
 	const [isDragging, setIsDragging] = useState(false);
 	const [localProgress, setLocalProgress] = useState(0);
 	const thumbPosition = useRef(new Animated.Value(0)).current;
@@ -79,7 +79,7 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 			const clampedX = Math.max(0, Math.min(SLIDER_WIDTH, locationX));
 			const newProgress = clampedX / SLIDER_WIDTH;
 
-			console.log('Touch at:', locationX, 'clamped:', clampedX, 'progress:', newProgress);
+			// Touch logging only for debugging - can be removed
 			
 			setLocalProgress(newProgress);
 			thumbPosition.setValue(clampedX);
@@ -186,8 +186,13 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 		return null;
 	}
 
+	const bottomMargin = isFullscreen ? FULLSCREEN_BOTTOM_MARGIN : TAB_BAR_HEIGHT;
+
 	return (
-		<Animated.View style={[styles.container, { opacity: containerOpacity }]}>
+		<Animated.View style={[
+			styles.container, 
+			{ opacity: containerOpacity, bottom: bottomMargin }
+		]}>
 			{/* Slider sutil sin tiempos */}
 			<View
 				style={styles.sliderContainer}
@@ -233,7 +238,6 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 const styles = StyleSheet.create({
 	container: {
 		position: 'absolute',
-		bottom: TAB_BAR_HEIGHT, // Justo tocando con los tabs pero sin quedar debajo
 		left: 0,
 		right: 0,
 		height: TRACK_HEIGHT + 20, // Altura mínima para permitir toques

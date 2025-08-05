@@ -195,79 +195,73 @@ export default function ProfileScreen() {
 					/>
 				}
 			>
-				{/* Header */}
+				{/* Header - Compact horizontal layout like external profile */}
 				<View style={styles.header}>
-					<View style={styles.avatarContainer}>
-						<LinearGradient
-							colors={Colors.gradientPrimary}
-							style={styles.avatarGradient}
-							start={{ x: 0, y: 0 }}
-							end={{ x: 1, y: 0 }}
-						>
-							{user.avatar_url ? (
-								<Image 
-									source={{ uri: user.avatar_url }} 
-									style={styles.avatarImage}
-									resizeMode="cover"
-								/>
-							) : (
-								<Feather name="user" size={32} color={Colors.text} />
-							)}
-						</LinearGradient>
-					</View>
+					<View style={styles.topSection}>
+						<View style={styles.avatarContainer}>
+							<LinearGradient
+								colors={Colors.gradientPrimary}
+								style={styles.avatarGradient}
+								start={{ x: 0, y: 0 }}
+								end={{ x: 1, y: 0 }}
+							>
+								{user.avatar_url ? (
+									<Image 
+										source={{ uri: user.avatar_url }} 
+										style={styles.avatarImage}
+										resizeMode="cover"
+									/>
+								) : (
+									<Feather name="user" size={28} color={Colors.text} />
+								)}
+							</LinearGradient>
+						</View>
 
-					<Text style={styles.displayName}>
-						{user.display_name || user.username}
-					</Text>
-					<Text style={styles.username}>@{user.username}</Text>
+						<View style={styles.userInfo}>
+							<Text style={styles.displayName}>
+								{user.display_name || user.username}
+							</Text>
+							<Text style={styles.username}>@{user.username}</Text>
+
+							{/* Stats */}
+							<View style={styles.statsContainer}>
+								<View style={styles.stat}>
+									<Text style={styles.statNumber}>
+										{formatNumber(user.videos_count)}
+									</Text>
+									<Text style={styles.statLabel}>{t('profile.videos')}</Text>
+								</View>
+								<View style={styles.stat}>
+									<Text style={styles.statNumber}>
+										{formatNumber(user.followers_count)}
+									</Text>
+									<Text style={styles.statLabel}>{t('profile.followers')}</Text>
+								</View>
+								<View style={styles.stat}>
+									<Text style={styles.statNumber}>
+										{formatNumber(user.subscribers_count)}
+									</Text>
+									<Text style={styles.statLabel}>Suscriptores</Text>
+								</View>
+							</View>
+						</View>
+					</View>
 
 					{user.bio && <Text style={styles.bio}>{user.bio}</Text>}
 
-					{/* Stats */}
-					<View style={styles.statsContainer}>
-						<View style={styles.stat}>
-							<Text style={styles.statNumber}>
-								{formatNumber(user.videos_count)}
-							</Text>
-							<Text style={styles.statLabel}>{t('profile.videos')}</Text>
-						</View>
-						<View style={styles.stat}>
-							<Text style={styles.statNumber}>
-								{formatNumber(user.followers_count)}
-							</Text>
-							<Text style={styles.statLabel}>{t('profile.followers')}</Text>
-						</View>
-						<View style={styles.stat}>
-							<Text style={styles.statNumber}>
-								{formatNumber(user.subscribers_count)}
-							</Text>
-							<Text style={styles.statLabel}>Suscriptores</Text>
-						</View>
-					</View>
-
-					{/* Subscription Info */}
-					{user.subscription_price > 0 && (
-						<View style={styles.subscriptionContainer}>
-							<Text style={styles.subscriptionPrice}>
-								{formatCurrency(
-									user.subscription_price,
-									user.subscription_currency,
-								)}
-								<Text style={styles.subscriptionPeriod}>/mes</Text>
-							</Text>
-							<Text style={styles.subscriptionLabel}>
-								{t('profile.monthlySubscription')}
-							</Text>
-						</View>
-					)}
-
 					{/* Edit Profile Button */}
-					<Button
-						title={t('profile.editProfile')}
-						onPress={handleEditProfile}
-						variant="outline"
-						style={styles.editButton}
-					/>
+					<View style={styles.actionButtons}>
+						<TouchableOpacity
+							style={styles.editProfileButton}
+							onPress={handleEditProfile}
+							activeOpacity={0.8}
+						>
+							<Feather name="edit" size={16} color={Colors.textSecondary} />
+							<Text style={styles.editProfileButtonText}>
+								{t('profile.editProfile')}
+							</Text>
+						</TouchableOpacity>
+					</View>
 				</View>
 
 				{/* Content Tabs */}
@@ -366,93 +360,90 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	header: {
-		alignItems: 'center',
-		paddingHorizontal: 24,
-		paddingVertical: 24,
+		paddingHorizontal: 20,
+		paddingVertical: 16,
 		borderBottomWidth: 1,
 		borderBottomColor: Colors.borderSecondary,
 	},
+	topSection: {
+		flexDirection: 'row',
+		alignItems: 'flex-start',
+		marginBottom: 12,
+	},
 	avatarContainer: {
-		marginBottom: 16,
+		marginRight: 16,
 	},
 	avatarGradient: {
-		width: 80,
-		height: 80,
-		borderRadius: 40,
+		width: 72,
+		height: 72,
+		borderRadius: 36,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
+	userInfo: {
+		flex: 1,
+	},
 	displayName: {
-		fontSize: 24,
+		fontSize: 20,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
-		marginBottom: 4,
-		textAlign: 'center',
+		marginBottom: 2,
 	},
 	username: {
-		fontSize: 16,
+		fontSize: 14,
 		fontFamily: 'Inter-Regular',
 		color: Colors.textSecondary,
-		marginBottom: 16,
-		textAlign: 'center',
+		marginBottom: 12,
 	},
 	bio: {
 		fontSize: 14,
 		fontFamily: 'Inter-Regular',
 		color: Colors.text,
-		textAlign: 'center',
-		lineHeight: 20,
-		marginBottom: 20,
+		lineHeight: 18,
+		marginTop: 10,
 	},
 	statsContainer: {
 		flexDirection: 'row',
-		gap: 32,
-		marginBottom: 20,
+		gap: 24,
 	},
 	stat: {
 		alignItems: 'center',
 	},
 	statNumber: {
-		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
-		fontWeight: '600',
-		color: Colors.text,
-		marginBottom: 4,
-	},
-	statLabel: {
-		fontSize: 12,
-		fontFamily: 'Inter-Regular',
-		color: Colors.textTertiary,
-	},
-	subscriptionContainer: {
-		alignItems: 'center',
-		backgroundColor: Colors.premiumBackground,
-		borderRadius: 12,
-		paddingVertical: 12,
-		paddingHorizontal: 20,
-		marginBottom: 20,
-	},
-	subscriptionPrice: {
 		fontSize: 18,
 		fontFamily: 'Poppins-SemiBold',
 		fontWeight: '600',
-		color: Colors.premium,
+		color: Colors.text,
+		marginBottom: 2,
 	},
-	subscriptionPeriod: {
+	statLabel: {
+		fontSize: 11,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textTertiary,
+	},
+	actionButtons: {
+		flexDirection: 'row',
+		gap: 12,
+		marginTop: 16,
+		height: 50,
+	},
+	editProfileButton: {
+		flex: 1,
+		backgroundColor: Colors.backgroundSecondary,
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: Colors.borderSecondary,
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexDirection: 'row',
+		gap: 8,
+	},
+	editProfileButtonText: {
 		fontSize: 14,
-		fontFamily: 'Inter-Regular',
-		color: Colors.premium,
-	},
-	subscriptionLabel: {
-		fontSize: 12,
-		fontFamily: 'Inter-Regular',
-		color: Colors.premium,
-		marginTop: 4,
-	},
-	editButton: {
-		width: '100%',
-		maxWidth: 200,
+		fontFamily: 'Inter-SemiBold',
+		fontWeight: '500',
+		color: Colors.textSecondary,
 	},
 	tabsContainer: {
 		flexDirection: 'row',
@@ -556,9 +547,10 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 	},
 	avatarImage: {
-		width: 80,
-		height: 80,
-		borderRadius: 40,
+		width: 72,
+		height: 72,
+		borderRadius: 36,
+		backgroundColor: Colors.backgroundSecondary,
 	},
 	thumbnailImage: {
 		width: '100%',

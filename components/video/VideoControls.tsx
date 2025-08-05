@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
 	leftControls: {
 		position: 'absolute',
 		left: 16,
-		bottom: 100,
+		bottom: 130,
 		maxWidth: SCREEN_WIDTH * 0.65,
 		alignItems: 'flex-start',
 	},
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
 	rightControls: {
 		position: 'absolute',
 		right: 16,
-		bottom: 100,
+		bottom: 130,
 		alignItems: 'center',
 		gap: 24,
 	},
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
 	statsContainer: {
 		position: 'absolute',
 		left: 16,
-		bottom: 60,
+		bottom: 80,
 	},
 	viewsText: {
 		fontSize: 12,

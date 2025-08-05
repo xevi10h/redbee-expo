@@ -117,6 +117,7 @@ export default function VideoScreen() {
 						comments_count: item.comments_count + 1,
 					});
 				}}
+				isFullscreen={true}
 			/>
 		);
 	};
@@ -128,28 +129,28 @@ export default function VideoScreen() {
 
 	if (isLoading) {
 		return (
-			<SafeAreaView style={styles.container}>
+			<View style={styles.container}>
 				<StatusBar style="light" />
 				<View style={styles.loadingContainer}>
 					<ActivityIndicator size="large" color={Colors.primary} />
 				</View>
-			</SafeAreaView>
+			</View>
 		);
 	}
 
 	if (error || videos.length === 0) {
 		return (
-			<SafeAreaView style={styles.container}>
+			<View style={styles.container}>
 				<StatusBar style="light" />
 				<View style={styles.errorContainer}>
 					<Text style={styles.errorText}>{error || 'Video not found'}</Text>
 				</View>
-			</SafeAreaView>
+			</View>
 		);
 	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={[]}>
+		<View style={styles.container}>
 			<StatusBar style="light" />
 			<FlatList
 				data={videos}
@@ -157,7 +158,7 @@ export default function VideoScreen() {
 				keyExtractor={(item) => item.id}
 				pagingEnabled
 				showsVerticalScrollIndicator={false}
-				snapToInterval={SCREEN_HEIGHT - 70}
+				snapToInterval={SCREEN_HEIGHT}
 				snapToAlignment="start"
 				decelerationRate="fast"
 				onViewableItemsChanged={handleVideoChange}
@@ -165,12 +166,12 @@ export default function VideoScreen() {
 					itemVisiblePercentThreshold: 80,
 				}}
 				getItemLayout={(_, index) => ({
-					length: SCREEN_HEIGHT - 70,
-					offset: (SCREEN_HEIGHT - 70) * index,
+					length: SCREEN_HEIGHT,
+					offset: SCREEN_HEIGHT * index,
 					index,
 				})}
 			/>
-		</SafeAreaView>
+		</View>
 	);
 }
 

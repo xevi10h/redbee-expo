@@ -78,6 +78,7 @@ export default function RootLayout() {
 		<ThemeProvider value={DarkTheme}>
 			<Stack>
 				<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+				<Stack.Screen name="video/[id]" options={{ headerShown: false }} />
 				<Stack.Screen name="user/[id]" options={{ headerShown: false }} />
 				<Stack.Screen name="hashtag/[hashtag]" options={{ headerShown: false }} />
 				<Stack.Screen

@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useEvent, useEventListener } from 'expo';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -33,6 +34,7 @@ interface VideoPlayerProps {
 	onReport: () => void;
 	onUserPress: () => void;
 	onCommentAdded: (comment: Comment) => void;
+	isFullscreen?: boolean; // Para indicar si estamos en pantalla completa
 }
 
 export const VideoPlayer: React.FC<VideoPlayerProps> = ({
@@ -46,6 +48,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	onReport,
 	onUserPress,
 	onCommentAdded,
+	isFullscreen = false,
 }) => {
 	const [hasError, setHasError] = useState(false);
 	const [showControls, setShowControls] = useState(true);
@@ -348,6 +351,19 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				</Animated.View>
 			)}
 
+			{/* Back button for fullscreen mode */}
+			{isFullscreen && (
+				<Animated.View style={[styles.backButtonContainer, { opacity: fadeAnim }]}>
+					<TouchableOpacity
+						style={styles.backButton}
+						onPress={() => router.back()}
+						activeOpacity={0.7}
+					>
+						<Feather name="arrow-left" size={24} color={Colors.text} />
+					</TouchableOpacity>
+				</Animated.View>
+			)}
+
 			{/* ✅ CommentsModal manejado directamente aquí para mejor control */}
 			<CommentsModal
 				isVisible={showCommentsModal}
@@ -358,32 +374,15 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 			/>
 
 			{/* Slider de progreso siempre visible */}
-			{(() => {
-				console.log('🔄 Passing props to VideoProgressSlider:', {
-					currentTime: currentTime.toFixed(2),
-					duration: duration.toFixed(2),
-					isActive: isActive && isLoaded,
-					isSeeking
-				});
-				return (
-					<VideoProgressSlider
-						currentTime={currentTime}
-						duration={duration}
-						onSeek={handleSeek}
-						isActive={isActive && isLoaded}
-						isSeeking={isSeeking}
-					/>
-				);
-			})()}
+			<VideoProgressSlider
+				currentTime={currentTime}
+				duration={duration}
+				onSeek={handleSeek}
+				isActive={isActive && isLoaded}
+				isSeeking={isSeeking}
+				isFullscreen={isFullscreen}
+			/>
 			
-			{/* Debug info */}
-			{__DEV__ && (
-				<View style={{ position: 'absolute', top: 50, left: 10, backgroundColor: 'rgba(0,0,0,0.7)', padding: 8, borderRadius: 4 }}>
-					<Text style={{ color: 'white', fontSize: 12 }}>
-						Duration: {duration.toFixed(2)}s | Current: {currentTime.toFixed(2)}s | Loaded: {isLoaded ? 'Yes' : 'No'}
-					</Text>
-				</View>
-			)}
 		</View>
 	);
 };
@@ -391,8 +390,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 const styles = StyleSheet.create({
 	container: {
 		width: SCREEN_WIDTH,
-		height: SCREEN_HEIGHT - 70,
-		marginBottom: 70,
+		height: SCREEN_HEIGHT,
 		backgroundColor: Colors.videoBackground,
 		position: 'relative',
 	},
@@ -497,6 +495,25 @@ const styles = StyleSheet.create({
 		right: 0,
 		bottom: 0,
 		pointerEvents: 'box-none',
+	},
+	backButtonContainer: {
+		position: 'absolute',
+		top: 70,
+		left: 20,
+		zIndex: 1000,
+	},
+	backButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		justifyContent: 'center',
+		alignItems: 'center',
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.3,
+		shadowRadius: 4,
+		elevation: 5,
 	},
 });
 
