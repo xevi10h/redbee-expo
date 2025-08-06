@@ -1,4 +1,4 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEvent, useEventListener } from 'expo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	Animated,
 	Dimensions,
+	Platform,
 	Pressable,
 	StyleSheet,
 	Text,
@@ -23,6 +24,11 @@ import { VideoProgressSlider } from '../video/VideoProgressSlider';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+// Tab bar measurements (matching _layout.tsx) - when not in fullscreen
+const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 90 : 70;
+// Video height should exclude tab bar area when in home feed
+const VIDEO_HEIGHT = SCREEN_HEIGHT - TAB_BAR_HEIGHT;
+
 interface VideoPlayerProps {
 	video: VideoType;
 	isActive: boolean;
@@ -32,6 +38,8 @@ interface VideoPlayerProps {
 	onFollow: () => void;
 	onSubscribe: () => void;
 	onReport: () => void;
+	onHideVideo?: () => void;
+	onDeleteVideo?: () => void;
 	onUserPress: () => void;
 	onCommentAdded: (comment: Comment) => void;
 	isFullscreen?: boolean; // Para indicar si estamos en pantalla completa
@@ -46,6 +54,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	onFollow,
 	onSubscribe,
 	onReport,
+	onHideVideo,
+	onDeleteVideo,
 	onUserPress,
 	onCommentAdded,
 	isFullscreen = false,
@@ -61,7 +71,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		player.muted = false;
 		player.timeUpdateEventInterval = 0.1; // More frequent updates to catch duration sooner
 		player.audioMixingMode = 'mixWithOthers';
-		
+
 		// Try to get duration immediately
 		console.log('🎥 Player created, initial duration:', player.duration);
 	});
@@ -80,22 +90,21 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		if (!isSeeking) {
 			setCurrentTime(time);
 		}
-		
+
 		// Update duration if it has changed
 		const videoDuration = player.duration;
 		if (videoDuration !== duration && videoDuration > 0) {
-			console.log('📏 Duration updated during timeUpdate:', videoDuration, 'previous:', duration);
 			setDuration(videoDuration);
-		}
-		
-		// Debug logging every few seconds
-		if (Math.floor(time) % 5 === 0 && time > 0) {
-			console.log('⏰ Time update - current:', time.toFixed(2), 'duration:', videoDuration, 'state duration:', duration);
 		}
 	});
 
 	useEventListener(player, 'statusChange', ({ status, error }) => {
-		console.log('🎬 Video status changed:', status, 'player.duration:', player.duration);
+		console.log(
+			'🎬 Video status changed:',
+			status,
+			'player.duration:',
+			player.duration,
+		);
 		if (status === 'error') {
 			console.error('❌ Video load error:', error);
 			setHasError(true);
@@ -108,7 +117,12 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 			setIsSeeking(false);
 			// Asegurar que obtenemos la duración cuando el video está listo
 			const videoDuration = player.duration;
-			console.log('📏 Video ready, player.duration:', videoDuration, 'current state duration:', duration);
+			console.log(
+				'📏 Video ready, player.duration:',
+				videoDuration,
+				'current state duration:',
+				duration,
+			);
 			if (videoDuration > 0) {
 				console.log('✅ Setting duration to:', videoDuration);
 				setDuration(videoDuration);
@@ -150,10 +164,20 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	// Polling más agresivo para asegurar que obtenemos la duración
 	useEffect(() => {
 		if (isLoaded && duration === 0) {
-			console.log('🔄 Starting duration polling - isLoaded:', isLoaded, 'current duration:', duration);
+			console.log(
+				'🔄 Starting duration polling - isLoaded:',
+				isLoaded,
+				'current duration:',
+				duration,
+			);
 			const interval = setInterval(() => {
 				const videoDuration = player.duration;
-				console.log('🔍 Polling duration:', videoDuration, 'NaN?', isNaN(videoDuration));
+				console.log(
+					'🔍 Polling duration:',
+					videoDuration,
+					'NaN?',
+					isNaN(videoDuration),
+				);
 				if (videoDuration > 0 && !isNaN(videoDuration)) {
 					console.log('✅ Duration found via polling:', videoDuration);
 					setDuration(videoDuration);
@@ -195,37 +219,39 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 		}
 	};
 
-	const handleSeek = useCallback((time: number) => {
-		console.log('Seeking to:', time, 'seconds', 'duration:', duration);
-		
-		if (!isLoaded || duration <= 0) {
-			console.warn('Cannot seek: video not loaded or invalid duration');
-			return;
-		}
-		
-		setIsSeeking(true);
-		
-		try {
-			// Asegurar que el tiempo está en el rango válido
-			const clampedTime = Math.max(0, Math.min(duration, time));
-			console.log('Clamped time:', clampedTime);
-			
-			// Set the player time directly (this should work based on VideoTrimmer implementation)
-			player.currentTime = clampedTime;
-			
-			// Update our local state immediately for better UX
-			setCurrentTime(clampedTime);
-			
-			// Reset seeking state after a short delay
-			setTimeout(() => {
+	const handleSeek = useCallback(
+		(time: number) => {
+			console.log('Seeking to:', time, 'seconds', 'duration:', duration);
+
+			if (!isLoaded || duration <= 0) {
+				console.warn('Cannot seek: video not loaded or invalid duration');
+				return;
+			}
+
+			setIsSeeking(true);
+
+			try {
+				// Asegurar que el tiempo está en el rango válido
+				const clampedTime = Math.max(0, Math.min(duration, time));
+				console.log('Clamped time:', clampedTime);
+
+				// Set the player time directly (this should work based on VideoTrimmer implementation)
+				player.currentTime = clampedTime;
+
+				// Update our local state immediately for better UX
+				setCurrentTime(clampedTime);
+
+				// Reset seeking state after a short delay
+				setTimeout(() => {
+					setIsSeeking(false);
+				}, 300);
+			} catch (error) {
+				console.error('Error seeking video:', error);
 				setIsSeeking(false);
-			}, 300);
-			
-		} catch (error) {
-			console.error('Error seeking video:', error);
-			setIsSeeking(false);
-		}
-	}, [player, duration, isLoaded]);
+			}
+		},
+		[player, duration, isLoaded],
+	);
 
 	const handleCommentPress = useCallback(() => {
 		setShowCommentsModal(true);
@@ -297,7 +323,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 							style={styles.premiumGradient}
 						>
 							<View style={styles.premiumContent}>
-								<Feather name="star" size={32} color={Colors.premium} />
+								<MaterialCommunityIcons name="crown" size={32} color={Colors.premium} />
 								<Text style={styles.premiumTitle}>
 									{t('video.previewOnly')}
 								</Text>
@@ -322,7 +348,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						)}
 					</Animated.View>
 				)}
-
 			</>
 		);
 	};
@@ -345,6 +370,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						onFollow={onFollow}
 						onSubscribe={onSubscribe}
 						onReport={onReport}
+						onHideVideo={onHideVideo}
+						onDeleteVideo={onDeleteVideo}
 						onUserPress={onUserPress}
 						onCommentAdded={handleCommentAdded}
 					/>
@@ -353,7 +380,9 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 			{/* Back button for fullscreen mode */}
 			{isFullscreen && (
-				<Animated.View style={[styles.backButtonContainer, { opacity: fadeAnim }]}>
+				<Animated.View
+					style={[styles.backButtonContainer, { opacity: fadeAnim }]}
+				>
 					<TouchableOpacity
 						style={styles.backButton}
 						onPress={() => router.back()}
@@ -381,8 +410,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 				isActive={isActive && isLoaded}
 				isSeeking={isSeeking}
 				isFullscreen={isFullscreen}
+				videoUri={video.video_url}
 			/>
-			
 		</View>
 	);
 };
@@ -390,7 +419,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 const styles = StyleSheet.create({
 	container: {
 		width: SCREEN_WIDTH,
-		height: SCREEN_HEIGHT,
+		height: SCREEN_HEIGHT, // Video a pantalla completa
 		backgroundColor: Colors.videoBackground,
 		position: 'relative',
 	},

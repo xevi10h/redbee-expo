@@ -1,11 +1,14 @@
 import { UserService, VideoService } from '@/services';
 import { User, Video } from '@/shared/types';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { Alert } from 'react-native';
+
+export type VideoSortOption = 'created_at' | 'views_count' | 'likes_count';
 
 export const useUserProfile = (userId: string, viewerId?: string) => {
 	const [userProfile, setUserProfile] = useState<User | null>(null);
 	const [userVideos, setUserVideos] = useState<Video[]>([]);
+	const [sortOption, setSortOption] = useState<VideoSortOption>('created_at');
 	const [isLoading, setIsLoading] = useState(false);
 	const [isLoadingVideos, setIsLoadingVideos] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -17,6 +20,28 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 
 	const setSpecificLoading = useCallback((key: string, loading: boolean) => {
 		setLoadingStates((prev) => ({ ...prev, [key]: loading }));
+	}, []);
+
+	// Sorted videos based on current sort option
+	const sortedUserVideos = useMemo(() => {
+		const sorted = [...userVideos].sort((a, b) => {
+			switch (sortOption) {
+				case 'views_count':
+					return b.views_count - a.views_count; // Descendente (más visualizaciones primero)
+				case 'likes_count':
+					return b.likes_count - a.likes_count; // Descendente (más me gusta primero)
+				case 'created_at':
+				default:
+					return new Date(b.created_at).getTime() - new Date(a.created_at).getTime(); // Descendente (más recientes primero)
+			}
+		});
+		
+		return sorted;
+	}, [userVideos, sortOption]);
+
+	// Function to change video sort option
+	const setSortOption_ = useCallback((sort: VideoSortOption) => {
+		setSortOption(sort);
 	}, []);
 
 	// Load user profile
@@ -279,7 +304,8 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 	return {
 		// State
 		userProfile,
-		userVideos,
+		userVideos: sortedUserVideos,
+		sortOption,
 		isLoading,
 		isLoadingVideos,
 		error,
@@ -296,6 +322,7 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 		loadUserVideos,
 		updateUserVideo,
 		removeUserVideo,
+		setSortOption: setSortOption_,
 
 		// Loading states
 		isFollowLoading: isActionLoading('follow'),

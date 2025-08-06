@@ -18,6 +18,7 @@ export type User = {
 	display_name?: string;
 	bio?: string;
 	avatar_url?: string;
+	has_premium_content: boolean; // Nueva propiedad para indicar si ofrece contenido premium
 	subscription_price: number;
 	subscription_currency: string;
 	commission_rate: number;
@@ -45,6 +46,8 @@ export type Video = {
 	thumbnail_url?: string;
 	duration?: number;
 	is_premium: boolean;
+	is_hidden?: boolean;
+	hidden_at?: string;
 	likes_count: number;
 	comments_count: number;
 	views_count: number;

@@ -191,13 +191,13 @@ export class SearchService {
 				};
 			}
 
-			// Search for videos containing this hashtag
+			// Search for videos containing this hashtag using the specific hashtag method
 			const { VideoService } = await import('./videoService');
-			return await VideoService.searchVideos(
-				`#${hashtag}`,
+			return await VideoService.getVideosByHashtag(
+				hashtag,
 				viewerId,
-				Math.floor(offset / limit),
 				limit,
+				offset,
 			);
 		} catch (error) {
 			return {

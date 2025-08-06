@@ -46,7 +46,9 @@ export const ThumbnailSelector = memo(function ThumbnailSelector({
 		
 		const times: number[] = [];
 		for (let i = 0; i < count; i++) {
-			times.push(startTime + (i * interval));
+			// Round to avoid decimal precision issues
+			const time = Math.round((startTime + (i * interval)) * 10) / 10;
+			times.push(time);
 		}
 		
 		return times;

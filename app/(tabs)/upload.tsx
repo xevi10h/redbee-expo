@@ -20,6 +20,8 @@ import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useUploadState } from '@/hooks/useUploadState';
 import { VideoService } from '@/services/videoService';
+import { useAuthStore } from '@/stores/authStore';
+import { router } from 'expo-router';
 
 interface VideoData {
 	uri: string;
@@ -29,6 +31,7 @@ interface VideoData {
 export default function UploadScreen() {
 	const { t } = useTranslation();
 	const { user } = useRequireAuth();
+	const { refreshSession } = useAuthStore();
 	const { setSelecting, setUploading, setEditing } = useUploadState();
 
 	const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
@@ -137,6 +140,15 @@ export default function UploadScreen() {
 			});
 
 			if (uploadResult.success) {
+				// Refresh user session to update videos_count in the profile
+				// The database trigger already incremented the count, we just need to fetch the updated data
+				try {
+					await refreshSession();
+					console.log('✅ User profile refreshed after video upload');
+				} catch (error) {
+					console.warn('⚠️ Failed to refresh user session after video upload:', error);
+				}
+
 				Alert.alert(
 					t('upload.uploadSuccess'),
 					'Your video has been uploaded successfully!',
@@ -146,6 +158,8 @@ export default function UploadScreen() {
 							onPress: () => {
 								setSelectedVideo(null);
 								setShowEditor(false);
+								// Navigate to profile to see the new video
+								router.push('/(tabs)/profile');
 							},
 						},
 					],

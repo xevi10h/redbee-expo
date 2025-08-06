@@ -3,6 +3,7 @@ import {
 	Alert,
 	Dimensions,
 	FlatList,
+	Platform,
 	RefreshControl,
 	StyleSheet,
 	Text,
@@ -19,6 +20,11 @@ import { useVideoFeedWithPermissions } from '@/hooks/useVideoFeedWithPermissions
 import { Comment, User } from '@/shared/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Tab bar measurements (matching _layout.tsx)
+const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 90 : 70;
+// Video height should exclude tab bar area
+const VIDEO_HEIGHT = SCREEN_HEIGHT - TAB_BAR_HEIGHT;
 
 interface ForYouScreenProps {
 	user: User;
@@ -254,10 +260,10 @@ const styles = StyleSheet.create({
 	},
 	videoItem: {
 		width: '100%',
-		height: SCREEN_HEIGHT,
+		height: SCREEN_HEIGHT, // Video a pantalla completa
 	},
 	emptyState: {
-		height: SCREEN_HEIGHT,
+		height: VIDEO_HEIGHT, // Altura reducida para no taparse con tab bar
 		justifyContent: 'center',
 		alignItems: 'center',
 		paddingHorizontal: 32,

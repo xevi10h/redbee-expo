@@ -308,6 +308,8 @@
 		"deleteAccountConfirmDescription": "Escribe \"ELIMINAR\" para confirmar la eliminación permanente de tu cuenta.",
 		"confirmDeletion": "Confirmar eliminación",
 		"preferences": "Preferencias",
+		"selectLanguage": "Seleccionar idioma",
+		"languageChangeNote": "El idioma se aplicará inmediatamente en toda la aplicación",
 		"languages": {
 			"es_ES": "Español",
 			"ca_ES": "Catalán",

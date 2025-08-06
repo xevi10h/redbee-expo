@@ -11,12 +11,13 @@ import {
 } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
+import { VideoFramePreview } from './VideoFramePreview';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SLIDER_WIDTH = SCREEN_WIDTH; // Sin padding, de borde a borde
 const THUMB_SIZE = 16;
 const TRACK_HEIGHT = 3;
-const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 40 : 30; // Espacio adecuado para estar justo encima de las tabs
+const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 140 : 120; // Perfecto - 5px más arriba
 const FULLSCREEN_BOTTOM_MARGIN = Platform.OS === 'ios' ? 50 : 45; // Espacio aumentado para evitar solaparse con info del video
 
 interface VideoProgressSliderProps {
@@ -26,6 +27,7 @@ interface VideoProgressSliderProps {
 	isActive: boolean;
 	isSeeking?: boolean;
 	isFullscreen?: boolean; // Para detectar si estamos en pantalla completa
+	videoUri: string; // URI del video para generar thumbnails
 }
 
 export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
@@ -35,6 +37,7 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 	isActive,
 	isSeeking = false,
 	isFullscreen = false,
+	videoUri,
 }) => {
 	// Debug logging for props (only when duration changes)
 	React.useEffect(() => {
@@ -51,6 +54,9 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 	// Calcular el progreso
 	const progress = duration > 0 ? currentTime / duration : 0;
 	const effectiveProgress = isDragging ? localProgress : progress;
+	
+	// Calcular tiempo para la vista previa del fotograma
+	const previewTime = effectiveProgress * duration;
 
 	// Animar la opacidad basada en isActive
 	React.useEffect(() => {
@@ -193,6 +199,14 @@ export const VideoProgressSlider: React.FC<VideoProgressSliderProps> = ({
 			styles.container, 
 			{ opacity: containerOpacity, bottom: bottomMargin }
 		]}>
+			{/* Vista previa del fotograma - solo visible cuando se arrastra */}
+			<VideoFramePreview
+				videoUri={videoUri}
+				timeInSeconds={previewTime}
+				isVisible={isDragging && duration > 0}
+				thumbPosition={effectiveProgress * SLIDER_WIDTH}
+			/>
+			
 			{/* Slider sutil sin tiempos */}
 			<View
 				style={styles.sliderContainer}

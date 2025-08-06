@@ -1,5 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { AuthResponse, Video } from '@/shared/types';
+import { getThumbnailAsync } from 'expo-video-thumbnails';
+import * as FileSystem from 'expo-file-system';
 
 export interface VideoFilters {
 	feed_type?: 'forYou' | 'following';
@@ -342,6 +344,8 @@ export class VideoService {
 					thumbnail_url: video.thumbnail_url,
 					duration: video.duration,
 					is_premium: video.is_premium,
+					is_hidden: video.is_hidden || false,
+					hidden_at: video.hidden_at,
 					likes_count: video.likes_count,
 					comments_count: video.comments_count,
 					views_count: video.views_count,
@@ -367,6 +371,137 @@ export class VideoService {
 				success: false,
 				error:
 					error instanceof Error ? error.message : 'Failed to search videos',
+			};
+		}
+	}
+
+	/**
+	 * Get all videos for a specific user (including hidden ones when viewing own profile)
+	 */
+	static async getUserVideos(
+		userId: string,
+		viewerId: string,
+		includeHidden: boolean = false
+	): Promise<AuthResponse<{ videos: Video[] }>> {
+		try {
+			let query = supabase
+				.from('videos')
+				.select(`
+					*,
+					user:profiles!videos_user_id_fkey (
+						id,
+						username,
+						display_name,
+						avatar_url,
+						subscription_price,
+						subscription_currency
+					)
+				`)
+				.eq('user_id', userId)
+				.order('created_at', { ascending: false });
+
+			// If not including hidden videos, filter them out
+			if (!includeHidden) {
+				query = query.eq('is_hidden', false);
+			}
+
+			const { data, error } = await query;
+
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			// Debug: log raw data from database
+			if (data && data.length > 0) {
+				console.log(`🔍 Raw video data from DB:`, {
+					id: data[0].id,
+					title: data[0].title,
+					thumbnail_url: data[0].thumbnail_url,
+					video_url: data[0].video_url,
+				});
+			}
+
+			if (!data) {
+				return {
+					success: true,
+					data: { videos: [] },
+				};
+			}
+
+			// Get interactions for these videos
+			const videoIds = data.map(v => v.id);
+			let interactions: any = {};
+
+			if (videoIds.length > 0 && viewerId) {
+				const { data: interactionData, error: interactionError } =
+					await supabase.rpc('get_video_interactions_safe', {
+						video_ids: videoIds,
+						viewer_id: viewerId,
+					});
+
+				if (!interactionError && interactionData) {
+					interactions = interactionData.reduce((acc: any, item: any) => {
+						acc[item.video_id] = {
+							is_liked: item.is_liked,
+							is_following: item.is_following,
+							is_subscribed: item.is_subscribed,
+							can_access: item.can_access,
+						};
+						return acc;
+					}, {});
+				}
+			}
+
+			// Process videos
+			const processedVideos: Video[] = data.map((video: any) => {
+				const videoInteractions = interactions[video.id] || {
+					is_liked: false,
+					is_following: false,
+					is_subscribed: false,
+					can_access: true,
+				};
+
+				return {
+					id: video.id,
+					user_id: video.user_id,
+					user: video.user || {
+						id: video.user_id,
+						username: 'Unknown',
+						display_name: 'Unknown User',
+						avatar_url: null,
+						subscription_price: null,
+						subscription_currency: null,
+					},
+					title: video.title,
+					description: video.description,
+					hashtags: video.hashtags || [],
+					video_url: video.video_url,
+					thumbnail_url: video.thumbnail_url,
+					duration: video.duration,
+					is_premium: video.is_premium || false,
+					is_hidden: video.is_hidden || false,
+					hidden_at: video.hidden_at,
+					likes_count: video.likes_count || 0,
+					comments_count: video.comments_count || 0,
+					views_count: video.views_count || 0,
+					created_at: video.created_at,
+					is_liked: videoInteractions.is_liked,
+					is_following: videoInteractions.is_following,
+					is_subscribed: videoInteractions.is_subscribed,
+				};
+			});
+
+			return {
+				success: true,
+				data: { videos: processedVideos },
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to get user videos',
 			};
 		}
 	}
@@ -519,7 +654,7 @@ export class VideoService {
 
 
 	/**
-	 * Upload a new video
+	 * Upload a new video with immediate thumbnail generation
 	 */
 	static async uploadVideo(data: {
 		videoUri: string;
@@ -528,56 +663,123 @@ export class VideoService {
 		hashtags?: string[];
 		isPremium: boolean;
 		userId: string;
+		startTime?: number;
+		endTime?: number;
+		thumbnailTime?: number;
 	}): Promise<AuthResponse<{ videoId: string }>> {
 		try {
-			const { videoUri, title, description, hashtags, isPremium, userId } = data;
+			const { videoUri, title, description, hashtags, isPremium, userId, thumbnailTime } = data;
 
-			// Generate unique filename
+			// Generate unique filenames
 			const timestamp = Date.now();
-			const fileName = `video_${userId}_${timestamp}.mp4`;
+			const videoFileName = `video_${userId}_${timestamp}.mp4`;
+			const thumbnailFileName = `thumbnail_${userId}_${timestamp}.jpg`;
 			
-			// Upload video to Supabase Storage - React Native compatible approach
-			// Create FormData for the upload
-			const formData = new FormData();
-			
-			// Add the video file to FormData
-			formData.append('file', {
-				uri: videoUri,
-				type: 'video/mp4',
-				name: fileName,
-			} as any);
-			
-			// Get Supabase URL and headers
+			// Get auth session
 			const { data: { session } } = await supabase.auth.getSession();
 			const authToken = session?.access_token;
 			
 			if (!authToken) {
 				throw new Error('No authentication token found');
 			}
+
+			let thumbnailUrl: string | null = null;
+
+			// Generate thumbnail - use specified time or default to 1 second
+			const thumbTime = thumbnailTime !== undefined && thumbnailTime >= 0 ? thumbnailTime : 1;
 			
-			// Upload using fetch directly to Supabase Storage API
+			try {
+				const timeInMilliseconds = Math.round(Number(thumbTime) * 1000);
+				
+				// Generate thumbnail using expo-video-thumbnails
+				const { uri: thumbnailUri } = await getThumbnailAsync(videoUri, {
+					time: timeInMilliseconds,
+					quality: 0.8,
+				});
+
+				if (thumbnailUri) {
+					// Upload thumbnail using Supabase client
+					const { error: thumbnailUploadError } = await supabase.storage
+						.from('thumbnails')
+						.upload(thumbnailFileName, {
+							uri: thumbnailUri,
+							type: 'image/jpeg',
+							name: thumbnailFileName,
+						} as any);
+
+					if (!thumbnailUploadError) {
+						// Get thumbnail public URL
+						const { data: thumbUrlData } = supabase.storage
+							.from('thumbnails')
+							.getPublicUrl(thumbnailFileName);
+						
+						thumbnailUrl = thumbUrlData.publicUrl;
+					}
+				}
+			} catch (thumbnailError) {
+				console.error('Failed to generate thumbnail:', thumbnailError);
+				// Continue without thumbnail rather than failing the whole upload
+			}
+			
+			// Check if videos bucket exists first
+			console.log('Checking if videos bucket exists...');
+			try {
+				const { data: files, error: listError } = await supabase.storage
+					.from('videos')
+					.list('', { limit: 1 });
+				
+				if (listError) {
+					console.error('Videos bucket does not exist or is not accessible:', listError.message);
+					throw new Error(`Videos bucket issue: ${listError.message}`);
+				}
+				console.log('Videos bucket is accessible');
+			} catch (bucketError) {
+				console.error('Bucket check failed:', bucketError);
+				throw new Error('Videos bucket is not properly configured');
+			}
+
+			// Upload video using direct fetch (Supabase client hangs with large files)
+			console.log('Starting video upload using fetch...');
+			console.log('Video file:', videoFileName, 'Size:', (await FileSystem.getInfoAsync(videoUri)).size);
+			
+			const videoFormData = new FormData();
+			videoFormData.append('file', {
+				uri: videoUri,
+				type: 'video/mp4',
+				name: videoFileName,
+			} as any);
+			
 			const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-			const uploadUrl = `${supabaseUrl}/storage/v1/object/videos/${fileName}`;
+			const uploadUrl = `${supabaseUrl}/storage/v1/object/videos/${videoFileName}`;
 			
-			const uploadResponse = await fetch(uploadUrl, {
+			console.log('Upload URL:', uploadUrl);
+			
+			const response = await fetch(uploadUrl, {
 				method: 'POST',
 				headers: {
 					'Authorization': `Bearer ${authToken}`,
 				},
-				body: formData,
+				body: videoFormData,
 			});
 			
-			if (!uploadResponse.ok) {
-				const errorText = await uploadResponse.text();
-				throw new Error(`Upload failed: ${errorText}`);
+			console.log('Video upload response status:', response.status);
+			
+			if (!response.ok) {
+				const errorText = await response.text();
+				console.error('Video upload failed:', errorText);
+				// Clean up thumbnail if it was uploaded
+				if (thumbnailUrl) {
+					await supabase.storage.from('thumbnails').remove([thumbnailFileName]);
+				}
+				throw new Error(`Video upload failed: HTTP ${response.status} - ${errorText}`);
 			}
 			
-			// Upload successful - no need to process response data
+			console.log('Video uploaded successfully!');
 
-			// Get public URL
-			const { data: urlData } = supabase.storage
+			// Get video public URL
+			const { data: videoUrlData } = supabase.storage
 				.from('videos')
-				.getPublicUrl(fileName);
+				.getPublicUrl(videoFileName);
 
 			// Insert video record in database
 			const { data: videoData, error: dbError } = await supabase
@@ -587,7 +789,8 @@ export class VideoService {
 					title,
 					description: description || '',
 					hashtags: hashtags || [],
-					video_url: urlData.publicUrl,
+					video_url: videoUrlData.publicUrl,
+					thumbnail_url: thumbnailUrl, // Will be null if thumbnail generation failed
 					is_premium: isPremium,
 					duration: 0, // Will be updated when we can calculate duration
 				})
@@ -595,8 +798,11 @@ export class VideoService {
 				.single();
 
 			if (dbError) {
-				// If database insert fails, clean up uploaded file
-				await supabase.storage.from('videos').remove([fileName]);
+				// If database insert fails, clean up uploaded files
+				await Promise.all([
+					supabase.storage.from('videos').remove([videoFileName]),
+					thumbnailUrl ? supabase.storage.from('thumbnails').remove([thumbnailFileName]) : Promise.resolve()
+				]);
 				return {
 					success: false,
 					error: `Failed to save video record: ${dbError.message}`,
@@ -614,4 +820,298 @@ export class VideoService {
 			};
 		}
 	}
+
+	/**
+	 * Hide a video (soft delete)
+	 */
+	static async hideVideo(videoId: string): Promise<AuthResponse<void>> {
+		try {
+			const { error } = await supabase
+				.from('videos')
+				.update({
+					is_hidden: true,
+					hidden_at: new Date().toISOString(),
+				})
+				.eq('id', videoId);
+
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			return {
+				success: true,
+				data: undefined,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to hide video',
+			};
+		}
+	}
+
+	/**
+	 * Show a hidden video
+	 */
+	static async showVideo(videoId: string): Promise<AuthResponse<void>> {
+		try {
+			const { error } = await supabase
+				.from('videos')
+				.update({
+					is_hidden: false,
+					hidden_at: null,
+				})
+				.eq('id', videoId);
+
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			return {
+				success: true,
+				data: undefined,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to show video',
+			};
+		}
+	}
+
+	/**
+	 * Get videos by specific hashtag
+	 */
+	static async getVideosByHashtag(
+		hashtag: string,
+		viewerId: string,
+		limit = 10,
+		offset = 0,
+	): Promise<
+		AuthResponse<{
+			videos: Video[];
+			hasMore: boolean;
+			total: number;
+		}>
+	> {
+		try {
+			if (!hashtag || !viewerId) {
+				return {
+					success: true,
+					data: {
+						videos: [],
+						hasMore: false,
+						total: 0,
+					},
+				};
+			}
+
+			// Search for videos that contain this specific hashtag in their hashtags array
+			const page = Math.floor(offset / limit);
+			
+			let query = supabase
+				.from('videos')
+				.select(`
+					*,
+					user:profiles!videos_user_id_fkey (
+						id,
+						username,
+						display_name,
+						avatar_url,
+						subscription_price,
+						subscription_currency
+					)
+				`)
+				.contains('hashtags', [hashtag])
+				.eq('is_hidden', false)
+				.order('created_at', { ascending: false });
+
+			// Add pagination
+			if (offset > 0) {
+				query = query.range(offset, offset + limit - 1);
+			} else {
+				query = query.limit(limit);
+			}
+
+			const { data, error, count } = await query;
+
+			if (error) {
+				console.error('❌ Error searching videos by hashtag:', error);
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			if (!data) {
+				return {
+					success: true,
+					data: {
+						videos: [],
+						hasMore: false,
+						total: 0,
+					},
+				};
+			}
+
+			// Get interactions for these videos
+			const videoIds = data.map(v => v.id);
+			let interactions: any = {};
+
+			if (videoIds.length > 0) {
+				const { data: interactionData, error: interactionError } =
+					await supabase.rpc('get_video_interactions_safe', {
+						video_ids: videoIds,
+						viewer_id: viewerId,
+					});
+
+				if (!interactionError && interactionData) {
+					interactions = interactionData.reduce((acc: any, item: any) => {
+						acc[item.video_id] = {
+							is_liked: item.is_liked,
+							is_following: item.is_following,
+							is_subscribed: item.is_subscribed,
+							can_access: item.can_access,
+						};
+						return acc;
+					}, {});
+				}
+			}
+
+			// Process videos
+			const processedVideos: Video[] = data.map((video: any) => {
+				const videoInteractions = interactions[video.id] || {
+					is_liked: false,
+					is_following: false,
+					is_subscribed: false,
+					can_access: true,
+				};
+
+				return {
+					id: video.id,
+					user_id: video.user_id,
+					user: video.user || {
+						id: video.user_id,
+						username: 'Unknown',
+						display_name: 'Unknown User',
+						avatar_url: null,
+						subscription_price: null,
+						subscription_currency: null,
+					},
+					title: video.title,
+					description: video.description,
+					hashtags: video.hashtags || [],
+					video_url: video.video_url,
+					thumbnail_url: video.thumbnail_url,
+					duration: video.duration,
+					is_premium: video.is_premium || false,
+					is_hidden: video.is_hidden || false,
+					hidden_at: video.hidden_at,
+					likes_count: video.likes_count || 0,
+					comments_count: video.comments_count || 0,
+					views_count: video.views_count || 0,
+					created_at: video.created_at,
+					is_liked: videoInteractions.is_liked,
+					is_following: videoInteractions.is_following,
+					is_subscribed: videoInteractions.is_subscribed,
+				};
+			});
+
+			console.log(`🔍 Found ${processedVideos.length} videos for hashtag "${hashtag}"`);
+
+			// Calculate if there are more results
+			const total = count || 0;
+			const hasMore = offset + limit < total;
+
+			return {
+				success: true,
+				data: {
+					videos: processedVideos,
+					hasMore,
+					total,
+				},
+			};
+		} catch (error) {
+			console.error('❌ Error in getVideosByHashtag:', error);
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to get videos by hashtag',
+			};
+		}
+	}
+
+	/**
+	 * Delete a video permanently
+	 */
+	static async deleteVideo(videoId: string): Promise<AuthResponse<void>> {
+		try {
+			// First get the video to get file URLs
+			const { data: video, error: fetchError } = await supabase
+				.from('videos')
+				.select('video_url, thumbnail_url')
+				.eq('id', videoId)
+				.single();
+
+			if (fetchError) {
+				return {
+					success: false,
+					error: fetchError.message,
+				};
+			}
+
+			// Extract file names from URLs for deletion
+			const videoFileName = video.video_url?.split('/').pop();
+			const thumbnailFileName = video.thumbnail_url?.split('/').pop();
+
+			// Delete from database first
+			const { error: deleteError } = await supabase
+				.from('videos')
+				.delete()
+				.eq('id', videoId);
+
+			if (deleteError) {
+				return {
+					success: false,
+					error: deleteError.message,
+				};
+			}
+
+			// Delete files from storage (don't fail if this doesn't work)
+			const deletePromises = [];
+			
+			if (videoFileName) {
+				deletePromises.push(
+					supabase.storage.from('videos').remove([videoFileName])
+				);
+			}
+			
+			if (thumbnailFileName) {
+				deletePromises.push(
+					supabase.storage.from('thumbnails').remove([thumbnailFileName])
+				);
+			}
+
+			// Execute deletions in parallel, but don't wait for them to complete
+			Promise.all(deletePromises).catch(error => 
+				console.warn('Failed to delete some storage files:', error)
+			);
+
+			return {
+				success: true,
+				data: undefined,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to delete video',
+			};
+		}
+	}
+
 }

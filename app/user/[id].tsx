@@ -20,12 +20,61 @@ import { Button } from '@/components/ui/Button';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserProfile, VideoSortOption } from '@/hooks/useUserProfile';
 import { formatCurrency, formatNumber } from '@/shared/functions/utils';
 import { Video } from '@/shared/types';
 
 const { width } = Dimensions.get('window');
 const videoWidth = (width - 32 - 16) / 3; // Account for padding and gaps
+
+// Sort Controls Component
+const SortControls: React.FC<{
+	currentSort: VideoSortOption;
+	onSortChange: (sort: VideoSortOption) => void;
+}> = ({ currentSort, onSortChange }) => {
+	const getSortConfig = (sort: VideoSortOption) => {
+		switch (sort) {
+			case 'created_at':
+				return { label: 'Más recientes', icon: 'clock' as const };
+			case 'views_count':
+				return { label: 'Más vistas', icon: 'eye' as const };
+			case 'likes_count':
+				return { label: 'Más gustados', icon: 'heart' as const };
+		}
+	};
+
+	const sorts: VideoSortOption[] = ['created_at', 'views_count', 'likes_count'];
+
+	return (
+		<View style={styles.sortContainer}>
+			{sorts.map((sort) => {
+				const config = getSortConfig(sort);
+				const isActive = currentSort === sort;
+				
+				return (
+					<TouchableOpacity
+						key={sort}
+						style={[styles.sortButton, isActive && styles.activeSortButton]}
+						onPress={() => onSortChange(sort)}
+						activeOpacity={0.7}
+					>
+						<Feather
+							name={config.icon}
+							size={14}
+							color={isActive ? Colors.primary : Colors.textTertiary}
+						/>
+						<Text style={[
+							styles.sortButtonText,
+							isActive && styles.activeSortButtonText
+						]}>
+							{config.label}
+						</Text>
+					</TouchableOpacity>
+				);
+			})}
+		</View>
+	);
+};
 
 // Avatar component with proper image handling
 const UserAvatar: React.FC<{
@@ -68,21 +117,44 @@ const UserAvatar: React.FC<{
 	);
 };
 
-// Placeholder component for video thumbnail
+// Video thumbnail component with proper cover image display
 const VideoThumbnail: React.FC<{ video: Video; onPress: () => void }> = ({
 	video,
 	onPress,
 }) => {
+	const [imageError, setImageError] = useState(false);
+
 	return (
 		<TouchableOpacity style={styles.videoThumbnail} onPress={onPress}>
 			<View style={styles.thumbnailContainer}>
-				<Feather name="play" size={20} color={Colors.text} />
+				{/* Show thumbnail image if available, otherwise show placeholder */}
+				{video.thumbnail_url && !imageError ? (
+					<Image
+						source={{ uri: video.thumbnail_url }}
+						style={styles.thumbnailImage}
+						resizeMode="cover"
+						onError={() => setImageError(true)}
+					/>
+				) : (
+					<View style={styles.placeholderThumbnail}>
+						<Feather name="video" size={24} color={Colors.textTertiary} />
+					</View>
+				)}
+				
+				{/* Play button overlay */}
+				<View style={styles.playOverlay}>
+					<Feather name="play" size={16} color={Colors.text} />
+				</View>
+				
+				{/* Premium badge */}
 				{video.is_premium && (
 					<View style={styles.premiumBadge}>
-						<Feather name="star" size={12} color={Colors.text} />
+						<MaterialCommunityIcons name="crown" size={12} color={Colors.text} />
 					</View>
 				)}
 			</View>
+			
+			{/* Video stats at bottom */}
 			<View style={styles.videoStats}>
 				<View style={styles.statItem}>
 					<Feather name="heart" size={12} color={Colors.text} />
@@ -105,6 +177,7 @@ export default function UserProfileScreen() {
 	const {
 		userProfile,
 		userVideos,
+		sortOption,
 		isLoading,
 		isLoadingVideos,
 		error,
@@ -115,13 +188,26 @@ export default function UserProfileScreen() {
 		handleBlock,
 		handleReport,
 		loadUserVideos,
+		setSortOption,
 	} = useUserProfile(id!, currentUser?.id);
 
-	const [currentTab, setCurrentTab] = useState<'videos' | 'liked'>('videos');
+	type ExternalProfileTab = 'public' | 'premium' | 'videos';
+	
+	// Determine initial tab based on user's premium content setting
+	const getInitialTab = (): ExternalProfileTab => {
+		if (userProfile?.has_premium_content) {
+			return 'public'; // Start with public when user has premium content
+		}
+		return 'videos'; // Start with videos when user doesn't have premium content
+	};
+	
+	const [currentTab, setCurrentTab] = useState<ExternalProfileTab>('public');
 
-	// Load user videos when component mounts
+	// Update tab when userProfile loads and changes
 	useEffect(() => {
 		if (userProfile) {
+			const initialTab = getInitialTab();
+			setCurrentTab(initialTab);
 			loadUserVideos();
 		}
 	}, [userProfile, loadUserVideos]);
@@ -175,21 +261,61 @@ export default function UserProfileScreen() {
 		<VideoThumbnail video={item} onPress={() => handleVideoPress(item)} />
 	);
 
-	const renderEmptyState = () => (
-		<View style={styles.emptyState}>
-			<Feather name="video" size={48} color={Colors.textTertiary} />
-			<Text style={styles.emptyTitle}>
-				{currentTab === 'videos'
-					? 'No hay videos'
-					: 'No hay videos que le gusten'}
-			</Text>
-			<Text style={styles.emptySubtitle}>
-				{currentTab === 'videos'
-					? 'Este usuario aún no ha publicado videos'
-					: 'Este usuario no ha dado like a ningún video'}
-			</Text>
-		</View>
-	);
+	// Filtrar videos según la tab activa
+	const filteredVideos = React.useMemo(() => {
+		if (currentTab === 'public') {
+			return userVideos.filter(video => !video.is_premium);
+		} else if (currentTab === 'premium') {
+			return userVideos.filter(video => video.is_premium);
+		} else {
+			// currentTab === 'videos'
+			return userVideos;
+		}
+	}, [userVideos, currentTab]);
+
+	const renderEmptyState = () => {
+		const getEmptyStateConfig = () => {
+			switch (currentTab) {
+				case 'public':
+					return {
+						icon: 'globe',
+						title: 'No hay videos públicos',
+						subtitle: 'Este usuario no ha publicado videos públicos'
+					};
+				case 'premium':
+					return {
+						icon: 'crown',
+						title: 'No hay videos premium',
+						subtitle: 'Este usuario no tiene contenido premium'
+					};
+				case 'videos':
+				default:
+					return {
+						icon: 'video',
+						title: 'No hay videos',
+						subtitle: 'Este usuario no ha publicado videos'
+					};
+			}
+		};
+
+		const config = getEmptyStateConfig();
+
+		return (
+			<View style={styles.emptyState}>
+				{config.icon === 'crown' ? (
+					<MaterialCommunityIcons
+						name="crown"
+						size={48}
+						color={Colors.textTertiary}
+					/>
+				) : (
+					<Feather name={config.icon as any} size={48} color={Colors.textTertiary} />
+				)}
+				<Text style={styles.emptyTitle}>{config.title}</Text>
+				<Text style={styles.emptySubtitle}>{config.subtitle}</Text>
+			</View>
+		);
+	};
 
 	if (isLoading) {
 		return (
@@ -348,7 +474,7 @@ export default function UserProfileScreen() {
 								</Text>
 							</TouchableOpacity>
 
-							{userProfile.subscription_price > 0 && (
+							{userProfile.has_premium_content && userProfile.subscription_price > 0 && (
 								<TouchableOpacity
 									style={styles.subscribeButton}
 									onPress={handleSubscribePress}
@@ -395,48 +521,80 @@ export default function UserProfileScreen() {
 
 				{/* Content Tabs */}
 				<View style={styles.tabsContainer}>
-					<TouchableOpacity
-						style={[styles.tab, currentTab === 'videos' && styles.activeTab]}
-						onPress={() => setCurrentTab('videos')}
-					>
-						<Feather
-							name="grid"
-							size={20}
-							color={
-								currentTab === 'videos' ? Colors.primary : Colors.textTertiary
-							}
-						/>
-						<Text
-							style={[
-								styles.tabText,
-								currentTab === 'videos' && styles.activeTabText,
-							]}
-						>
-							Videos
-						</Text>
-					</TouchableOpacity>
+					{/* Video tabs - show either "Videos" or "Públicos/Premium" based on user settings */}
+					{userProfile.has_premium_content ? (
+						<>
+							<TouchableOpacity
+								style={[styles.tab, currentTab === 'public' && styles.activeTab]}
+								onPress={() => setCurrentTab('public')}
+							>
+								<Feather
+									name="globe"
+									size={20}
+									color={
+										currentTab === 'public' ? Colors.primary : Colors.textTertiary
+									}
+								/>
+								<Text
+									style={[
+										styles.tabText,
+										currentTab === 'public' && styles.activeTabText,
+									]}
+								>
+									Públicos
+								</Text>
+							</TouchableOpacity>
 
-					<TouchableOpacity
-						style={[styles.tab, currentTab === 'liked' && styles.activeTab]}
-						onPress={() => setCurrentTab('liked')}
-					>
-						<Feather
-							name="heart"
-							size={20}
-							color={
-								currentTab === 'liked' ? Colors.primary : Colors.textTertiary
-							}
-						/>
-						<Text
-							style={[
-								styles.tabText,
-								currentTab === 'liked' && styles.activeTabText,
-							]}
+							<TouchableOpacity
+								style={[styles.tab, currentTab === 'premium' && styles.activeTab]}
+								onPress={() => setCurrentTab('premium')}
+							>
+								<MaterialCommunityIcons
+									name="crown"
+									size={20}
+									color={
+										currentTab === 'premium' ? Colors.primary : Colors.textTertiary
+									}
+								/>
+								<Text
+									style={[
+										styles.tabText,
+										currentTab === 'premium' && styles.activeTabText,
+									]}
+								>
+									Premium
+								</Text>
+							</TouchableOpacity>
+						</>
+					) : (
+						<TouchableOpacity
+							style={[styles.tab, currentTab === 'videos' && styles.activeTab]}
+							onPress={() => setCurrentTab('videos')}
 						>
-							{t('profile.likes')}
-						</Text>
-					</TouchableOpacity>
+							<Feather
+								name="grid"
+								size={20}
+								color={
+									currentTab === 'videos' ? Colors.primary : Colors.textTertiary
+								}
+							/>
+							<Text
+								style={[
+									styles.tabText,
+									currentTab === 'videos' && styles.activeTabText,
+								]}
+							>
+								Vídeos
+							</Text>
+						</TouchableOpacity>
+					)}
 				</View>
+
+				{/* Sort Controls */}
+				<SortControls
+					currentSort={sortOption}
+					onSortChange={setSortOption}
+				/>
 
 				{/* Video Grid */}
 				<View style={styles.videosContainer}>
@@ -446,7 +604,7 @@ export default function UserProfileScreen() {
 						</View>
 					) : (
 						<FlatList
-							data={currentTab === 'videos' ? userVideos : []}
+							data={filteredVideos}
 							renderItem={renderVideoItem}
 							keyExtractor={(item) => item.id}
 							numColumns={3}
@@ -455,7 +613,7 @@ export default function UserProfileScreen() {
 							ItemSeparatorComponent={() => (
 								<View style={styles.videoSeparator} />
 							)}
-							columnWrapperStyle={styles.videoRow}
+							columnWrapperStyle={styles.videoRowStart}
 							ListEmptyComponent={renderEmptyState}
 						/>
 					)}
@@ -677,6 +835,10 @@ const styles = StyleSheet.create({
 	videoRow: {
 		justifyContent: 'space-between',
 	},
+	videoRowStart: {
+		justifyContent: 'flex-start',
+		gap: 8, // Espacio entre videos
+	},
 	videoSeparator: {
 		height: 8,
 	},
@@ -721,6 +883,18 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-Regular',
 		color: Colors.text,
 	},
+	playOverlay: {
+		position: 'absolute',
+		top: '50%',
+		left: '50%',
+		transform: [{ translateX: -20 }, { translateY: -20 }],
+		backgroundColor: 'rgba(0, 0, 0, 0.6)',
+		borderRadius: 20,
+		width: 40,
+		height: 40,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
 	emptyState: {
 		alignItems: 'center',
 		justifyContent: 'center',
@@ -740,5 +914,38 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-Regular',
 		color: Colors.textTertiary,
 		textAlign: 'center',
+	},
+	sortContainer: {
+		flexDirection: 'row',
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		backgroundColor: Colors.background,
+		borderBottomWidth: 1,
+		borderBottomColor: Colors.borderSecondary,
+		gap: 8,
+	},
+	sortButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		paddingHorizontal: 12,
+		paddingVertical: 8,
+		borderRadius: 20,
+		backgroundColor: Colors.backgroundSecondary,
+		borderWidth: 1,
+		borderColor: Colors.borderSecondary,
+		gap: 6,
+	},
+	activeSortButton: {
+		backgroundColor: 'rgba(255, 107, 129, 0.1)',
+		borderColor: Colors.primary,
+	},
+	sortButtonText: {
+		fontSize: 12,
+		fontFamily: 'Inter-Medium',
+		fontWeight: '500',
+		color: Colors.textTertiary,
+	},
+	activeSortButtonText: {
+		color: Colors.primary,
 	},
 });

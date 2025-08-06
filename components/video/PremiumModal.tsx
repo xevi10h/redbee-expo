@@ -1,4 +1,4 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef } from 'react';
 import {
@@ -83,7 +83,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
 							</Text>
 						</View>
 						<View style={styles.premiumBadge}>
-							<Feather name="star" size={16} color={Colors.text} />
+							<MaterialCommunityIcons name="crown" size={16} color={Colors.text} />
 						</View>
 					</View>
 
@@ -141,7 +141,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
 							start={{ x: 0, y: 0 }}
 							end={{ x: 1, y: 0 }}
 						>
-							<Feather name="star" size={20} color={Colors.text} />
+							<MaterialCommunityIcons name="crown" size={20} color={Colors.text} />
 							<Text style={styles.subscribeText}>{t('video.subscribe')}</Text>
 						</LinearGradient>
 					</TouchableOpacity>

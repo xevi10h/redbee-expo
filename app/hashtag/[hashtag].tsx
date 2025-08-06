@@ -1,45 +1,99 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
 	Alert,
 	Dimensions,
 	FlatList,
+	Image,
 	RefreshControl,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View,
-	ViewToken,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { VideoFeedLoader } from '@/components/ui/VideoFeedLoader';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useHashtagVideos } from '@/hooks/useHashtagSearch';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useUserInteractions } from '@/hooks/useUserInteractions';
-import { Comment } from '@/shared/types';
+import { Video } from '@/shared/types';
+import { formatNumber } from '@/shared/functions/utils';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const VIDEO_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 columns with margins
+
+// Video Card Component
+const VideoCard: React.FC<{
+	video: Video;
+	onPress: () => void;
+}> = ({ video, onPress }) => {
+	const [imageError, setImageError] = useState(false);
+
+	return (
+		<TouchableOpacity style={styles.videoCard} onPress={onPress}>
+			<View style={styles.thumbnailContainer}>
+				{video.thumbnail_url && !imageError ? (
+					<Image
+						source={{ uri: video.thumbnail_url }}
+						style={styles.thumbnail}
+						resizeMode="cover"
+						onError={() => setImageError(true)}
+					/>
+				) : (
+					<View style={styles.placeholderThumbnail}>
+						<Feather name="video" size={32} color={Colors.textTertiary} />
+					</View>
+				)}
+				
+				{/* Play overlay */}
+				<View style={styles.playOverlay}>
+					<Feather name="play" size={16} color={Colors.text} />
+				</View>
+				
+				{/* Premium badge */}
+				{video.is_premium && (
+					<View style={styles.premiumBadge}>
+						<MaterialCommunityIcons name="crown" size={12} color={Colors.text} />
+					</View>
+				)}
+
+				{/* Video stats overlay */}
+				<View style={styles.statsOverlay}>
+					<View style={styles.statItem}>
+						<Feather name="heart" size={12} color={Colors.text} />
+						<Text style={styles.statText}>{formatNumber(video.likes_count)}</Text>
+					</View>
+					<View style={styles.statItem}>
+						<Feather name="eye" size={12} color={Colors.text} />
+						<Text style={styles.statText}>{formatNumber(video.views_count)}</Text>
+					</View>
+				</View>
+			</View>
+			
+			{/* Video info */}
+			<View style={styles.videoInfo}>
+				<Text style={styles.videoTitle} numberOfLines={2}>
+					{video.title || 'Sin título'}
+				</Text>
+				<Text style={styles.videoAuthor} numberOfLines={1}>
+					@{video.user?.username || 'Unknown'}
+				</Text>
+			</View>
+		</TouchableOpacity>
+	);
+};
 
 export default function HashtagFeedScreen() {
 	const { t } = useTranslation();
 	const { hashtag: hashtagParam } = useLocalSearchParams<{ hashtag: string }>();
 	const { user } = useRequireAuth();
-	const { handleLike, handleFollow, handleSubscribe } = useUserInteractions();
 
 	// Decode hashtag parameter
 	const hashtag = decodeURIComponent(hashtagParam || '');
-
-	// State management
-	const [activeVideoIndex, setActiveVideoIndex] = useState(0);
-
-	// Refs
-	const flatListRef = useRef<FlatList>(null);
 
 	// Use hashtag videos hook
 	const {
@@ -51,34 +105,6 @@ export default function HashtagFeedScreen() {
 		refresh,
 		canLoadMore,
 	} = useHashtagVideos(hashtag, user?.id);
-
-	// Handle viewable items change for video playback
-	const onViewableItemsChanged = useCallback(
-		({ viewableItems }: { viewableItems: ViewToken[] }) => {
-			if (viewableItems.length > 0) {
-				const activeItem = viewableItems.find(
-					(item) => item.isViewable && item.index !== null,
-				);
-				if (activeItem && activeItem.index !== null) {
-					setActiveVideoIndex(activeItem.index);
-
-					// Track video view
-					const video = videos[activeItem.index];
-					if (video) {
-						import('@/services/videoService').then(({ VideoService }) => {
-							VideoService.incrementViewCount(video.id, user?.id);
-						});
-					}
-				}
-			}
-		},
-		[videos, user?.id],
-	);
-
-	const viewabilityConfig = {
-		itemVisiblePercentThreshold: 50,
-		minimumViewTime: 500,
-	};
 
 	// Show error alert when error state changes
 	useEffect(() => {
@@ -96,83 +122,6 @@ export default function HashtagFeedScreen() {
 		}
 	}, [error, t, refresh]);
 
-	// Handle video like
-	const handleVideoLike = useCallback(
-		async (videoId: string) => {
-			try {
-				await handleLike(videoId);
-			} catch (error) {
-				console.error('Error liking video:', error);
-				Alert.alert(t('common.error'), 'No se pudo dar like al video');
-			}
-		},
-		[handleLike, t],
-	);
-
-	// Handle user follow
-	const handleUserFollow = useCallback(
-		async (userId: string) => {
-			try {
-				await handleFollow(userId);
-			} catch (error) {
-				console.error('Error following user:', error);
-				Alert.alert(t('common.error'), 'No se pudo seguir al usuario');
-			}
-		},
-		[handleFollow, t],
-	);
-
-	// Handle user subscribe
-	const handleUserSubscribe = useCallback(
-		async (userId: string) => {
-			try {
-				await handleSubscribe(userId);
-			} catch (error) {
-				console.error('Error subscribing to user:', error);
-				Alert.alert(t('common.error'), 'No se pudo suscribir al usuario');
-			}
-		},
-		[handleSubscribe, t],
-	);
-
-	// Handle video comment
-	const handleVideoComment = useCallback(() => {
-		// This will be handled by the VideoPlayer component's comment modal
-	}, []);
-
-	// Handle video report
-	const handleVideoReport = useCallback(
-		(videoId: string) => {
-			Alert.alert(
-				'Reportar video',
-				'¿Quieres reportar este video?',
-				[
-					{ text: 'Cancelar', style: 'cancel' },
-					{
-						text: 'Reportar',
-						style: 'destructive',
-						onPress: () => {
-							// TODO: Implement video reporting
-							console.log('Report video:', videoId);
-						},
-					},
-				],
-			);
-		},
-		[],
-	);
-
-	// Handle user press
-	const handleUserPress = useCallback((userId: string) => {
-		router.push(`/user/${userId}`);
-	}, []);
-
-	// Handle comment added
-	const handleCommentAdded = useCallback((comment: Comment) => {
-		// TODO: Update video comments count
-		console.log('Comment added:', comment);
-	}, []);
-
 	// Handle back navigation
 	const handleBack = useCallback(() => {
 		if (router.canGoBack()) {
@@ -182,35 +131,20 @@ export default function HashtagFeedScreen() {
 		}
 	}, []);
 
+	// Handle video press - navigate to video player
+	const handleVideoPress = useCallback((video: Video) => {
+		router.push(`/video/${video.id}`);
+	}, []);
+
 	// Render video item
 	const renderVideoItem = useCallback(
-		({ item, index }: { item: any; index: number }) => (
-			<View style={styles.videoContainer}>
-				<VideoPlayer
-					video={item}
-					isActive={index === activeVideoIndex}
-					currentUser={user!}
-					onLike={() => handleVideoLike(item.id)}
-					onComment={handleVideoComment}
-					onFollow={() => handleUserFollow(item.author?.id)}
-					onSubscribe={() => handleUserSubscribe(item.author?.id)}
-					onReport={() => handleVideoReport(item.id)}
-					onUserPress={() => handleUserPress(item.author?.id)}
-					onCommentAdded={handleCommentAdded}
-				/>
-			</View>
+		({ item }: { item: Video }) => (
+			<VideoCard
+				video={item}
+				onPress={() => handleVideoPress(item)}
+			/>
 		),
-		[
-			activeVideoIndex,
-			user,
-			handleVideoLike,
-			handleVideoComment,
-			handleUserFollow,
-			handleUserSubscribe,
-			handleVideoReport,
-			handleUserPress,
-			handleCommentAdded,
-		],
+		[handleVideoPress],
 	);
 
 	// Render empty state
@@ -271,22 +205,16 @@ export default function HashtagFeedScreen() {
 				/>
 			)}
 
-			{/* Video Feed */}
+			{/* Video Grid */}
 			{!showMainLoader && (
 				<FlatList
-					ref={flatListRef}
 					data={videos}
 					renderItem={renderVideoItem}
 					keyExtractor={(item) => item.id}
-					pagingEnabled
+					numColumns={2}
 					showsVerticalScrollIndicator={false}
-					onViewableItemsChanged={onViewableItemsChanged}
-					viewabilityConfig={viewabilityConfig}
-					getItemLayout={(_, index) => ({
-						length: SCREEN_HEIGHT - 100, // Subtract header height
-						offset: (SCREEN_HEIGHT - 100) * index,
-						index,
-					})}
+					contentContainerStyle={styles.gridContainer}
+					columnWrapperStyle={styles.gridRow}
 					refreshControl={
 						<RefreshControl
 							refreshing={false}
@@ -299,10 +227,7 @@ export default function HashtagFeedScreen() {
 					onEndReached={handleLoadMore}
 					onEndReachedThreshold={0.5}
 					ListEmptyComponent={!isLoading ? renderEmptyState : null}
-					removeClippedSubviews={true}
-					maxToRenderPerBatch={3}
-					windowSize={5}
-					initialNumToRender={2}
+					ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
 				/>
 			)}
 
@@ -356,16 +281,106 @@ const styles = StyleSheet.create({
 		color: Colors.textSecondary,
 		marginTop: 2,
 	},
-	videoContainer: {
-		height: SCREEN_HEIGHT - 100, // Subtract header height
+	gridContainer: {
+		padding: 16,
+	},
+	gridRow: {
+		justifyContent: 'space-between',
+	},
+	itemSeparator: {
+		height: 16,
+	},
+	videoCard: {
+		width: VIDEO_WIDTH,
+		backgroundColor: Colors.backgroundSecondary,
+		borderRadius: 12,
+		overflow: 'hidden',
+		marginBottom: 8,
+	},
+	thumbnailContainer: {
 		width: '100%',
+		aspectRatio: 9 / 16,
+		position: 'relative',
+		backgroundColor: Colors.backgroundSecondary,
+	},
+	thumbnail: {
+		width: '100%',
+		height: '100%',
+	},
+	placeholderThumbnail: {
+		width: '100%',
+		height: '100%',
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: Colors.backgroundSecondary,
+	},
+	playOverlay: {
+		position: 'absolute',
+		top: '50%',
+		left: '50%',
+		transform: [{ translateX: -20 }, { translateY: -20 }],
+		backgroundColor: 'rgba(0, 0, 0, 0.6)',
+		borderRadius: 20,
+		width: 40,
+		height: 40,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	premiumBadge: {
+		position: 'absolute',
+		top: 8,
+		right: 8,
+		backgroundColor: Colors.premium,
+		borderRadius: 10,
+		width: 20,
+		height: 20,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	statsOverlay: {
+		position: 'absolute',
+		bottom: 8,
+		left: 8,
+		right: 8,
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+	},
+	statItem: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		backgroundColor: 'rgba(0, 0, 0, 0.6)',
+		paddingHorizontal: 6,
+		paddingVertical: 2,
+		borderRadius: 4,
+		gap: 2,
+	},
+	statText: {
+		fontSize: 10,
+		fontFamily: 'Inter-Regular',
+		color: Colors.text,
+	},
+	videoInfo: {
+		padding: 12,
+	},
+	videoTitle: {
+		fontSize: 14,
+		fontFamily: 'Inter-SemiBold',
+		fontWeight: '600',
+		color: Colors.text,
+		marginBottom: 4,
+		lineHeight: 18,
+	},
+	videoAuthor: {
+		fontSize: 12,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textSecondary,
 	},
 	emptyState: {
 		flex: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
 		paddingHorizontal: 32,
-		height: SCREEN_HEIGHT - 200,
+		minHeight: 400,
 	},
 	emptyTitle: {
 		fontSize: 20,

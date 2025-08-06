@@ -41,6 +41,7 @@ const createDefaultUser = (): User => ({
 	display_name: '',
 	bio: '',
 	avatar_url: '',
+	has_premium_content: false,
 	subscription_price: 0,
 	subscription_currency: 'USD',
 	commission_rate: 30,

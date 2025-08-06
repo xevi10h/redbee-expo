@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
 	Alert,
+	Platform,
 	Share,
 	StyleSheet,
 	Text,
@@ -19,6 +20,17 @@ import { PremiumModal } from './PremiumModal';
 
 const SCREEN_WIDTH = 375; // Default width for styling
 
+// Positioning ajustado: subir ambos elementos manteniendo separación
+const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 90 : 70; // Altura real del tab bar
+const SLIDER_SPACE = 60; // Espacio del slider desde tab bar (PERFECTO - 5px más)
+const STATS_HEIGHT = 25; // Altura del texto de estadísticas
+const STATS_MARGIN = 25; // Margen MANTENIDO entre slider y stats (misma separación)
+const CONTROLS_MARGIN = 50; // Margen para los controles
+
+// Calculated positions - ambos más arriba, misma separación
+const STATS_BOTTOM = TAB_BAR_HEIGHT + SLIDER_SPACE + STATS_MARGIN; // ~150-130 (subido)
+const CONTROLS_BOTTOM = STATS_BOTTOM + STATS_HEIGHT + CONTROLS_MARGIN; // ~225-205 (ajustado)
+
 interface VideoControlsProps {
 	video: VideoType;
 	currentUser: User;
@@ -27,6 +39,8 @@ interface VideoControlsProps {
 	onFollow: () => void;
 	onSubscribe: () => void;
 	onReport: () => void;
+	onHideVideo?: () => void;
+	onDeleteVideo?: () => void;
 	onUserPress: () => void;
 	onCommentAdded: (comment: Comment) => void;
 }
@@ -39,6 +53,8 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 	onFollow,
 	onSubscribe,
 	onReport,
+	onHideVideo,
+	onDeleteVideo,
 	onUserPress,
 	onCommentAdded,
 }) => {
@@ -85,8 +101,58 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 		);
 	};
 
+	const handleHideVideo = () => {
+		Alert.alert(
+			'Ocultar video',
+			'¿Quieres ocultar este video? Podrás mostrarlo nuevamente desde tu perfil.',
+			[
+				{ text: 'Cancelar', style: 'cancel' },
+				{
+					text: 'Ocultar',
+					style: 'default',
+					onPress: () => onHideVideo && onHideVideo()
+				}
+			]
+		);
+	};
+
+	const handleDeleteVideo = () => {
+		Alert.alert(
+			'Eliminar video',
+			'¿Estás seguro de que quieres eliminar este video permanentemente? Esta acción no se puede deshacer.',
+			[
+				{ text: 'Cancelar', style: 'cancel' },
+				{
+					text: 'Eliminar',
+					style: 'destructive',
+					onPress: () => onDeleteVideo && onDeleteVideo()
+				}
+			]
+		);
+	};
+
 	return (
 		<>
+			{/* Top right controls - Hide/Delete buttons for own videos */}
+			{video.user?.id === currentUser.id && (
+				<View style={styles.topRightControls}>
+					<TouchableOpacity
+						style={styles.topActionButton}
+						onPress={handleHideVideo}
+						activeOpacity={0.7}
+					>
+						<Feather name="eye-off" size={20} color={Colors.warning} />
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={styles.topActionButton}
+						onPress={handleDeleteVideo}
+						activeOpacity={0.7}
+					>
+						<Feather name="trash-2" size={20} color={Colors.error} />
+					</TouchableOpacity>
+				</View>
+			)}
+
 			<View style={styles.leftControls}>
 				<TouchableOpacity
 					style={styles.userInfoContainer}
@@ -168,7 +234,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 									start={{ x: 0, y: 0 }}
 									end={{ x: 1, y: 0 }}
 								>
-									<Feather name="star" size={16} color={Colors.text} />
+									<MaterialCommunityIcons name="crown" size={16} color={Colors.text} />
 									<Text style={styles.subscribeText}>
 										{t('video.subscribe')}
 									</Text>
@@ -184,7 +250,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 						style={styles.premiumIndicator}
 						onPress={() => !video.is_subscribed && setShowPremiumModal(true)}
 					>
-						<Feather name="star" size={20} color={Colors.premium} />
+						<MaterialCommunityIcons name="crown" size={20} color={Colors.premium} />
 					</TouchableOpacity>
 				)}
 
@@ -224,13 +290,16 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 					<Text style={styles.actionText}>{t('video.share')}</Text>
 				</TouchableOpacity>
 
-				<TouchableOpacity
-					style={styles.actionButton}
-					onPress={handleReport}
-					activeOpacity={0.7}
-				>
-					<Feather name="flag" size={24} color={Colors.text} />
-				</TouchableOpacity>
+				{/* Report button only for other users' videos */}
+				{video.user?.id !== currentUser.id && (
+					<TouchableOpacity
+						style={styles.actionButton}
+						onPress={handleReport}
+						activeOpacity={0.7}
+					>
+						<Feather name="flag" size={24} color={Colors.text} />
+					</TouchableOpacity>
+				)}
 			</View>
 
 			{/* Stats */}
@@ -255,10 +324,31 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 };
 
 const styles = StyleSheet.create({
+	topRightControls: {
+		position: 'absolute',
+		top: 70,
+		right: 16,
+		flexDirection: 'row',
+		gap: 12,
+		zIndex: 1000,
+	},
+	topActionButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: 'rgba(0, 0, 0, 0.6)',
+		justifyContent: 'center',
+		alignItems: 'center',
+		shadowColor: '#000',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.3,
+		shadowRadius: 4,
+		elevation: 5,
+	},
 	leftControls: {
 		position: 'absolute',
 		left: 16,
-		bottom: 130,
+		bottom: CONTROLS_BOTTOM, // Calculado dinámicamente basado en tab bar
 		maxWidth: SCREEN_WIDTH * 0.65,
 		alignItems: 'flex-start',
 	},
@@ -356,7 +446,7 @@ const styles = StyleSheet.create({
 	rightControls: {
 		position: 'absolute',
 		right: 16,
-		bottom: 130,
+		bottom: CONTROLS_BOTTOM, // Calculado dinámicamente basado en tab bar
 		alignItems: 'center',
 		gap: 24,
 	},
@@ -389,7 +479,7 @@ const styles = StyleSheet.create({
 	statsContainer: {
 		position: 'absolute',
 		left: 16,
-		bottom: 80,
+		bottom: STATS_BOTTOM, // Calculado dinámicamente basado en tab bar
 	},
 	viewsText: {
 		fontSize: 12,

@@ -3,13 +3,13 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
 	ActivityIndicator,
+	Alert,
 	Dimensions,
 	FlatList,
 	StyleSheet,
 	Text,
 	View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import VideoPlayer from '@/components/video/VideoPlayer';
 import { Colors } from '@/constants/Colors';
@@ -97,6 +97,57 @@ export default function VideoScreen() {
 		}
 	};
 
+	const handleHideVideo = async (videoId: string) => {
+		try {
+			const result = await VideoService.hideVideo(videoId);
+			if (result.success) {
+				Alert.alert('Video oculto', 'El video ha sido ocultado exitosamente.', [
+					{
+						text: 'OK',
+						onPress: () => router.back()
+					}
+				]);
+			} else {
+				Alert.alert('Error', result.error || 'No se pudo ocultar el video');
+			}
+		} catch (error) {
+			console.error('Error hiding video:', error);
+			Alert.alert('Error', 'No se pudo ocultar el video');
+		}
+	};
+
+	const handleDeleteVideo = async (videoId: string) => {
+		Alert.alert(
+			'Eliminar video',
+			'¿Estás seguro de que quieres eliminar este video permanentemente? Esta acción no se puede deshacer.',
+			[
+				{ text: 'Cancelar', style: 'cancel' },
+				{
+					text: 'Eliminar',
+					style: 'destructive',
+					onPress: async () => {
+						try {
+							const result = await VideoService.deleteVideo(videoId);
+							if (result.success) {
+								Alert.alert('Video eliminado', 'El video ha sido eliminado exitosamente.', [
+									{
+										text: 'OK',
+										onPress: () => router.back()
+									}
+								]);
+							} else {
+								Alert.alert('Error', result.error || 'No se pudo eliminar el video');
+							}
+						} catch (error) {
+							console.error('Error deleting video:', error);
+							Alert.alert('Error', 'No se pudo eliminar el video');
+						}
+					}
+				}
+			]
+		);
+	};
+
 	const renderVideoItem = ({ item, index }: { item: Video; index: number }) => {
 		if (!user) return null;
 
@@ -110,6 +161,8 @@ export default function VideoScreen() {
 				onFollow={() => handleFollow(item.user_id, updateVideoState)}
 				onSubscribe={() => handleSubscribe(item.user_id, updateVideoState)}
 				onReport={() => handleReport(item.id, 'inappropriate')}
+				onHideVideo={() => handleHideVideo(item.id)}
+				onDeleteVideo={() => handleDeleteVideo(item.id)}
 				onUserPress={() => handleUserPress(item)}
 				onCommentAdded={(comment) => {
 					// Update video comment count

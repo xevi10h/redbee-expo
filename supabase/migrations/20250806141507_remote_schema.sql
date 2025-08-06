@@ -211,6 +211,59 @@ COMMENT ON FUNCTION "public"."check_username_availability_for_update"("username_
 
 
 
+CREATE OR REPLACE FUNCTION "public"."create_default_notification_preferences"("user_id_param" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  INSERT INTO notification_preferences (user_id)
+  VALUES (user_id_param)
+  ON CONFLICT (user_id) DO NOTHING;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."create_default_notification_preferences"("user_id_param" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."create_notification"("recipient_id" "uuid", "actor_id" "uuid", "notification_type" character varying, "entity_id" "uuid" DEFAULT NULL::"uuid", "entity_type" character varying DEFAULT NULL::character varying) RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  notification_id uuid;
+  preferences_enabled boolean;
+BEGIN
+  -- Check if recipient has this notification type enabled
+  SELECT CASE notification_type
+    WHEN 'video_like' THEN video_likes_enabled
+    WHEN 'follow' THEN new_followers_enabled
+    WHEN 'comment_like' THEN comment_likes_enabled
+    WHEN 'video_comment' THEN video_comments_enabled
+    WHEN 'comment_reply' THEN comment_replies_enabled
+    ELSE TRUE
+  END INTO preferences_enabled
+  FROM notification_preferences
+  WHERE user_id = recipient_id;
+  
+  -- If preferences not found, assume enabled
+  IF preferences_enabled IS NULL THEN
+    preferences_enabled := TRUE;
+  END IF;
+  
+  -- Only create notification if enabled and not self-action
+  IF preferences_enabled AND recipient_id != actor_id THEN
+    INSERT INTO notifications (recipient_id, actor_id, type, entity_id, entity_type)
+    VALUES (recipient_id, actor_id, notification_type, entity_id, entity_type)
+    RETURNING id INTO notification_id;
+  END IF;
+  
+  RETURN notification_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."create_notification"("recipient_id" "uuid", "actor_id" "uuid", "notification_type" character varying, "entity_id" "uuid", "entity_type" character varying) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_comment_replies"("p_comment_id" "uuid", "p_limit" integer DEFAULT 10, "p_offset" integer DEFAULT 0) RETURNS TABLE("id" "uuid", "user_id" "uuid", "video_id" "uuid", "text" "text", "reply_to" "uuid", "created_at" timestamp with time zone, "updated_at" timestamp with time zone, "username" character varying, "display_name" character varying, "avatar_url" character varying)
     LANGUAGE "plpgsql"
     AS $$
@@ -554,6 +607,59 @@ $$;
 ALTER FUNCTION "public"."get_trending_hashtags"("limit_count" integer, "days_back" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_unread_notification_count"("user_id_param" "uuid") RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  unread_count integer;
+BEGIN
+  SELECT COUNT(*)::integer INTO unread_count
+  FROM notifications
+  WHERE recipient_id = user_id_param AND is_read = false;
+  
+  RETURN unread_count;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_unread_notification_count"("user_id_param" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_user_notifications"("user_id_param" "uuid", "page_offset" integer DEFAULT 0, "page_limit" integer DEFAULT 20) RETURNS TABLE("id" "uuid", "type" character varying, "entity_id" "uuid", "entity_type" character varying, "is_read" boolean, "created_at" timestamp with time zone, "actor_username" character varying, "actor_display_name" character varying, "actor_avatar_url" character varying, "entity_title" character varying)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    n.id,
+    n.type,
+    n.entity_id,
+    n.entity_type,
+    n.is_read,
+    n.created_at,
+    p.username as actor_username,
+    p.display_name as actor_display_name,
+    p.avatar_url as actor_avatar_url,
+    CASE 
+      WHEN n.entity_type = 'video' THEN v.title
+      WHEN n.entity_type = 'comment' THEN SUBSTRING(c.text, 1, 50)
+      ELSE NULL
+    END as entity_title
+  FROM notifications n
+  JOIN profiles p ON n.actor_id = p.id
+  LEFT JOIN videos v ON n.entity_type = 'video' AND n.entity_id = v.id
+  LEFT JOIN comments c ON n.entity_type = 'comment' AND n.entity_id = c.id
+  WHERE n.recipient_id = user_id_param
+  ORDER BY n.created_at DESC
+  OFFSET page_offset
+  LIMIT page_limit;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_user_notifications"("user_id_param" "uuid", "page_offset" integer, "page_limit" integer) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_user_stats"("profile_id" "uuid") RETURNS TABLE("total_videos" integer, "total_likes" bigint, "total_views" bigint, "total_comments" bigint, "followers_count" integer, "following_count" integer, "subscribers_count" integer, "avg_engagement_rate" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -709,6 +815,29 @@ $$;
 ALTER FUNCTION "public"."get_video_interactions_safe"("video_ids" "uuid"[], "viewer_id" "uuid") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_videos_pending_thumbnail_processing"() RETURNS TABLE("video_id" "uuid", "video_url" "text", "thumbnail_time" double precision, "thumbnail_url" "text")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        v.id,
+        v.video_url,
+        v.thumbnail_time,
+        v.thumbnail_url
+    FROM public.videos v
+    WHERE v.thumbnail_processing_status = 'pending'
+    AND v.thumbnail_time IS NOT NULL
+    AND v.thumbnail_time >= 0
+    ORDER BY v.created_at ASC
+    LIMIT 50;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_videos_pending_thumbnail_processing"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -744,6 +873,10 @@ BEGIN
     NOW(),
     NOW()
   );
+  
+  -- Create default notification preferences
+  PERFORM create_default_notification_preferences(NEW.id);
+  
   RETURN NEW;
 END;
 $$;
@@ -754,6 +887,55 @@ ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
 
 COMMENT ON FUNCTION "public"."handle_new_user"() IS 'Automatically creates profile when user signs up';
 
+
+
+CREATE OR REPLACE FUNCTION "public"."handle_new_user_enhanced"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  INSERT INTO public.profiles (
+    id,
+    username,
+    display_name,
+    bio,
+    avatar_url,
+    subscription_price,
+    subscription_currency,
+    commission_rate,
+    followers_count,
+    subscribers_count,
+    videos_count,
+    locale,
+    preferred_language,
+    pricing_region,
+    created_at,
+    updated_at
+  )
+  VALUES (
+    NEW.id,
+    -- Generate a temporary username based on email
+    LOWER(SPLIT_PART(NEW.email, '@', 1)) || '_' || SUBSTR(NEW.id::text, 1, 8),
+    COALESCE(NEW.raw_user_meta_data->>'display_name', ''),
+    NULL,
+    NEW.raw_user_meta_data->>'avatar_url',
+    3.95, -- Default recommended price for ES region
+    'EUR',
+    30.00,
+    0,
+    0,
+    0,
+    'es-ES',
+    'es',
+    'ES',
+    NOW(),
+    NOW()
+  );
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."handle_new_user_enhanced"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."handle_user_email_update"() RETURNS "trigger"
@@ -804,6 +986,150 @@ $$;
 
 
 ALTER FUNCTION "public"."increment_video_views_safe"("video_id" "uuid", "viewer_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."mark_all_notifications_read"("user_id_param" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE notifications
+  SET is_read = true, updated_at = now()
+  WHERE recipient_id = user_id_param AND is_read = false;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."mark_all_notifications_read"("user_id_param" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."mark_notification_read"("notification_id" "uuid") RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE notifications
+  SET is_read = true, updated_at = now()
+  WHERE id = notification_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."mark_notification_read"("notification_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."notify_comment_like"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM create_notification(
+      (SELECT user_id FROM comments WHERE id = NEW.comment_id),
+      NEW.user_id,
+      'comment_like',
+      NEW.comment_id,
+      'comment'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."notify_comment_like"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."notify_follow"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM create_notification(
+      NEW.following_id,
+      NEW.follower_id,
+      'follow',
+      NULL,
+      NULL
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."notify_follow"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."notify_video_comment"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' AND NEW.reply_to IS NULL THEN
+    -- Only notify for top-level comments, not replies
+    PERFORM create_notification(
+      (SELECT user_id FROM videos WHERE id = NEW.video_id),
+      NEW.user_id,
+      'video_comment',
+      NEW.video_id,
+      'video'
+    );
+  ELSIF TG_OP = 'INSERT' AND NEW.reply_to IS NOT NULL THEN
+    -- Notify original commenter about reply
+    PERFORM create_notification(
+      (SELECT user_id FROM comments WHERE id = NEW.reply_to),
+      NEW.user_id,
+      'comment_reply',
+      NEW.reply_to,
+      'comment'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."notify_video_comment"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."notify_video_like"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM create_notification(
+      (SELECT user_id FROM videos WHERE id = NEW.video_id),
+      NEW.user_id,
+      'video_like',
+      NEW.video_id,
+      'video'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."notify_video_like"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."reset_failed_thumbnail_processing"() RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+    reset_count INTEGER;
+BEGIN
+    UPDATE public.videos 
+    SET 
+        thumbnail_processing_status = 'pending',
+        updated_at = NOW()
+    WHERE thumbnail_processing_status = 'failed'
+    AND created_at > NOW() - INTERVAL '24 hours'; -- Only retry recent failures
+    
+    GET DIAGNOSTICS reset_count = ROW_COUNT;
+    RETURN reset_count;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."reset_failed_thumbnail_processing"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."search_users_with_interactions"("search_query" "text", "viewer_id" "uuid" DEFAULT NULL::"uuid", "page_offset" integer DEFAULT 0, "page_limit" integer DEFAULT 20) RETURNS TABLE("id" "uuid", "username" character varying, "display_name" character varying, "bio" "text", "avatar_url" character varying, "subscription_price" numeric, "subscription_currency" character varying, "followers_count" integer, "subscribers_count" integer, "videos_count" integer, "created_at" timestamp with time zone, "is_following" boolean, "is_subscribed" boolean)
@@ -973,6 +1299,27 @@ $$;
 ALTER FUNCTION "public"."search_videos_with_permissions"("search_query" "text", "viewer_id" "uuid", "page_offset" integer, "page_limit" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."set_initial_thumbnail_status"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    -- If thumbnail_time is provided, mark for processing
+    IF NEW.thumbnail_time IS NOT NULL AND NEW.thumbnail_time >= 0 THEN
+        NEW.thumbnail_processing_status := 'pending';
+        NEW.thumbnail_generated := FALSE;
+    ELSE
+        NEW.thumbnail_processing_status := 'not_required';
+        NEW.thumbnail_generated := TRUE;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."set_initial_thumbnail_status"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."toggle_comment_like"("comment_id_param" "uuid", "user_id_param" "uuid") RETURNS TABLE("liked" boolean, "likes_count" integer)
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1029,6 +1376,29 @@ $$;
 
 
 ALTER FUNCTION "public"."update_comment_likes_count"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_thumbnail_processing_status"("video_id" "uuid", "new_status" character varying, "new_thumbnail_url" "text" DEFAULT NULL::"text", "mark_generated" boolean DEFAULT false) RETURNS boolean
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    UPDATE public.videos 
+    SET 
+        thumbnail_processing_status = new_status,
+        thumbnail_url = COALESCE(new_thumbnail_url, thumbnail_url),
+        thumbnail_generated = CASE 
+            WHEN mark_generated THEN TRUE 
+            ELSE thumbnail_generated 
+        END,
+        updated_at = NOW()
+    WHERE id = video_id;
+    
+    RETURN FOUND;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_thumbnail_processing_status"("video_id" "uuid", "new_status" character varying, "new_thumbnail_url" "text", "mark_generated" boolean) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."update_updated_at_column"() RETURNS "trigger"
@@ -1223,6 +1593,40 @@ CREATE TABLE IF NOT EXISTS "public"."likes" (
 ALTER TABLE "public"."likes" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."notification_preferences" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "video_likes_enabled" boolean DEFAULT true,
+    "comment_likes_enabled" boolean DEFAULT true,
+    "new_followers_enabled" boolean DEFAULT true,
+    "video_comments_enabled" boolean DEFAULT true,
+    "comment_replies_enabled" boolean DEFAULT true,
+    "push_notifications_enabled" boolean DEFAULT true,
+    "email_notifications_enabled" boolean DEFAULT false,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."notification_preferences" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."notifications" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "recipient_id" "uuid" NOT NULL,
+    "actor_id" "uuid" NOT NULL,
+    "type" character varying NOT NULL,
+    "entity_id" "uuid",
+    "entity_type" character varying,
+    "is_read" boolean DEFAULT false,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."notifications" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "username" character varying NOT NULL,
@@ -1236,7 +1640,10 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "subscribers_count" integer DEFAULT 0,
     "videos_count" integer DEFAULT 0,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "locale" character varying(10) DEFAULT 'es-ES'::character varying,
+    "preferred_language" character varying(5) DEFAULT 'es'::character varying,
+    "pricing_region" character varying(5) DEFAULT 'ES'::character varying
 );
 
 
@@ -1244,6 +1651,18 @@ ALTER TABLE "public"."profiles" OWNER TO "postgres";
 
 
 COMMENT ON TABLE "public"."profiles" IS 'User profiles linked to auth.users';
+
+
+
+COMMENT ON COLUMN "public"."profiles"."locale" IS 'User locale (e.g., es-ES, en-US, fr-FR)';
+
+
+
+COMMENT ON COLUMN "public"."profiles"."preferred_language" IS 'User preferred language code (e.g., es, en, fr)';
+
+
+
+COMMENT ON COLUMN "public"."profiles"."pricing_region" IS 'Region code for pricing recommendations (e.g., ES, US, FR)';
 
 
 
@@ -1321,11 +1740,50 @@ CREATE TABLE IF NOT EXISTS "public"."videos" (
     "likes_count" integer DEFAULT 0,
     "comments_count" integer DEFAULT 0,
     "views_count" integer DEFAULT 0,
-    "created_at" timestamp with time zone DEFAULT "now"()
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "thumbnail_time" double precision DEFAULT 0,
+    "start_time" double precision DEFAULT 0,
+    "end_time" double precision,
+    "thumbnail_generated" boolean DEFAULT false,
+    "thumbnail_processing_status" character varying(20) DEFAULT 'pending'::character varying,
+    "is_hidden" boolean DEFAULT false,
+    "hidden_at" timestamp with time zone
 );
 
 
 ALTER TABLE "public"."videos" OWNER TO "postgres";
+
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_url" IS 'Public URL of the video thumbnail image uploaded to Supabase Storage';
+
+
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_time" IS 'Time in seconds where thumbnail should be extracted from video';
+
+
+
+COMMENT ON COLUMN "public"."videos"."start_time" IS 'Video start time for trimming (in seconds)';
+
+
+
+COMMENT ON COLUMN "public"."videos"."end_time" IS 'Video end time for trimming (in seconds)';
+
+
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_generated" IS 'Whether thumbnail has been generated successfully';
+
+
+
+COMMENT ON COLUMN "public"."videos"."thumbnail_processing_status" IS 'Status of thumbnail processing: pending, processing, completed, failed';
+
+
+
+COMMENT ON COLUMN "public"."videos"."is_hidden" IS 'Whether the video is hidden from public view (soft delete)';
+
+
+
+COMMENT ON COLUMN "public"."videos"."hidden_at" IS 'Timestamp when the video was hidden';
+
 
 
 ALTER TABLE ONLY "public"."app_config"
@@ -1365,6 +1823,21 @@ ALTER TABLE ONLY "public"."likes"
 
 ALTER TABLE ONLY "public"."likes"
     ADD CONSTRAINT "likes_user_id_video_id_key" UNIQUE ("user_id", "video_id");
+
+
+
+ALTER TABLE ONLY "public"."notification_preferences"
+    ADD CONSTRAINT "notification_preferences_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."notification_preferences"
+    ADD CONSTRAINT "notification_preferences_user_id_key" UNIQUE ("user_id");
+
+
+
+ALTER TABLE ONLY "public"."notifications"
+    ADD CONSTRAINT "notifications_pkey" PRIMARY KEY ("id");
 
 
 
@@ -1438,6 +1911,30 @@ CREATE INDEX "idx_likes_video_user" ON "public"."likes" USING "btree" ("video_id
 
 
 
+CREATE INDEX "idx_notifications_actor_id" ON "public"."notifications" USING "btree" ("actor_id");
+
+
+
+CREATE INDEX "idx_notifications_created_at" ON "public"."notifications" USING "btree" ("created_at" DESC);
+
+
+
+CREATE INDEX "idx_notifications_is_read" ON "public"."notifications" USING "btree" ("is_read");
+
+
+
+CREATE INDEX "idx_notifications_recipient_id" ON "public"."notifications" USING "btree" ("recipient_id");
+
+
+
+CREATE INDEX "idx_notifications_recipient_read" ON "public"."notifications" USING "btree" ("recipient_id", "is_read");
+
+
+
+CREATE INDEX "idx_notifications_type" ON "public"."notifications" USING "btree" ("type");
+
+
+
 CREATE INDEX "idx_profiles_created_at" ON "public"."profiles" USING "btree" ("created_at");
 
 
@@ -1447,6 +1944,18 @@ CREATE INDEX "idx_profiles_display_name" ON "public"."profiles" USING "btree" ("
 
 
 CREATE INDEX "idx_profiles_followers_count" ON "public"."profiles" USING "btree" ("followers_count");
+
+
+
+CREATE INDEX "idx_profiles_locale" ON "public"."profiles" USING "btree" ("locale");
+
+
+
+CREATE INDEX "idx_profiles_preferred_language" ON "public"."profiles" USING "btree" ("preferred_language");
+
+
+
+CREATE INDEX "idx_profiles_pricing_region" ON "public"."profiles" USING "btree" ("pricing_region");
 
 
 
@@ -1482,11 +1991,27 @@ CREATE INDEX "idx_videos_hashtags_gin" ON "public"."videos" USING "gin" ("hashta
 
 
 
+CREATE INDEX "idx_videos_is_hidden" ON "public"."videos" USING "btree" ("is_hidden");
+
+
+
 CREATE INDEX "idx_videos_is_premium" ON "public"."videos" USING "btree" ("is_premium");
 
 
 
 CREATE INDEX "idx_videos_premium_creator" ON "public"."videos" USING "btree" ("is_premium", "user_id");
+
+
+
+CREATE INDEX "idx_videos_thumbnail_generated" ON "public"."videos" USING "btree" ("thumbnail_generated");
+
+
+
+CREATE INDEX "idx_videos_thumbnail_status" ON "public"."videos" USING "btree" ("thumbnail_processing_status");
+
+
+
+CREATE INDEX "idx_videos_thumbnail_url" ON "public"."videos" USING "btree" ("thumbnail_url") WHERE ("thumbnail_url" IS NOT NULL);
 
 
 
@@ -1498,7 +2023,23 @@ CREATE INDEX "idx_videos_user_id_created_at" ON "public"."videos" USING "btree" 
 
 
 
+CREATE INDEX "idx_videos_user_visible" ON "public"."videos" USING "btree" ("user_id", "is_hidden", "created_at" DESC);
+
+
+
 CREATE INDEX "idx_videos_views_count" ON "public"."videos" USING "btree" ("views_count" DESC);
+
+
+
+CREATE OR REPLACE TRIGGER "comment_like_notification_trigger" AFTER INSERT ON "public"."comment_likes" FOR EACH ROW EXECUTE FUNCTION "public"."notify_comment_like"();
+
+
+
+CREATE OR REPLACE TRIGGER "follow_notification_trigger" AFTER INSERT ON "public"."follows" FOR EACH ROW EXECUTE FUNCTION "public"."notify_follow"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_set_initial_thumbnail_status" BEFORE INSERT ON "public"."videos" FOR EACH ROW EXECUTE FUNCTION "public"."set_initial_thumbnail_status"();
 
 
 
@@ -1507,6 +2048,14 @@ CREATE OR REPLACE TRIGGER "update_comment_likes_count_trigger" AFTER INSERT OR D
 
 
 CREATE OR REPLACE TRIGGER "update_comments_updated_at" BEFORE UPDATE ON "public"."comments" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_notification_preferences_updated_at" BEFORE UPDATE ON "public"."notification_preferences" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_notifications_updated_at" BEFORE UPDATE ON "public"."notifications" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
@@ -1527,6 +2076,14 @@ CREATE OR REPLACE TRIGGER "update_video_comments_count_trigger" AFTER INSERT OR 
 
 
 CREATE OR REPLACE TRIGGER "update_video_likes_count_trigger" AFTER INSERT OR DELETE ON "public"."likes" FOR EACH ROW EXECUTE FUNCTION "public"."update_video_likes_count"();
+
+
+
+CREATE OR REPLACE TRIGGER "video_comment_notification_trigger" AFTER INSERT ON "public"."comments" FOR EACH ROW EXECUTE FUNCTION "public"."notify_video_comment"();
+
+
+
+CREATE OR REPLACE TRIGGER "video_like_notification_trigger" AFTER INSERT ON "public"."likes" FOR EACH ROW EXECUTE FUNCTION "public"."notify_video_like"();
 
 
 
@@ -1572,6 +2129,21 @@ ALTER TABLE ONLY "public"."likes"
 
 ALTER TABLE ONLY "public"."likes"
     ADD CONSTRAINT "likes_video_id_fkey" FOREIGN KEY ("video_id") REFERENCES "public"."videos"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."notification_preferences"
+    ADD CONSTRAINT "notification_preferences_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."notifications"
+    ADD CONSTRAINT "notifications_actor_id_fkey" FOREIGN KEY ("actor_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."notifications"
+    ADD CONSTRAINT "notifications_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
 
 
 
@@ -1663,6 +2235,10 @@ CREATE POLICY "Users can create their own comment likes" ON "public"."comment_li
 
 
 
+CREATE POLICY "Users can create their own notification preferences" ON "public"."notification_preferences" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 CREATE POLICY "Users can create their own profile" ON "public"."profiles" FOR INSERT WITH CHECK (("auth"."uid"() = "id"));
 
 
@@ -1711,6 +2287,14 @@ CREATE POLICY "Users can update their own comments" ON "public"."comments" FOR U
 
 
 
+CREATE POLICY "Users can update their own notification preferences" ON "public"."notification_preferences" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can update their own notifications" ON "public"."notifications" FOR UPDATE USING (("auth"."uid"() = "recipient_id"));
+
+
+
 CREATE POLICY "Users can update their own profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
 
 
@@ -1739,6 +2323,14 @@ CREATE POLICY "Users can view their own comment likes" ON "public"."comment_like
 
 
 
+CREATE POLICY "Users can view their own notification preferences" ON "public"."notification_preferences" FOR SELECT USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Users can view their own notifications" ON "public"."notifications" FOR SELECT USING (("auth"."uid"() = "recipient_id"));
+
+
+
 CREATE POLICY "Users can view their own reports" ON "public"."reports" FOR SELECT USING (("auth"."uid"() = "reporter_id"));
 
 
@@ -1762,6 +2354,12 @@ ALTER TABLE "public"."follows" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."likes" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."notification_preferences" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
 
 
@@ -1777,6 +2375,10 @@ ALTER TABLE "public"."videos" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
+
+
+
+
 
 
 GRANT USAGE ON SCHEMA "public" TO "postgres";
@@ -1966,6 +2568,18 @@ GRANT ALL ON FUNCTION "public"."check_username_availability_for_update"("usernam
 
 
 
+GRANT ALL ON FUNCTION "public"."create_default_notification_preferences"("user_id_param" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."create_default_notification_preferences"("user_id_param" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."create_default_notification_preferences"("user_id_param" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."create_notification"("recipient_id" "uuid", "actor_id" "uuid", "notification_type" character varying, "entity_id" "uuid", "entity_type" character varying) TO "anon";
+GRANT ALL ON FUNCTION "public"."create_notification"("recipient_id" "uuid", "actor_id" "uuid", "notification_type" character varying, "entity_id" "uuid", "entity_type" character varying) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."create_notification"("recipient_id" "uuid", "actor_id" "uuid", "notification_type" character varying, "entity_id" "uuid", "entity_type" character varying) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."get_comment_replies"("p_comment_id" "uuid", "p_limit" integer, "p_offset" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."get_comment_replies"("p_comment_id" "uuid", "p_limit" integer, "p_offset" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_comment_replies"("p_comment_id" "uuid", "p_limit" integer, "p_offset" integer) TO "service_role";
@@ -2026,6 +2640,18 @@ GRANT ALL ON FUNCTION "public"."get_trending_hashtags"("limit_count" integer, "d
 
 
 
+GRANT ALL ON FUNCTION "public"."get_unread_notification_count"("user_id_param" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_unread_notification_count"("user_id_param" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_unread_notification_count"("user_id_param" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_user_notifications"("user_id_param" "uuid", "page_offset" integer, "page_limit" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."get_user_notifications"("user_id_param" "uuid", "page_offset" integer, "page_limit" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_user_notifications"("user_id_param" "uuid", "page_offset" integer, "page_limit" integer) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."get_user_stats"("profile_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."get_user_stats"("profile_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_user_stats"("profile_id" "uuid") TO "service_role";
@@ -2056,9 +2682,21 @@ GRANT ALL ON FUNCTION "public"."get_video_interactions_safe"("video_ids" "uuid"[
 
 
 
+GRANT ALL ON FUNCTION "public"."get_videos_pending_thumbnail_processing"() TO "anon";
+GRANT ALL ON FUNCTION "public"."get_videos_pending_thumbnail_processing"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_videos_pending_thumbnail_processing"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."handle_new_user_enhanced"() TO "anon";
+GRANT ALL ON FUNCTION "public"."handle_new_user_enhanced"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."handle_new_user_enhanced"() TO "service_role";
 
 
 
@@ -2080,6 +2718,48 @@ GRANT ALL ON FUNCTION "public"."increment_video_views_safe"("video_id" "uuid", "
 
 
 
+GRANT ALL ON FUNCTION "public"."mark_all_notifications_read"("user_id_param" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."mark_all_notifications_read"("user_id_param" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."mark_all_notifications_read"("user_id_param" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."mark_notification_read"("notification_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."mark_notification_read"("notification_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."mark_notification_read"("notification_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."notify_comment_like"() TO "anon";
+GRANT ALL ON FUNCTION "public"."notify_comment_like"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."notify_comment_like"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."notify_follow"() TO "anon";
+GRANT ALL ON FUNCTION "public"."notify_follow"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."notify_follow"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."notify_video_comment"() TO "anon";
+GRANT ALL ON FUNCTION "public"."notify_video_comment"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."notify_video_comment"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."notify_video_like"() TO "anon";
+GRANT ALL ON FUNCTION "public"."notify_video_like"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."notify_video_like"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."reset_failed_thumbnail_processing"() TO "anon";
+GRANT ALL ON FUNCTION "public"."reset_failed_thumbnail_processing"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."reset_failed_thumbnail_processing"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."search_users_with_interactions"("search_query" "text", "viewer_id" "uuid", "page_offset" integer, "page_limit" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."search_users_with_interactions"("search_query" "text", "viewer_id" "uuid", "page_offset" integer, "page_limit" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."search_users_with_interactions"("search_query" "text", "viewer_id" "uuid", "page_offset" integer, "page_limit" integer) TO "service_role";
@@ -2098,6 +2778,12 @@ GRANT ALL ON FUNCTION "public"."search_videos_with_permissions"("search_query" "
 
 
 
+GRANT ALL ON FUNCTION "public"."set_initial_thumbnail_status"() TO "anon";
+GRANT ALL ON FUNCTION "public"."set_initial_thumbnail_status"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."set_initial_thumbnail_status"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."toggle_comment_like"("comment_id_param" "uuid", "user_id_param" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."toggle_comment_like"("comment_id_param" "uuid", "user_id_param" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."toggle_comment_like"("comment_id_param" "uuid", "user_id_param" "uuid") TO "service_role";
@@ -2107,6 +2793,12 @@ GRANT ALL ON FUNCTION "public"."toggle_comment_like"("comment_id_param" "uuid", 
 GRANT ALL ON FUNCTION "public"."update_comment_likes_count"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_comment_likes_count"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_comment_likes_count"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_thumbnail_processing_status"("video_id" "uuid", "new_status" character varying, "new_thumbnail_url" "text", "mark_generated" boolean) TO "anon";
+GRANT ALL ON FUNCTION "public"."update_thumbnail_processing_status"("video_id" "uuid", "new_status" character varying, "new_thumbnail_url" "text", "mark_generated" boolean) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_thumbnail_processing_status"("video_id" "uuid", "new_status" character varying, "new_thumbnail_url" "text", "mark_generated" boolean) TO "service_role";
 
 
 
@@ -2188,6 +2880,18 @@ GRANT ALL ON TABLE "public"."follows" TO "service_role";
 GRANT ALL ON TABLE "public"."likes" TO "anon";
 GRANT ALL ON TABLE "public"."likes" TO "authenticated";
 GRANT ALL ON TABLE "public"."likes" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."notification_preferences" TO "anon";
+GRANT ALL ON TABLE "public"."notification_preferences" TO "authenticated";
+GRANT ALL ON TABLE "public"."notification_preferences" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."notifications" TO "anon";
+GRANT ALL ON TABLE "public"."notifications" TO "authenticated";
+GRANT ALL ON TABLE "public"."notifications" TO "service_role";
 
 
 

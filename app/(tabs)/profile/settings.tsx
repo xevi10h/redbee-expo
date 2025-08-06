@@ -3,7 +3,9 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
+	ActionSheetIOS,
 	Alert,
+	Platform,
 	ScrollView,
 	StyleSheet,
 	Switch,
@@ -13,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import * as Haptics from 'expo-haptics';
 import { Colors } from '@/constants/Colors';
 import { useAuth, useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -91,77 +94,81 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 	onLanguageChange,
 }) => {
 	const { t } = useTranslation();
-	const [isVisible, setIsVisible] = useState(false);
 
+	// Solo incluir idiomas con traducciones completas
 	const languages: { code: Language; name: string }[] = [
 		{ code: 'es_ES', name: t('settings.languages.es_ES') },
+		{ code: 'en_US', name: t('settings.languages.en_US') },
 		{ code: 'ca_ES', name: t('settings.languages.ca_ES') },
 		{ code: 'fr_FR', name: t('settings.languages.fr_FR') },
 		{ code: 'it_IT', name: t('settings.languages.it_IT') },
-		{ code: 'en_US', name: t('settings.languages.en_US') },
-		{ code: 'ja_JP', name: t('settings.languages.ja_JP') },
-		{ code: 'zh_CN', name: t('settings.languages.zh_CN') },
 		{ code: 'pt_PT', name: t('settings.languages.pt_PT') },
-		{ code: 'th_TH', name: t('settings.languages.th_TH') },
-		{ code: 'id_ID', name: t('settings.languages.id_ID') },
-		{ code: 'ms_MY', name: t('settings.languages.ms_MY') },
 	];
 
 	const currentLanguageName =
 		languages.find((lang) => lang.code === currentLanguage)?.name || 'Español';
 
-	const handleLanguageSelect = (language: Language) => {
-		onLanguageChange(language);
-		setIsVisible(false);
+	const handleLanguagePress = () => {
+		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+		
+		const languageOptions = languages.map(lang => lang.name);
+		const cancelText = t('common.cancel');
+		
+		if (Platform.OS === 'ios') {
+			ActionSheetIOS.showActionSheetWithOptions(
+				{
+					options: [...languageOptions, cancelText],
+					cancelButtonIndex: languageOptions.length,
+					title: t('settings.selectLanguage'),
+					message: t('settings.languageChangeNote'),
+				},
+				(buttonIndex) => {
+					if (buttonIndex < languageOptions.length) {
+						const selectedLanguage = languages[buttonIndex];
+						if (selectedLanguage.code !== currentLanguage) {
+							onLanguageChange(selectedLanguage.code);
+							Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+						}
+					}
+				}
+			);
+		} else {
+			// Android - usar Alert tradicional
+			Alert.alert(
+				t('settings.selectLanguage'),
+				t('settings.languageChangeNote'),
+				languages.map((lang) => ({
+					text: lang.name,
+					onPress: () => {
+						if (lang.code !== currentLanguage) {
+							onLanguageChange(lang.code);
+							Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+						}
+					},
+				})).concat([
+					{
+						text: cancelText,
+						style: 'cancel',
+					},
+				]),
+				{ cancelable: true }
+			);
+		}
 	};
-
-	if (isVisible) {
-		return (
-			<View style={styles.languageSelector}>
-				<View style={styles.languageHeader}>
-					<Text style={styles.languageTitle}>{t('settings.language')}</Text>
-					<TouchableOpacity onPress={() => setIsVisible(false)}>
-						<Feather name="x" size={24} color={Colors.text} />
-					</TouchableOpacity>
-				</View>
-				<ScrollView style={styles.languageList}>
-					{languages.map((language) => (
-						<TouchableOpacity
-							key={language.code}
-							style={styles.languageOption}
-							onPress={() => handleLanguageSelect(language.code)}
-						>
-							<Text
-								style={[
-									styles.languageOptionText,
-									currentLanguage === language.code && styles.selectedLanguage,
-								]}
-							>
-								{language.name}
-							</Text>
-							{currentLanguage === language.code && (
-								<Feather name="check" size={20} color={Colors.primary} />
-							)}
-						</TouchableOpacity>
-					))}
-				</ScrollView>
-			</View>
-		);
-	}
 
 	return (
 		<SettingsItem
 			title={t('settings.language')}
 			subtitle={currentLanguageName}
 			icon="globe"
-			onPress={() => setIsVisible(true)}
+			onPress={handleLanguagePress}
 		/>
 	);
 };
 
 export default function SettingsScreen() {
 	const { t } = useTranslation();
-	const { user, signOut } = useAuth();
+	const { user, signOut, updateProfile } = useAuth();
 	const setLanguage = useAuthStore((state) => state.setLanguage);
 
 	// This hook will redirect to auth if user is not authenticated
@@ -271,9 +278,20 @@ export default function SettingsScreen() {
 		);
 	};
 
-	const handleLanguageChange = (language: Language) => {
+	const handleLanguageChange = async (language: Language) => {
+		// Update language in local state immediately
 		setLanguage(language);
-		// TODO: Also update in backend if needed
+		
+		// Update in backend
+		try {
+			const success = await updateProfile({ language });
+			if (!success) {
+				console.error('Failed to update language in backend');
+				// Could show a toast notification here if needed
+			}
+		} catch (error) {
+			console.error('Error updating language:', error);
+		}
 	};
 
 	const loadNotificationPreferences = async () => {
@@ -715,51 +733,6 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: 8,
-	},
-	languageSelector: {
-		position: 'absolute',
-		top: 0,
-		left: 0,
-		right: 0,
-		bottom: 0,
-		backgroundColor: Colors.background,
-		zIndex: 1000,
-	},
-	languageHeader: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		paddingHorizontal: 16,
-		paddingVertical: 16,
-		borderBottomWidth: 1,
-		borderBottomColor: Colors.borderSecondary,
-	},
-	languageTitle: {
-		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
-		fontWeight: '600',
-		color: Colors.text,
-	},
-	languageList: {
-		flex: 1,
-	},
-	languageOption: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		paddingHorizontal: 16,
-		paddingVertical: 16,
-		borderBottomWidth: 1,
-		borderBottomColor: Colors.borderSecondary,
-	},
-	languageOptionText: {
-		fontSize: 16,
-		fontFamily: 'Inter-Medium',
-		fontWeight: '500',
-		color: Colors.text,
-	},
-	selectedLanguage: {
-		color: Colors.primary,
 	},
 	bottomSpacing: {
 		height: 32,
