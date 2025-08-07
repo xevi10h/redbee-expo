@@ -81,7 +81,7 @@ export class SupabaseAuthService {
 				...profile,
 				email: authData.user.email!,
 				access_token: authData.session?.access_token,
-				language: getDeviceLanguage(),
+				language: profile.language || getDeviceLanguage(),
 			};
 
 			return {
@@ -172,7 +172,7 @@ export class SupabaseAuthService {
 				...profile,
 				email: authData.user.email!,
 				access_token: authData.session?.access_token,
-				language: getDeviceLanguage(),
+				language: profile.language || getDeviceLanguage(),
 			};
 
 			return {
@@ -277,7 +277,7 @@ export class SupabaseAuthService {
 				...profile!,
 				email: data.user.email!,
 				access_token: data.session?.access_token,
-				language: getDeviceLanguage(),
+				language: profile!.language || getDeviceLanguage(),
 			};
 
 			return {
@@ -422,7 +422,7 @@ export class SupabaseAuthService {
 				...profile!,
 				email: sessionData.user.email!,
 				access_token: sessionData.session?.access_token,
-				language: getDeviceLanguage(),
+				language: profile!.language || getDeviceLanguage(),
 			};
 
 			return {
@@ -537,7 +537,7 @@ export class SupabaseAuthService {
 				...profile!,
 				email: data.user.email || credential.email || '',
 				access_token: data.session?.access_token,
-				language: getDeviceLanguage(),
+				language: profile!.language || getDeviceLanguage(),
 			};
 
 			return {
@@ -637,7 +637,7 @@ export class SupabaseAuthService {
 				...profile,
 				email: session.session.user.email!,
 				access_token: session.session.access_token,
-				language: getDeviceLanguage(),
+				language: profile.language || getDeviceLanguage(),
 			};
 
 			return {
@@ -870,10 +870,10 @@ export class SupabaseAuthService {
 		updates: Partial<User>,
 	): Promise<AuthResponse<User>> {
 		try {
-			// Separate email updates from profile updates
-			const { email, access_token, language, ...profileUpdates } = updates;
+			// Separate email updates from profile updates (keep language in profile)
+			const { email, access_token, ...profileUpdates } = updates;
 
-			// Update profile in profiles table
+			// Update profile in profiles table (including language)
 			const { data: profile, error: profileError } = await supabase
 				.from('profiles')
 				.update({
@@ -914,7 +914,7 @@ export class SupabaseAuthService {
 				data: {
 					...profile,
 					email: email || currentEmail,
-					language: language || getDeviceLanguage(),
+					language: updates.language || profile.language || getDeviceLanguage(),
 				},
 			};
 		} catch (error) {

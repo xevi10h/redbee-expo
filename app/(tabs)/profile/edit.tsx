@@ -383,7 +383,7 @@ export default function EditProfileScreen() {
 			<View style={styles.header}>
 				<TouchableOpacity
 					style={styles.backButton}
-					onPress={() => router.push('/(tabs)/profile')}
+					onPress={() => router.back()}
 				>
 					<Feather name="arrow-left" size={24} color={Colors.text} />
 				</TouchableOpacity>

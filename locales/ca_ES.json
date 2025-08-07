@@ -297,6 +297,7 @@
 	"settings": {
 		"accountSettings": "Configuració del compte",
 		"privacy": "Privacitat",
+		"legal": "Legal",
 		"notifications": "Notificacions",
 		"language": "Idioma",
 		"about": "Sobre",
@@ -312,6 +313,9 @@
 		"version": "Versió",
 		"darkMode": "Mode fosc",
 		"darkModeSubtitle": "Tema de l'aplicació",
+		"notificationsEnabledSubtitle": "Configurar preferències de notificacions",
+		"notificationsDisabledSubtitle": "Les notificacions estan desactivades",
+		"configureNotificationPreferences": "Configurar preferències de notificacions",
 		"privacySettings": "Configuració de privacitat",
 		"privacySettingsSubtitle": "Controla qui et pot veure",
 		"blockedUsersSubtitle": "Usuaris que has bloquejat",
@@ -346,6 +350,29 @@
 			"id_ID": "Indonesi",
 			"ms_MY": "Malai"
 		}
+	},
+	"privacy": {
+		"profileVisibility": "Visibilitat del perfil",
+		"communication": "Comunicació",
+		"activity": "Activitat",
+		"privateProfile": "Perfil privat",
+		"privateProfileSubtitle": "Només els seguidors poden veure el teu contingut",
+		"directMessages": "Missatges directes",
+		"directMessagesSubtitle": "Permetre que altres t'enviïn missatges",
+		"allowTagging": "Permetre etiquetatge",
+		"allowTaggingSubtitle": "Permetre que altres t'etiquetïn en el seu contingut",
+		"onlineStatus": "Estat en línia",
+		"onlineStatusSubtitle": "Mostrar quan estàs en línia",
+		"viewHistory": "Historial de visualització",
+		"viewHistorySubtitle": "Guardar vídeos que has vist"
+	},
+	"blockedUsers": {
+		"noBlockedUsers": "No hi ha usuaris bloquejats",
+		"noBlockedUsersSubtitle": "Els usuaris que bloquegis apareixeran aquí",
+		"unblock": "Desbloquejar",
+		"unblockTitle": "Desbloquejar usuari",
+		"unblockMessage": "Estàs segur que vols desbloquejar @{username}?",
+		"unblockError": "Error en desbloquejar l'usuari"
 	},
 	"subscriptions": {
 		"mySubscriptions": "Les meves subscripcions",
@@ -392,9 +419,17 @@
 			"videoCommentsSubtitle": "Quan algú comenta els teus vídeos",
 			"commentReplies": "Respostes als comentaris",
 			"commentRepliesSubtitle": "Quan algú respon als teus comentaris",
+			"newSubscribers": "Nous subscriptors",
+			"newSubscribersSubtitle": "Quan algú es subscriu al teu contingut",
 			"pushNotifications": "Notificacions push",
 			"pushNotificationsSubtitle": "Rebre notificacions al teu dispositiu"
-		}
+		},
+		"managePreferencesDescription": "Configura quines notificacions vols rebre i quines no.",
+		"enableAllNotifications": "Habilitar totes les notificacions",
+		"enableAllNotificationsSubtitle": "Activa o desactiva totes les notificacions d'una vegada",
+		"videoInteractions": "Interaccions de vídeo",
+		"commentInteractions": "Interaccions de comentaris",
+		"socialNotifications": "Notificacions socials"
 	},
 	"errors": {
 		"somethingWentWrong": "Alguna cosa ha anat malament",

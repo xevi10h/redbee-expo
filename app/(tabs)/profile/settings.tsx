@@ -175,7 +175,6 @@ export default function SettingsScreen() {
 	useRequireAuth();
 
 	const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-	const [darkModeEnabled, setDarkModeEnabled] = useState(true);
 	const [notificationPreferences, setNotificationPreferences] =
 		useState<NotificationPreferences | null>(null);
 
@@ -187,34 +186,10 @@ export default function SettingsScreen() {
 		router.push('/(tabs)/profile/change-password');
 	};
 
-	const handlePrivacySettings = () => {
-		console.log('Navigate to privacy settings');
-		// TODO: Implement navigation to privacy settings screen
-	};
-
 	const handleNotificationSettings = () => {
-		console.log('Navigate to notification settings');
-		// TODO: Implement navigation to notification settings screen
+		router.push('/(tabs)/profile/notifications');
 	};
 
-	const handleBlockedUsers = () => {
-		console.log('Navigate to blocked users');
-		// TODO: Implement navigation to blocked users screen
-	};
-
-	const handleDownloadData = () => {
-		Alert.alert(
-			t('settings.downloadData'),
-			t('settings.downloadDataDescription'),
-			[
-				{ text: t('common.cancel'), style: 'cancel' },
-				{
-					text: t('common.continue'),
-					onPress: () => console.log('Download data requested'),
-				},
-			],
-		);
-	};
 
 	const handleTermsOfService = () => {
 		console.log('Navigate to terms of service');
@@ -226,10 +201,6 @@ export default function SettingsScreen() {
 		// TODO: Implement navigation to privacy policy screen
 	};
 
-	const handleHelp = () => {
-		console.log('Navigate to help');
-		// TODO: Implement navigation to help screen
-	};
 
 	const handleSignOut = () => {
 		Alert.alert(t('settings.logout'), t('settings.logoutConfirmation'), [
@@ -390,199 +361,16 @@ export default function SettingsScreen() {
 
 					<SettingsItem
 						title={t('settings.notifications')}
-						subtitle={t('notifications.preferences.pushNotificationsSubtitle')}
+						subtitle={t('settings.configureNotificationPreferences')}
 						icon="bell"
-						rightComponent={
-							<Switch
-								value={notificationsEnabled}
-								onValueChange={(value) =>
-									updateNotificationPreference(
-										'push_notifications_enabled',
-										value,
-									)
-								}
-								trackColor={{
-									false: Colors.textTertiary,
-									true: Colors.primary,
-								}}
-								thumbColor={Colors.text}
-							/>
-						}
-						showArrow={false}
-					/>
-
-					{/* Detailed notification preferences */}
-					{notificationPreferences && (
-						<>
-							<SettingsItem
-								title={t('notifications.preferences.videoLikes')}
-								subtitle={t('notifications.preferences.videoLikesSubtitle')}
-								icon="heart"
-								rightComponent={
-									<Switch
-										value={notificationPreferences.video_likes_enabled}
-										onValueChange={(value) =>
-											updateNotificationPreference('video_likes_enabled', value)
-										}
-										trackColor={{
-											false: Colors.textTertiary,
-											true: Colors.primary,
-										}}
-										thumbColor={Colors.text}
-									/>
-								}
-								showArrow={false}
-							/>
-
-							<SettingsItem
-								title={t('notifications.preferences.newFollowers')}
-								subtitle={t('notifications.preferences.newFollowersSubtitle')}
-								icon="user-plus"
-								rightComponent={
-									<Switch
-										value={notificationPreferences.new_followers_enabled}
-										onValueChange={(value) =>
-											updateNotificationPreference(
-												'new_followers_enabled',
-												value,
-											)
-										}
-										trackColor={{
-											false: Colors.textTertiary,
-											true: Colors.primary,
-										}}
-										thumbColor={Colors.text}
-									/>
-								}
-								showArrow={false}
-							/>
-
-							<SettingsItem
-								title={t('notifications.preferences.commentLikes')}
-								subtitle={t('notifications.preferences.commentLikesSubtitle')}
-								icon="thumbs-up"
-								rightComponent={
-									<Switch
-										value={notificationPreferences.comment_likes_enabled}
-										onValueChange={(value) =>
-											updateNotificationPreference(
-												'comment_likes_enabled',
-												value,
-											)
-										}
-										trackColor={{
-											false: Colors.textTertiary,
-											true: Colors.primary,
-										}}
-										thumbColor={Colors.text}
-									/>
-								}
-								showArrow={false}
-							/>
-
-							<SettingsItem
-								title={t('notifications.preferences.videoComments')}
-								subtitle={t('notifications.preferences.videoCommentsSubtitle')}
-								icon="message-circle"
-								rightComponent={
-									<Switch
-										value={notificationPreferences.video_comments_enabled}
-										onValueChange={(value) =>
-											updateNotificationPreference(
-												'video_comments_enabled',
-												value,
-											)
-										}
-										trackColor={{
-											false: Colors.textTertiary,
-											true: Colors.primary,
-										}}
-										thumbColor={Colors.text}
-									/>
-								}
-								showArrow={false}
-							/>
-
-							<SettingsItem
-								title={t('notifications.preferences.commentReplies')}
-								subtitle={t('notifications.preferences.commentRepliesSubtitle')}
-								icon="corner-up-left"
-								rightComponent={
-									<Switch
-										value={notificationPreferences.comment_replies_enabled}
-										onValueChange={(value) =>
-											updateNotificationPreference(
-												'comment_replies_enabled',
-												value,
-											)
-										}
-										trackColor={{
-											false: Colors.textTertiary,
-											true: Colors.primary,
-										}}
-										thumbColor={Colors.text}
-									/>
-								}
-								showArrow={false}
-							/>
-						</>
-					)}
-
-					<SettingsItem
-						title={t('settings.darkMode')}
-						subtitle={t('settings.darkModeSubtitle')}
-						icon="moon"
-						rightComponent={
-							<Switch
-								value={darkModeEnabled}
-								onValueChange={setDarkModeEnabled}
-								trackColor={{
-									false: Colors.textTertiary,
-									true: Colors.primary,
-								}}
-								thumbColor={Colors.text}
-							/>
-						}
-						showArrow={false}
+						onPress={handleNotificationSettings}
 					/>
 				</View>
 
-				{/* Privacy Section */}
+
+				{/* Legal Section */}
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>{t('settings.privacy')}</Text>
-
-					<SettingsItem
-						title={t('settings.privacySettings')}
-						subtitle={t('settings.privacySettingsSubtitle')}
-						icon="shield"
-						onPress={handlePrivacySettings}
-					/>
-
-					<SettingsItem
-						title={t('settings.blockedUsers')}
-						subtitle={t('settings.blockedUsersSubtitle')}
-						icon="user-x"
-						onPress={handleBlockedUsers}
-					/>
-
-					<SettingsItem
-						title={t('settings.downloadData')}
-						subtitle={t('settings.downloadDataSubtitle')}
-						icon="download"
-						onPress={handleDownloadData}
-					/>
-				</View>
-
-				{/* Support Section */}
-				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>{t('settings.support')}</Text>
-
-					<SettingsItem
-						title={t('settings.help')}
-						subtitle={t('settings.helpSubtitle')}
-						icon="help-circle"
-						onPress={handleHelp}
-					/>
+					<Text style={styles.sectionTitle}>{t('settings.legal')}</Text>
 
 					<SettingsItem
 						title={t('settings.termsOfService')}
@@ -733,6 +521,10 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: 8,
+	},
+	notificationControls: {
+		flexDirection: 'row',
+		alignItems: 'center',
 	},
 	bottomSpacing: {
 		height: 32,

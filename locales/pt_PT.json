@@ -297,6 +297,7 @@
 	"settings": {
 		"accountSettings": "Definições da conta",
 		"privacy": "Privacidade",
+		"legal": "Legal",
 		"notifications": "Notificações",
 		"language": "Idioma",
 		"about": "Sobre",
@@ -312,6 +313,9 @@
 		"version": "Versão",
 		"darkMode": "Modo escuro",
 		"darkModeSubtitle": "Tema da aplicação",
+		"notificationsEnabledSubtitle": "Configurar preferências de notificação",
+		"notificationsDisabledSubtitle": "As notificações estão desativadas",
+		"configureNotificationPreferences": "Configurar preferências de notificação",
 		"privacySettings": "Definições de privacidade",
 		"privacySettingsSubtitle": "Controla quem te pode ver",
 		"blockedUsersSubtitle": "Utilizadores que bloqueaste",
@@ -346,6 +350,29 @@
 			"id_ID": "Indonésio",
 			"ms_MY": "Malaio"
 		}
+	},
+	"privacy": {
+		"profileVisibility": "Visibilidade do perfil",
+		"communication": "Comunicação",
+		"activity": "Atividade",
+		"privateProfile": "Perfil privado",
+		"privateProfileSubtitle": "Apenas seguidores podem ver o teu conteúdo",
+		"directMessages": "Mensagens diretas",
+		"directMessagesSubtitle": "Permitir que outros te enviem mensagens",
+		"allowTagging": "Permitir marcação",
+		"allowTaggingSubtitle": "Permitir que outros te marquem no seu conteúdo",
+		"onlineStatus": "Estado online",
+		"onlineStatusSubtitle": "Mostrar quando estás online",
+		"viewHistory": "Histórico de visualização",
+		"viewHistorySubtitle": "Guardar vídeos que viste"
+	},
+	"blockedUsers": {
+		"noBlockedUsers": "Nenhum utilizador bloqueado",
+		"noBlockedUsersSubtitle": "Os utilizadores que bloqueares aparecerão aqui",
+		"unblock": "Desbloquear",
+		"unblockTitle": "Desbloquear utilizador",
+		"unblockMessage": "Tens a certeza de que queres desbloquear @{username}?",
+		"unblockError": "Erro ao desbloquear utilizador"
 	},
 	"subscriptions": {
 		"mySubscriptions": "As minhas subscrições",
@@ -392,9 +419,17 @@
 			"videoCommentsSubtitle": "Quando alguém comenta os teus vídeos",
 			"commentReplies": "Respostas aos comentários",
 			"commentRepliesSubtitle": "Quando alguém responde aos teus comentários",
+			"newSubscribers": "Novos subscritores",
+			"newSubscribersSubtitle": "Quando alguém se subscreve ao teu conteúdo",
 			"pushNotifications": "Notificações push",
 			"pushNotificationsSubtitle": "Receber notificações no teu dispositivo"
-		}
+		},
+		"managePreferencesDescription": "Configura que notificações queres receber e quais não.",
+		"enableAllNotifications": "Ativar todas as notificações",
+		"enableAllNotificationsSubtitle": "Ativar ou desativar todas as notificações de uma só vez",
+		"videoInteractions": "Interações de vídeo",
+		"commentInteractions": "Interações de comentários",
+		"socialNotifications": "Notificações sociais"
 	},
 	"errors": {
 		"somethingWentWrong": "Algo correu mal",

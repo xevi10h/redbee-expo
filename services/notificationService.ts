@@ -22,6 +22,7 @@ export interface NotificationPreferences {
 	video_likes_enabled: boolean;
 	comment_likes_enabled: boolean;
 	new_followers_enabled: boolean;
+	new_subscribers_enabled?: boolean;
 	video_comments_enabled: boolean;
 	comment_replies_enabled: boolean;
 	push_notifications_enabled: boolean;
@@ -310,6 +311,7 @@ export class NotificationService {
 				push_notifications_enabled: true,
 				video_likes_enabled: true,
 				new_followers_enabled: true,
+				new_subscribers_enabled: true,
 				comment_likes_enabled: true,
 				video_comments_enabled: true,
 				comment_replies_enabled: true,

@@ -297,6 +297,7 @@
 	"settings": {
 		"accountSettings": "Paramètres du compte",
 		"privacy": "Confidentialité",
+		"legal": "Légal",
 		"notifications": "Notifications",
 		"language": "Langue",
 		"about": "À propos",
@@ -312,6 +313,9 @@
 		"version": "Version",
 		"darkMode": "Mode sombre",
 		"darkModeSubtitle": "Thème de l'application",
+		"notificationsEnabledSubtitle": "Configurer les préférences de notification",
+		"notificationsDisabledSubtitle": "Les notifications sont désactivées",
+		"configureNotificationPreferences": "Configurer les préférences de notification",
 		"privacySettings": "Paramètres de confidentialité",
 		"privacySettingsSubtitle": "Contrôlez qui peut vous voir",
 		"blockedUsersSubtitle": "Utilisateurs que vous avez bloqués",
@@ -346,6 +350,29 @@
 			"id_ID": "Indonésien",
 			"ms_MY": "Malais"
 		}
+	},
+	"privacy": {
+		"profileVisibility": "Visibilité du profil",
+		"communication": "Communication",
+		"activity": "Activité",
+		"privateProfile": "Profil privé",
+		"privateProfileSubtitle": "Seuls les abonnés peuvent voir votre contenu",
+		"directMessages": "Messages directs",
+		"directMessagesSubtitle": "Autoriser les autres à vous envoyer des messages",
+		"allowTagging": "Autoriser le marquage",
+		"allowTaggingSubtitle": "Permettre aux autres de vous marquer dans leur contenu",
+		"onlineStatus": "Statut en ligne",
+		"onlineStatusSubtitle": "Afficher quand vous êtes en ligne",
+		"viewHistory": "Historique de visionnage",
+		"viewHistorySubtitle": "Enregistrer les vidéos que vous avez regardez"
+	},
+	"blockedUsers": {
+		"noBlockedUsers": "Aucun utilisateur bloqué",
+		"noBlockedUsersSubtitle": "Les utilisateurs que vous bloquez apparaîtront ici",
+		"unblock": "Débloquer",
+		"unblockTitle": "Débloquer l'utilisateur",
+		"unblockMessage": "Êtes-vous sûr de vouloir débloquer @{username} ?",
+		"unblockError": "Erreur lors du déblocage de l'utilisateur"
 	},
 	"subscriptions": {
 		"mySubscriptions": "Mes abonnements",
@@ -392,9 +419,17 @@
 			"videoCommentsSubtitle": "Quand quelqu'un commente vos vidéos",
 			"commentReplies": "Réponses aux commentaires",
 			"commentRepliesSubtitle": "Quand quelqu'un répond à vos commentaires",
+			"newSubscribers": "Nouveaux abonnés",
+			"newSubscribersSubtitle": "Quand quelqu'un s'abonne à votre contenu",
 			"pushNotifications": "Notifications push",
 			"pushNotificationsSubtitle": "Recevoir des notifications sur votre appareil"
-		}
+		},
+		"managePreferencesDescription": "Configurez les notifications que vous souhaitez recevoir et celles que vous ne souhaitez pas.",
+		"enableAllNotifications": "Activer toutes les notifications",
+		"enableAllNotificationsSubtitle": "Activer ou désactiver toutes les notifications en une fois",
+		"videoInteractions": "Interactions vidéo",
+		"commentInteractions": "Interactions de commentaires",
+		"socialNotifications": "Notifications sociales"
 	},
 	"errors": {
 		"somethingWentWrong": "Quelque chose s'est mal passé",

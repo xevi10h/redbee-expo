@@ -1017,7 +1017,8 @@ const styles = StyleSheet.create({
 	sortContainer: {
 		flexDirection: 'row',
 		paddingHorizontal: 16,
-		paddingVertical: 8,
+		paddingTop: 20,
+		paddingBottom: 8,
 		backgroundColor: Colors.background,
 		gap: 8,
 	},

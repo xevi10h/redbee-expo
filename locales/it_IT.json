@@ -297,6 +297,7 @@
 	"settings": {
 		"accountSettings": "Impostazioni account",
 		"privacy": "Privacy",
+		"legal": "Legale",
 		"notifications": "Notifiche",
 		"language": "Lingua",
 		"about": "Info",
@@ -312,6 +313,9 @@
 		"version": "Versione",
 		"darkMode": "Modalità scura",
 		"darkModeSubtitle": "Tema dell'app",
+		"notificationsEnabledSubtitle": "Configurare le preferenze di notifica",
+		"notificationsDisabledSubtitle": "Le notifiche sono disabilitate",
+		"configureNotificationPreferences": "Configurare le preferenze di notifica",
 		"privacySettings": "Impostazioni privacy",
 		"privacySettingsSubtitle": "Controlla chi può vederti",
 		"blockedUsersSubtitle": "Utenti che hai bloccato",
@@ -346,6 +350,29 @@
 			"id_ID": "Indonesiano",
 			"ms_MY": "Malese"
 		}
+	},
+	"privacy": {
+		"profileVisibility": "Visibilità del profilo",
+		"communication": "Comunicazione",
+		"activity": "Attività",
+		"privateProfile": "Profilo privato",
+		"privateProfileSubtitle": "Solo i follower possono vedere i tuoi contenuti",
+		"directMessages": "Messaggi diretti",
+		"directMessagesSubtitle": "Consenti ad altri di inviarti messaggi",
+		"allowTagging": "Consenti tag",
+		"allowTaggingSubtitle": "Permetti ad altri di taggarti nei loro contenuti",
+		"onlineStatus": "Stato online",
+		"onlineStatusSubtitle": "Mostra quando sei online",
+		"viewHistory": "Cronologia visualizzazioni",
+		"viewHistorySubtitle": "Salva i video che hai guardato"
+	},
+	"blockedUsers": {
+		"noBlockedUsers": "Nessun utente bloccato",
+		"noBlockedUsersSubtitle": "Gli utenti che blocchi appariranno qui",
+		"unblock": "Sblocca",
+		"unblockTitle": "Sblocca utente",
+		"unblockMessage": "Sei sicuro di voler sbloccare @{username}?",
+		"unblockError": "Errore nello sbloccare l'utente"
 	},
 	"subscriptions": {
 		"mySubscriptions": "I miei abbonamenti",
@@ -392,9 +419,17 @@
 			"videoCommentsSubtitle": "Quando qualcuno commenta i tuoi video",
 			"commentReplies": "Risposte ai commenti",
 			"commentRepliesSubtitle": "Quando qualcuno risponde ai tuoi commenti",
+			"newSubscribers": "Nuovi abbonati",
+			"newSubscribersSubtitle": "Quando qualcuno si abbona ai tuoi contenuti",
 			"pushNotifications": "Notifiche push",
 			"pushNotificationsSubtitle": "Ricevi notifiche sul tuo dispositivo"
-		}
+		},
+		"managePreferencesDescription": "Configura quali notifiche vuoi ricevere e quali no.",
+		"enableAllNotifications": "Abilita tutte le notifiche",
+		"enableAllNotificationsSubtitle": "Attiva o disattiva tutte le notifiche in una volta",
+		"videoInteractions": "Interazioni video",
+		"commentInteractions": "Interazioni commenti",
+		"socialNotifications": "Notifiche sociali"
 	},
 	"errors": {
 		"somethingWentWrong": "Qualcosa è andato storto",

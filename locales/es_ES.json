@@ -274,6 +274,7 @@
 	"settings": {
 		"accountSettings": "Configuración de cuenta",
 		"privacy": "Privacidad",
+		"legal": "Legal",
 		"notifications": "Notificaciones",
 		"language": "Idioma",
 		"about": "Acerca de",
@@ -289,6 +290,9 @@
 		"version": "Versión",
 		"darkMode": "Modo oscuro",
 		"darkModeSubtitle": "Tema de la aplicación",
+		"notificationsEnabledSubtitle": "Configurar preferencias de notificaciones",
+		"notificationsDisabledSubtitle": "Las notificaciones están desactivadas",
+		"configureNotificationPreferences": "Configurar preferencias de notificaciones",
 		"privacySettings": "Configuración de privacidad",
 		"privacySettingsSubtitle": "Controla quien puede verte",
 		"blockedUsersSubtitle": "Usuarios que has bloqueado",
@@ -323,6 +327,29 @@
 			"id_ID": "Indonesio",
 			"ms_MY": "Malayo"
 		}
+	},
+	"privacy": {
+		"profileVisibility": "Visibilidad del perfil",
+		"communication": "Comunicación",
+		"activity": "Actividad",
+		"privateProfile": "Perfil privado",
+		"privateProfileSubtitle": "Solo los seguidores pueden ver tu contenido",
+		"directMessages": "Mensajes directos",
+		"directMessagesSubtitle": "Permitir que otros te envíen mensajes",
+		"allowTagging": "Permitir etiquetado",
+		"allowTaggingSubtitle": "Permitir que otros te etiqueten en su contenido",
+		"onlineStatus": "Estado en línea",
+		"onlineStatusSubtitle": "Mostrar cuando estás en línea",
+		"viewHistory": "Historial de visualización",
+		"viewHistorySubtitle": "Guardar videos que has visto"
+	},
+	"blockedUsers": {
+		"noBlockedUsers": "No hay usuarios bloqueados",
+		"noBlockedUsersSubtitle": "Los usuarios que bloquees aparecerán aquí",
+		"unblock": "Desbloquear",
+		"unblockTitle": "Desbloquear usuario",
+		"unblockMessage": "¿Estás seguro de que quieres desbloquear a @{username}?",
+		"unblockError": "Error al desbloquear usuario"
 	},
 	"subscriptions": {
 		"mySubscriptions": "Mis suscripciones",
@@ -375,6 +402,8 @@
 			"videoLikesSubtitle": "Cuando alguien le da me gusta a tus videos",
 			"newFollowers": "Nuevos seguidores",
 			"newFollowersSubtitle": "Cuando alguien comienza a seguirte",
+			"newSubscribers": "Nuevos suscriptores",
+			"newSubscribersSubtitle": "Cuando alguien se suscribe a tu contenido",
 			"commentLikes": "Me gusta en comentarios",
 			"commentLikesSubtitle": "Cuando alguien le da me gusta a tus comentarios",
 			"videoComments": "Comentarios en videos",
@@ -383,6 +412,12 @@
 			"commentRepliesSubtitle": "Cuando alguien responde a tus comentarios",
 			"pushNotifications": "Notificaciones push",
 			"pushNotificationsSubtitle": "Recibir notificaciones en tu dispositivo"
-		}
+		},
+		"managePreferencesDescription": "Configura qué notificaciones quieres recibir y cuáles no.",
+		"enableAllNotifications": "Habilitar todas las notificaciones",
+		"enableAllNotificationsSubtitle": "Activa o desactiva todas las notificaciones de una vez",
+		"videoInteractions": "Interacciones de video",
+		"commentInteractions": "Interacciones de comentarios",
+		"socialNotifications": "Notificaciones sociales"
 	}
 }

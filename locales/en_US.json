@@ -298,6 +298,7 @@
 	"settings": {
 		"accountSettings": "Account Settings",
 		"privacy": "Privacy",
+		"legal": "Legal",
 		"notifications": "Notifications",
 		"language": "Language",
 		"about": "About",
@@ -323,6 +324,9 @@
 		"termsOfServiceSubtitle": "Terms and conditions",
 		"privacyPolicySubtitle": "Privacy policy",
 		"application": "Application",
+		"notificationsEnabledSubtitle": "Configure notification preferences",
+		"notificationsDisabledSubtitle": "Notifications are disabled",
+		"configureNotificationPreferences": "Configure notification preferences",
 		"dangerZone": "Danger Zone",
 		"logoutSubtitle": "Sign out on this device",
 		"logoutConfirmation": "Are you sure you want to sign out?",
@@ -347,6 +351,29 @@
 			"id_ID": "Indonesian",
 			"ms_MY": "Malay"
 		}
+	},
+	"privacy": {
+		"profileVisibility": "Profile Visibility",
+		"communication": "Communication",
+		"activity": "Activity",
+		"privateProfile": "Private Profile",
+		"privateProfileSubtitle": "Only followers can see your content",
+		"directMessages": "Direct Messages",
+		"directMessagesSubtitle": "Allow others to send you messages",
+		"allowTagging": "Allow Tagging",
+		"allowTaggingSubtitle": "Let others tag you in their content",
+		"onlineStatus": "Online Status",
+		"onlineStatusSubtitle": "Show when you're online",
+		"viewHistory": "View History",
+		"viewHistorySubtitle": "Save videos you've watched"
+	},
+	"blockedUsers": {
+		"noBlockedUsers": "No blocked users",
+		"noBlockedUsersSubtitle": "Users you block will appear here",
+		"unblock": "Unblock",
+		"unblockTitle": "Unblock User",
+		"unblockMessage": "Are you sure you want to unblock @{username}?",
+		"unblockError": "Error unblocking user"
 	},
 	"subscriptions": {
 		"mySubscriptions": "My Subscriptions",
@@ -393,9 +420,17 @@
 			"videoCommentsSubtitle": "When someone comments on your videos",
 			"commentReplies": "Comment replies",
 			"commentRepliesSubtitle": "When someone replies to your comments",
+			"newSubscribers": "New subscribers",
+			"newSubscribersSubtitle": "When someone subscribes to your content",
 			"pushNotifications": "Push notifications",
 			"pushNotificationsSubtitle": "Receive notifications on your device"
-		}
+		},
+		"managePreferencesDescription": "Configure which notifications you want to receive and which ones you don't.",
+		"enableAllNotifications": "Enable all notifications",
+		"enableAllNotificationsSubtitle": "Turn on or off all notifications at once",
+		"videoInteractions": "Video interactions",
+		"commentInteractions": "Comment interactions",
+		"socialNotifications": "Social notifications"
 	},
 	"errors": {
 		"somethingWentWrong": "Something went wrong",
