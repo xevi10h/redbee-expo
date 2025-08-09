@@ -200,9 +200,6 @@ export default function SignUpScreen() {
 						/>
 						<Text style={styles.title}>Redbee</Text>
 						<Text style={styles.subtitle}>{t('auth.welcome')}</Text>
-						<Text style={styles.webNotice}>
-							Versión web - Crea tu cuenta con email y contraseña
-						</Text>
 					</View>
 
 					{/* Sign Up Form */}
@@ -355,12 +352,6 @@ export default function SignUpScreen() {
 						</View>
 					</View>
 
-					{/* Web-specific notice */}
-					<View style={styles.webInfo}>
-						<Text style={styles.webInfoText}>
-							💡 En la app móvil también puedes usar Google y Apple Sign-In
-						</Text>
-					</View>
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</LinearGradient>
@@ -406,14 +397,6 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-Regular',
 		color: Colors.textSecondary,
 		textAlign: 'center',
-		marginBottom: 8,
-	},
-	webNotice: {
-		fontSize: 14,
-		fontFamily: 'Inter-Regular',
-		color: Colors.textTertiary,
-		textAlign: 'center',
-		fontStyle: 'italic',
 	},
 	form: {
 		marginBottom: 24,
@@ -457,7 +440,6 @@ const styles = StyleSheet.create({
 	},
 	footer: {
 		alignItems: 'center',
-		marginBottom: 24,
 	},
 	footerTextContainer: {
 		flexDirection: 'row',
@@ -477,18 +459,5 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
 		fontSize: 14,
-	},
-	webInfo: {
-		alignItems: 'center',
-		padding: 16,
-		backgroundColor: Colors.backgroundSecondary,
-		borderRadius: 12,
-		marginTop: 16,
-	},
-	webInfoText: {
-		fontSize: 12,
-		fontFamily: 'Inter-Regular',
-		color: Colors.textTertiary,
-		textAlign: 'center',
 	},
 });
