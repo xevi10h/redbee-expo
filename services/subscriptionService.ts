@@ -1,6 +1,15 @@
 import { supabase } from '@/lib/supabase';
 import { AuthResponse } from '@/shared/types';
-import Stripe from '@stripe/stripe-react-native';
+
+// Import Stripe only on native platforms
+let Stripe: any;
+if (require('react-native').Platform.OS !== 'web') {
+  try {
+    Stripe = require('@stripe/stripe-react-native').default;
+  } catch (e) {
+    console.warn('Stripe not available on this platform');
+  }
+}
 
 export interface SubscriptionPlan {
 	price: number;

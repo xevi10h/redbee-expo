@@ -105,17 +105,17 @@ export default function ResetPasswordScreen() {
 					</TouchableOpacity>
 
 					{/* Header */}
-					<View style={styles.header}>
-						<View style={styles.iconContainer}>
-							<Feather name="key" size={48} color={Colors.primary} />
+					{!emailSent && (
+						<View style={styles.header}>
+							<View style={styles.iconContainer}>
+								<Feather name="key" size={48} color={Colors.primary} />
+							</View>
+							<Text style={styles.title}>{t('auth.resetPassword')}</Text>
+							<Text style={styles.subtitle}>
+								Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+							</Text>
 						</View>
-						<Text style={styles.title}>{t('auth.resetPassword')}</Text>
-						<Text style={styles.subtitle}>
-							{emailSent
-								? t('auth.checkEmail')
-								: 'Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.'}
-						</Text>
-					</View>
+					)}
 
 					{!emailSent ? (
 						/* Reset Form */

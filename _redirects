@@ -1,0 +1,11 @@
+# SPA fallback
+/*    /index.html   200
+
+# Auth callback handling for password reset
+/auth/confirm    /auth/confirm-password   302
+
+# Deep link handling
+/auth/confirm-password    /auth/confirm-password   200
+
+# API routes (if needed)
+/api/*    https://hecpxuoxynuamcmzwulm.supabase.co/:splat   200

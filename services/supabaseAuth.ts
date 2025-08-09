@@ -810,7 +810,7 @@ export class SupabaseAuthService {
 	static async resetPassword(email: string): Promise<AuthResponse<void>> {
 		try {
 			const { error } = await supabase.auth.resetPasswordForEmail(email, {
-				redirectTo: 'redbeeexpo://auth/reset-password',
+				redirectTo: 'redbeeapp://auth/confirm-password',
 			});
 
 			if (error) {
@@ -828,6 +828,37 @@ export class SupabaseAuthService {
 				success: false,
 				error:
 					error instanceof Error ? error.message : 'Failed to send reset email',
+			};
+		}
+	}
+
+	/**
+	 * Verify OTP token for password recovery
+	 */
+	static async verifyOtp(params: {
+		token_hash: string;
+		type: 'recovery' | 'email';
+	}): Promise<AuthResponse<void>> {
+		try {
+			const { error } = await supabase.auth.verifyOtp({
+				token_hash: params.token_hash,
+				type: params.type,
+			});
+
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			return {
+				success: true,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'Failed to verify OTP',
 			};
 		}
 	}
