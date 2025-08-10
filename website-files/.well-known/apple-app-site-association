@@ -7,6 +7,10 @@
 				],
 				"components": [
 					{
+						"/": "*",
+						"comment": "Matches all URLs - catch all"
+					},
+					{
 						"/": "/profile/*",
 						"comment": "Matches any profile URL"
 					},
@@ -21,6 +25,14 @@
 					{
 						"/": "/auth/*",
 						"comment": "Matches any auth URL"
+					},
+					{
+						"/": "/share/*",
+						"comment": "Matches any share URL"
+					},
+					{
+						"/": "/user/*",
+						"comment": "Matches any user URL"
 					}
 				]
 			}
