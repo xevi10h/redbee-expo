@@ -136,7 +136,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 		set({ isLoading: true, error: null });
 
 		try {
-			const result = await SupabaseAuthService.signUpWithEmail(credentials);
+			// Get device language for email template
+			const deviceLanguage = getDeviceLanguage();
+			const result = await SupabaseAuthService.signUpWithEmail(credentials, deviceLanguage);
 
 			if (result.success && result.data) {
 				set({

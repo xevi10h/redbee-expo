@@ -101,8 +101,12 @@ export class SupabaseAuthService {
 	 */
 	static async signUpWithEmail(
 		credentials: RegisterCredentials,
+		language?: string,
 	): Promise<AuthResponse<User>> {
 		try {
+			// Get device language if not provided
+			const deviceLanguage = language || getDeviceLanguage();
+
 			// First check if username is available using the function
 			const { data: isAvailable, error: availabilityError } =
 				await supabase.rpc('check_username_availability', {
@@ -123,7 +127,7 @@ export class SupabaseAuthService {
 				};
 			}
 
-			// Sign up with Supabase Auth
+			// Sign up with Supabase Auth including language in metadata
 			const { data: authData, error: authError } = await supabase.auth.signUp({
 				email: credentials.email,
 				password: credentials.password,
@@ -131,7 +135,10 @@ export class SupabaseAuthService {
 					data: {
 						display_name: credentials.display_name,
 						username: credentials.username,
+						language: deviceLanguage,
+						email_language: deviceLanguage,
 					},
+					emailRedirectTo: 'redbeeapp://auth/confirm-email',
 				},
 			});
 
@@ -149,12 +156,13 @@ export class SupabaseAuthService {
 				};
 			}
 
-			// Update the profile with the correct username (trigger creates initial profile)
+			// Update the profile with the correct data including language
 			const { data: profile, error: profileError } = await supabase
 				.from('profiles')
 				.update({
 					username: credentials.username,
 					display_name: credentials.display_name,
+					language: deviceLanguage,
 					updated_at: new Date().toISOString(),
 				})
 				.eq('id', authData.user.id)
@@ -172,7 +180,7 @@ export class SupabaseAuthService {
 				...profile,
 				email: authData.user.email!,
 				access_token: authData.session?.access_token,
-				language: profile.language || getDeviceLanguage(),
+				language: profile.language || deviceLanguage,
 			};
 
 			return {
@@ -809,9 +817,46 @@ export class SupabaseAuthService {
 	 */
 	static async resetPassword(email: string): Promise<AuthResponse<void>> {
 		try {
+			// Get user language and ID from profile based on email in one query
+			let userLanguage = getDeviceLanguage(); // fallback
+			let userId: string | null = null;
+
+			try {
+				const { data: userData, error: userError } = await supabase
+					.from('users_with_email')
+					.select('id, language')
+					.eq('email', email.toLowerCase())
+					.single();
+
+				if (!userError && userData) {
+					if (userData.language) {
+						userLanguage = userData.language;
+					}
+					userId = userData.id;
+				}
+			} catch (e) {
+				// If we can't get user data, use device language
+				console.log('Could not fetch user data, using device language');
+			}
+
+			// Store user language in user metadata temporarily for email template access
+			if (userId) {
+				try {
+					await supabase.auth.admin.updateUserById(userId, {
+						user_metadata: {
+							email_language: userLanguage,
+						},
+					});
+				} catch (e) {
+					console.log('Could not update user metadata for email language');
+				}
+			}
+
 			const { error } = await supabase.auth.resetPasswordForEmail(email, {
 				redirectTo: 'redbeeapp://auth/confirm-password',
 			});
+
+			console.log('Reset password email sent for:', email);
 
 			if (error) {
 				return {

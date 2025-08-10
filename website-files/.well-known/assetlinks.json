@@ -1,0 +1,12 @@
+[
+	{
+		"relation": ["delegate_permission/common.handle_all_urls"],
+		"target": {
+			"namespace": "android_app",
+			"package_name": "com.redbeeapp.mobile",
+			"sha256_cert_fingerprints": [
+				"E6:CA:AB:1D:05:05:66:F7:46:38:5F:1C:7E:C2:2A:A8:AC:20:9B:37:3F:7D:19:D8:65:B0:F3:A4:37:AF:BE:B3"
+			]
+		}
+	}
+]

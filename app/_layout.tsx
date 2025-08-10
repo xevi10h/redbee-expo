@@ -13,6 +13,7 @@ import 'react-native-reanimated';
 
 import { Colors } from '@/constants/Colors';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
+import { useDeepLinks } from '@/hooks/useDeepLinks';
 import { useTranslation } from '@/hooks/useTranslation';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -21,6 +22,9 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
 	const { t } = useTranslation();
 	const { isInitialized, isLoading, error } = useAppInitialization();
+	
+	// Initialize deep links handling
+	useDeepLinks();
 
 	const [loaded] = useFonts({
 		'Poppins-Regular': require('../assets/fonts/Poppins-Regular.ttf'),

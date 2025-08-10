@@ -1,0 +1,34 @@
+{
+	"applinks": {
+		"details": [
+			{
+				"appIDs": [
+					"4WWBHK245Y.com.redbeeapp.mobile"
+				],
+				"components": [
+					{
+						"/": "/profile/*",
+						"comment": "Matches any profile URL"
+					},
+					{
+						"/": "/video/*",
+						"comment": "Matches any video URL"
+					},
+					{
+						"/": "/hashtag/*",
+						"comment": "Matches any hashtag URL"
+					},
+					{
+						"/": "/auth/*",
+						"comment": "Matches any auth URL"
+					}
+				]
+			}
+		]
+	},
+	"webcredentials": {
+		"apps": [
+			"4WWBHK245Y.com.redbeeapp.mobile"
+		]
+	}
+}

@@ -5,7 +5,13 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Redirect rules for SPA
+# Exclude .well-known from SPA redirects (for deep links)
+[[redirects]]
+  from = "/.well-known/*"
+  to = "/.well-known/:splat"
+  status = 200
+
+# Redirect rules for SPA (after excluding .well-known)
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -25,6 +31,14 @@
   for = "/static/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# Headers for .well-known files (Deep Links)
+[[headers]]
+  for = "/.well-known/*"
+  [headers.values]
+    Content-Type = "application/json"
+    Cache-Control = "public, max-age=86400"
+    Access-Control-Allow-Origin = "*"
 
 # Custom domain redirects
 [[redirects]]

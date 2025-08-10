@@ -8,6 +8,7 @@
 		"scheme": "redbeeapp",
 		"userInterfaceStyle": "automatic",
 		"newArchEnabled": true,
+		"associatedDomains": ["applinks:redbeeapp.com"],
 		"web": {
 			"bundler": "metro",
 			"output": "static",
@@ -18,7 +19,8 @@
 			"usesAppleSignIn": true,
 			"bundleIdentifier": "com.redbeeapp.mobile",
 			"entitlements": {
-				"com.apple.developer.applesignin": ["Default", "Default"]
+				"com.apple.developer.applesignin": ["Default", "Default"],
+				"com.apple.developer.associated-domains": ["applinks:redbeeapp.com"]
 			},
 			"infoPlist": {
 				"ITSAppUsesNonExemptEncryption": false
@@ -30,7 +32,20 @@
 				"backgroundColor": "#ffffff"
 			},
 			"edgeToEdgeEnabled": true,
-			"package": "com.redbeeapp.mobile"
+			"package": "com.redbeeapp.mobile",
+			"intentFilters": [
+				{
+					"action": "VIEW",
+					"autoVerify": true,
+					"data": [
+						{
+							"scheme": "https",
+							"host": "redbeeapp.com"
+						}
+					],
+					"category": ["BROWSABLE", "DEFAULT"]
+				}
+			]
 		},
 		"plugins": [
 			"expo-router",

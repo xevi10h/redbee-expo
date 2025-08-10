@@ -64,6 +64,41 @@ try {
   
   console.log('✅ Web build completed successfully!');
   
+  // Copy .well-known files for deep links
+  console.log('📋 Copying .well-known files for deep links...');
+  
+  const distDir = 'dist';
+  const wellKnownDir = path.join(distDir, '.well-known');
+  
+  // Create .well-known directory in dist
+  if (!fs.existsSync(wellKnownDir)) {
+    fs.mkdirSync(wellKnownDir, { recursive: true });
+  }
+  
+  // Copy assetlinks.json for Android
+  const assetlinksSource = 'website-files/.well-known/assetlinks.json';
+  const assetlinksTarget = path.join(wellKnownDir, 'assetlinks.json');
+  
+  if (fs.existsSync(assetlinksSource)) {
+    fs.copyFileSync(assetlinksSource, assetlinksTarget);
+    console.log('✅ Copied assetlinks.json for Android deep links');
+  } else {
+    console.warn('⚠️  assetlinks.json not found at', assetlinksSource);
+  }
+  
+  // Copy apple-app-site-association for iOS
+  const appleSource = 'website-files/.well-known/apple-app-site-association';
+  const appleTarget = path.join(wellKnownDir, 'apple-app-site-association');
+  
+  if (fs.existsSync(appleSource)) {
+    fs.copyFileSync(appleSource, appleTarget);
+    console.log('✅ Copied apple-app-site-association for iOS deep links');
+  } else {
+    console.warn('⚠️  apple-app-site-association not found at', appleSource);
+  }
+  
+  console.log('🔗 Deep links files ready for deployment!');
+  
 } catch (error) {
   console.error('❌ Build failed:', error.message);
   process.exit(1);
