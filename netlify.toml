@@ -11,6 +11,12 @@
   to = "/.well-known/:splat"
   status = 200
 
+# Static waiting list page (exclude from SPA redirects)
+[[redirects]]
+  from = "/waiting-list"
+  to = "/waiting-list/index.html"
+  status = 200
+
 # Redirect rules for SPA (after excluding .well-known)
 [[redirects]]
   from = "/*"

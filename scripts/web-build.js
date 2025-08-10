@@ -97,6 +97,25 @@ try {
     console.warn('⚠️  apple-app-site-association not found at', appleSource);
   }
   
+  // Copy waiting list page
+  console.log('📋 Copying waiting list files...');
+  
+  const waitingListSource = 'website-files/waiting-list/index.html';
+  const waitingListDir = path.join(distDir, 'waiting-list');
+  const waitingListTarget = path.join(waitingListDir, 'index.html');
+  
+  if (fs.existsSync(waitingListSource)) {
+    // Create waiting-list directory in dist
+    if (!fs.existsSync(waitingListDir)) {
+      fs.mkdirSync(waitingListDir, { recursive: true });
+    }
+    
+    fs.copyFileSync(waitingListSource, waitingListTarget);
+    console.log('✅ Copied waiting list page');
+  } else {
+    console.warn('⚠️  waiting list page not found at', waitingListSource);
+  }
+  
   console.log('🔗 Deep links files ready for deployment!');
   
 } catch (error) {
