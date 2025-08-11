@@ -116,6 +116,29 @@ try {
     console.warn('⚠️  waiting list page not found at', waitingListSource);
   }
   
+  // Copy icon assets for waiting list
+  console.log('📋 Copying icon assets...');
+  
+  const iconSource = 'assets/images/icon.png';
+  const iconTarget = path.join(distDir, 'icon.png');
+  
+  if (fs.existsSync(iconSource)) {
+    fs.copyFileSync(iconSource, iconTarget);
+    console.log('✅ Copied icon.png for waiting list logo');
+  } else {
+    console.warn('⚠️  icon.png not found at', iconSource);
+  }
+  
+  const faviconSource = 'assets/images/favicon.png';
+  const faviconTarget = path.join(distDir, 'favicon.png');
+  
+  if (fs.existsSync(faviconSource)) {
+    fs.copyFileSync(faviconSource, faviconTarget);
+    console.log('✅ Copied favicon.png');
+  } else {
+    console.warn('⚠️  favicon.png not found at', faviconSource);
+  }
+  
   console.log('🔗 Deep links files ready for deployment!');
   
 } catch (error) {

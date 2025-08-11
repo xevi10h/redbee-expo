@@ -31,26 +31,27 @@
 
     <style>
         :root {
-            --primary: #007bff;
-            --primary-dark: #0056b3;
-            --secondary: #667eea;
-            --accent: #764ba2;
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --dark: #1a1a1a;
-            --light: #ffffff;
+            --primary: #E1306C;
+            --primary-dark: #892142;
+            --primary-light: #F77737;
+            --secondary: #1C1C1E;
+            --accent: #2C2C2E;
+            --success: #28A745;
+            --warning: #FFC107;
+            --danger: #DC3545;
+            --dark: #000000;
+            --light: #FFFFFF;
             --gray-50: #f8f9fa;
             --gray-100: #e9ecef;
             --gray-200: #dee2e6;
-            --gray-300: #ced4da;
-            --gray-400: #adb5bd;
-            --gray-500: #6c757d;
-            --gray-600: #495057;
-            --gray-700: #343a40;
-            --gray-800: #212529;
-            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
-            --gradient-dark: linear-gradient(135deg, #1a1a1a 0%, #2d3436 100%);
+            --gray-300: #ADB5BD;
+            --gray-400: #6C757D;
+            --gray-500: #495057;
+            --gray-600: #343a40;
+            --gray-700: #212529;
+            --gray-800: #1a1a1a;
+            --gradient-primary: linear-gradient(135deg, #E1306C 0%, #F77737 100%);
+            --gradient-dark: linear-gradient(135deg, #000000 0%, #1C1C1E 100%);
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -107,22 +108,39 @@
             100% { transform: rotate(360deg); }
         }
 
-        .floating {
-            animation: floating 6s ease-in-out infinite;
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: reveal 0.8s ease-out forwards;
         }
 
-        @keyframes floating {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+        @keyframes reveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .glow {
+            position: relative;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        .glow::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: var(--gradient-primary);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .glow:hover::before {
+            opacity: 0.3;
         }
 
         /* Header */
@@ -153,13 +171,21 @@
         .logo-icon {
             width: 40px;
             height: 40px;
-            background: var(--gradient-primary);
+            background-image: url('/icon.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
             font-size: 18px;
+        }
+        
+        .logo-icon-fallback {
+            background: var(--gradient-primary);
+            background-image: none;
         }
 
         .logo-text {
@@ -236,15 +262,39 @@
         }
 
         .feature-icon {
-            width: 64px;
-            height: 64px;
-            background: var(--gradient-primary);
-            border-radius: 16px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 24px;
-            font-size: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-icon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-primary);
+            opacity: 0.1;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon::before {
+            opacity: 0.2;
+        }
+
+        .feature-icon svg {
+            width: 36px;
+            height: 36px;
+            color: var(--primary);
+            z-index: 1;
+            position: relative;
         }
 
         .feature-title {
@@ -377,15 +427,150 @@
             transform: none;
         }
 
-        /* Success message */
-        .success-message {
-            background: rgba(40, 167, 69, 0.1);
-            border: 1px solid var(--success);
-            color: var(--success);
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 24px;
+        /* Success page styles */
+        .success-page {
             display: none;
+            text-align: center;
+            padding: 80px 0;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .success-page.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 32px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .success-icon::before {
+            content: '';
+            position: absolute;
+            inset: -20px;
+            background: conic-gradient(from 0deg, transparent 0deg, var(--primary) 90deg, transparent 360deg);
+            animation: rotate 2s linear infinite;
+            border-radius: 50%;
+        }
+
+        .success-icon::after {
+            content: '✓';
+            position: relative;
+            z-index: 2;
+            color: white;
+            font-size: 48px;
+            font-weight: 800;
+            background: var(--gradient-dark);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .success-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 24px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .success-message {
+            font-size: 1.2rem;
+            color: var(--gray-300);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        .success-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin: 48px 0;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .success-feature {
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .success-feature-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            background: var(--gradient-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .success-feature h4 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--light);
+        }
+
+        .success-feature p {
+            color: var(--gray-400);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .back-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light);
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 32px;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary);
+            transform: translateY(-2px);
         }
 
         .error-message {
@@ -408,22 +593,51 @@
 
         .stat-card {
             text-align: center;
-            padding: 32px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 32px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: left 0.5s ease;
+        }
+
+        .stat-card:hover::before {
+            left: 0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(225, 48, 108, 0.3);
+            box-shadow: 0 20px 40px rgba(225, 48, 108, 0.1);
         }
 
         .stat-number {
             font-family: 'Poppins', sans-serif;
-            font-size: 3rem;
-            font-weight: 800;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .stat-highlight {
             background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 8px;
         }
 
         .stat-label {
@@ -505,7 +719,9 @@
         <div class="container">
             <nav class="nav">
                 <a href="/" class="logo">
-                    <div class="logo-icon">R</div>
+                    <div class="logo-icon" id="logoIcon">
+                        <span id="logoFallback" style="display: none;">R</span>
+                    </div>
                     <span class="logo-text">Redbee</span>
                 </a>
             </nav>
@@ -515,7 +731,7 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="container">
-            <h1 class="floating">El Futuro del Contenido Exclusivo</h1>
+            <h1 class="reveal">El Futuro del Contenido Exclusivo</h1>
             <p class="hero-subtitle">Donde los creadores prosperan y los fans acceden a contenido premium</p>
             <p class="hero-description">
                 Únete a la revolución que está transformando la industria del contenido digital. 
@@ -527,8 +743,12 @@
     <!-- Features -->
     <section class="container">
         <div class="features">
-            <div class="feature-card floating" style="animation-delay: 0.2s;">
-                <div class="feature-icon">🎨</div>
+            <div class="feature-card glow reveal" style="animation-delay: 0.2s;">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
                 <h3 class="feature-title">Creadores Empoderados</h3>
                 <p class="feature-description">
                     Herramientas avanzadas con IA para crear, monetizar y hacer crecer tu audiencia. 
@@ -536,8 +756,12 @@
                 </p>
             </div>
             
-            <div class="feature-card floating" style="animation-delay: 0.4s;">
-                <div class="feature-icon">⭐</div>
+            <div class="feature-card glow reveal" style="animation-delay: 0.4s;">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
                 <h3 class="feature-title">Contenido Exclusivo</h3>
                 <p class="feature-description">
                     Accede a contenido premium y experiencias únicas de tus creadores favoritos. 
@@ -545,12 +769,15 @@
                 </p>
             </div>
             
-            <div class="feature-card floating" style="animation-delay: 0.6s;">
-                <div class="feature-icon">🤝</div>
-                <h3 class="feature-title">Marcas Inteligentes</h3>
+            <div class="feature-card glow reveal" style="animation-delay: 0.6s;">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                    </svg>
+                </div>
+                <h3 class="feature-title">Conecta con el Creador</h3>
                 <p class="feature-description">
-                    Conecta con creadores auténticos usando IA para colaboraciones genuinas. 
-                    ROI medible y audiencias altamente segmentadas.
+                    IA que une marcas y creadores de forma natural. El puente inteligente que hace que las colaboraciones fluyan sin complicaciones.
                 </p>
             </div>
         </div>
@@ -559,28 +786,28 @@
     <!-- Stats -->
     <section class="container">
         <div class="stats">
-            <div class="stat-card pulse">
-                <div class="stat-number" id="waitingCount">1,247</div>
-                <div class="stat-label">Personas esperando</div>
+            <div class="stat-card reveal" style="animation-delay: 0.1s;">
+                <div class="stat-number"><span class="stat-highlight">Stop</span></div>
+                <div class="stat-label">Scroll sin valor</div>
             </div>
-            <div class="stat-card pulse" style="animation-delay: 0.2s;">
-                <div class="stat-number">50K+</div>
-                <div class="stat-label">Creadores interesados</div>
+            <div class="stat-card reveal" style="animation-delay: 0.2s;">
+                <div class="stat-number"><span class="stat-highlight">Vive</span></div>
+                <div class="stat-label">De tu talento</div>
             </div>
-            <div class="stat-card pulse" style="animation-delay: 0.4s;">
-                <div class="stat-number">200+</div>
-                <div class="stat-label">Marcas esperando</div>
+            <div class="stat-card reveal" style="animation-delay: 0.3s;">
+                <div class="stat-number"><span class="stat-highlight">AI</span></div>
+                <div class="stat-label">Potenciado por IA</div>
             </div>
-            <div class="stat-card pulse" style="animation-delay: 0.6s;">
-                <div class="stat-number">∞</div>
-                <div class="stat-label">Potencial</div>
+            <div class="stat-card reveal" style="animation-delay: 0.4s;">
+                <div class="stat-number"><span class="stat-highlight">∞</span></div>
+                <div class="stat-label">Potencial ilimitado</div>
             </div>
         </div>
     </section>
 
     <!-- Waiting List Form -->
     <section class="container">
-        <div class="waiting-list">
+        <div class="waiting-list" id="formSection">
             <h2>Sé parte de la revolución</h2>
             <p>Únete a nuestra waiting list y sé de los primeros en experimentar el futuro del contenido digital</p>
             
@@ -600,8 +827,7 @@
                 <div class="form-group">
                     <label for="userType" class="form-label">¿Cuál es tu interés principal? *</label>
                     <select id="userType" name="userType" class="form-select" required>
-                        <option value="">Selecciona una opción</option>
-                        <option value="fan">Quiero poder ver contenido exclusivo de mis creadores favoritos</option>
+                        <option value="fan" selected>Quiero poder ver contenido exclusivo de mis creadores favoritos</option>
                         <option value="creator">Quiero crear contenido para mis seguidores</option>
                         <option value="brand">Soy una marca interesada en colaborar con creadores</option>
                     </select>
@@ -611,58 +837,117 @@
                     Únete a la Revolución
                 </button>
                 
-                <div id="successMessage" class="success-message">
-                    🎉 ¡Bienvenido a la revolución! Te contactaremos pronto con acceso exclusivo.
-                </div>
-                
                 <div id="errorMessage" class="error-message">
                     ❌ Hubo un error. Por favor, inténtalo de nuevo.
                 </div>
             </form>
+        </div>
+        
+        <!-- Success Page -->
+        <div class="success-page" id="successPage">
+            <div class="success-icon"></div>
+            
+            <h2 class="success-title">¡Bienvenido al futuro!</h2>
+            
+            <p class="success-message">
+                Gracias por unirte a la revolución del contenido digital. Te hemos enviado un email de confirmación 
+                y serás uno de los primeros en experimentar Redbee cuando esté listo.
+            </p>
+            
+            <div class="success-features">
+                <div class="success-feature">
+                    <div class="success-feature-icon">🔥</div>
+                    <h4>Acceso Prioritario</h4>
+                    <p>Serás de los primeros en probar todas las funcionalidades exclusivas</p>
+                </div>
+                
+                <div class="success-feature">
+                    <div class="success-feature-icon">💎</div>
+                    <h4>Contenido Premium</h4>
+                    <p>Acceso temprano a creadores y contenido que no encontrarás en ningún otro lugar</p>
+                </div>
+                
+                <div class="success-feature">
+                    <div class="success-feature-icon">🚀</div>
+                    <h4>Experiencia Única</h4>
+                    <p>Una plataforma diseñada para ofrecer la mejor experiencia en contenido exclusivo</p>
+                </div>
+            </div>
+            
         </div>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 Redbee. El futuro del contenido digital.</p>
-            <div class="social-links">
-                <a href="#" class="social-link" aria-label="Instagram">📸</a>
-                <a href="#" class="social-link" aria-label="Twitter">🐦</a>
-                <a href="#" class="social-link" aria-label="LinkedIn">💼</a>
-            </div>
+            <p>&copy; 2025 Redbee. El futuro del contenido digital.</p>
         </div>
     </footer>
 
+    <!-- EmailJS CDN -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
     <script>
-        // Animate waiting count
-        function animateCounter() {
-            const counter = document.getElementById('waitingCount');
-            const target = Math.floor(Math.random() * 500) + 1200;
-            let current = parseInt(counter.textContent.replace(',', ''));
-            
-            if (current < target) {
-                current += Math.floor(Math.random() * 5) + 1;
-                counter.textContent = current.toLocaleString();
-                setTimeout(animateCounter, 100);
+        // Helper function to get user type message
+        function getUserTypeMessage(userType) {
+            switch (userType) {
+                case 'fan':
+                    return '🎉 ¡Prepárate para contenido exclusivo! Pronto tendrás acceso a contenido premium de tus creadores favoritos como nunca antes.';
+                case 'creator':
+                    return '🚀 ¡Tu revolución creativa comienza! Herramientas potenciadas por IA para monetizar y hacer crecer tu audiencia te esperan.';
+                case 'brand':
+                    return '🤝 ¡Colaboraciones auténticas en camino! Conecta con creadores genuinos y llega a audiencias altamente segmentadas.';
+                default:
+                    return '✨ ¡Bienvenido a la revolución! Estás a punto de experimentar el futuro del contenido digital.';
             }
         }
+        
+        // Add reveal animation to elements
+        function observeElements() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
 
-        // Start counter animation after page load
-        setTimeout(animateCounter, 2000);
+            document.querySelectorAll('.reveal').forEach(el => {
+                el.style.animationPlayState = 'paused';
+                observer.observe(el);
+            });
+        }
+
+        // Initialize reveal animations
+        document.addEventListener('DOMContentLoaded', observeElements);
+        
+        // Handle logo fallback if image fails to load
+        const logoIcon = document.getElementById('logoIcon');
+        const logoFallback = document.getElementById('logoFallback');
+        
+        // Check if background image loads successfully
+        const testImg = new Image();
+        testImg.onload = function() {
+            // Image loaded successfully, keep as is
+        };
+        testImg.onerror = function() {
+            // Image failed to load, show fallback
+            logoIcon.classList.add('logo-icon-fallback');
+            logoFallback.style.display = 'block';
+        };
+        testImg.src = '/icon.png';
 
         // Form submission
         document.getElementById('waitingListForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
-            const successMessage = document.getElementById('successMessage');
             const errorMessage = document.getElementById('errorMessage');
             const email = document.getElementById('email').value;
             const userType = document.getElementById('userType').value;
             
             // Reset messages
-            successMessage.style.display = 'none';
             errorMessage.style.display = 'none';
             
             // Loading state
@@ -671,47 +956,423 @@
             submitBtn.textContent = 'Uniéndote...';
             
             try {
-                // HubSpot API call (replace with your actual HubSpot portal ID and form GUID)
-                const response = await fetch('https://api.hsforms.com/submissions/v3/integration/submit/YOUR_PORTAL_ID/YOUR_FORM_GUID', {
+                // Supabase API call
+                const response = await fetch('https://hecpxuoxynuamcmzwulm.supabase.co/rest/v1/waiting_list', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'apikey': 'sb_publishable_lCB9zfPj0tOboOr0V0a3xQ_AeN6D3Uu',
+                        'Authorization': 'Bearer sb_publishable_lCB9zfPj0tOboOr0V0a3xQ_AeN6D3Uu',
+                        'Prefer': 'return=minimal'
                     },
                     body: JSON.stringify({
-                        fields: [
-                            {
-                                name: 'email',
-                                value: email
-                            },
-                            {
-                                name: 'user_type',
-                                value: userType
-                            },
-                            {
-                                name: 'source',
-                                value: 'waiting_list'
-                            }
-                        ],
-                        context: {
-                            pageUri: window.location.href,
-                            pageName: 'Redbee Waiting List'
-                        }
+                        email: email,
+                        user_type: userType,
+                        source: 'waiting_list'
                     })
                 });
                 
                 if (response.ok) {
-                    successMessage.style.display = 'block';
-                    document.getElementById('waitingListForm').reset();
+                    // Hide form and show success page
+                    document.getElementById('formSection').style.display = 'none';
+                    document.getElementById('successPage').classList.add('show');
                     
-                    // Update counter
-                    const counter = document.getElementById('waitingCount');
-                    let current = parseInt(counter.textContent.replace(',', ''));
-                    counter.textContent = (current + 1).toLocaleString();
+                    // Send confirmation email directly with Resend API
+                    try {
+                        const { title, message } = getUserTypeMessage(userType);
+                        
+                        const emailHtml = `
+                        <!DOCTYPE html>
+                        <html lang="es">
+                        <head>
+                            <meta charset="utf-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Bienvenido a Redbee</title>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
+                                
+                                * { margin: 0; padding: 0; box-sizing: border-box; }
+                                
+                                body { 
+                                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+                                    line-height: 1.6; 
+                                    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+                                    padding: 40px 20px;
+                                    min-height: 100vh;
+                                }
+                                
+                                .email-wrapper {
+                                    max-width: 640px;
+                                    margin: 0 auto;
+                                    background: linear-gradient(135deg, rgba(225, 48, 108, 0.05) 0%, rgba(247, 119, 55, 0.05) 100%);
+                                    border-radius: 24px;
+                                    padding: 2px;
+                                    box-shadow: 0 32px 64px rgba(0,0,0,0.4);
+                                }
+                                
+                                .container { 
+                                    background: #0d0d0d;
+                                    border-radius: 22px;
+                                    overflow: hidden;
+                                    position: relative;
+                                }
+                                
+                                .container::before {
+                                    content: '';
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    right: 0;
+                                    bottom: 0;
+                                    background: radial-gradient(circle at 20% 20%, rgba(225, 48, 108, 0.1) 0%, transparent 50%),
+                                               radial-gradient(circle at 80% 80%, rgba(247, 119, 55, 0.1) 0%, transparent 50%);
+                                    pointer-events: none;
+                                }
+                                
+                                .header { 
+                                    background: linear-gradient(135deg, #E1306C 0%, #F77737 50%, #E1306C 100%);
+                                    background-size: 200% 200%;
+                                    color: white; 
+                                    padding: 60px 40px 50px; 
+                                    text-align: center;
+                                    position: relative;
+                                    overflow: hidden;
+                                }
+                                
+                                .header::before {
+                                    content: '';
+                                    position: absolute;
+                                    top: -2px;
+                                    left: -2px;
+                                    right: -2px;
+                                    bottom: -2px;
+                                    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+                                    z-index: 1;
+                                }
+                                
+                                .header::after {
+                                    content: '';
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    right: 0;
+                                    bottom: 0;
+                                    background: 
+                                        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                                        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+                                    z-index: 1;
+                                }
+                                
+                                .success-badge {
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 12px;
+                                    background: rgba(255,255,255,0.2);
+                                    backdrop-filter: blur(20px);
+                                    border: 1px solid rgba(255,255,255,0.3);
+                                    border-radius: 50px;
+                                    padding: 12px 24px;
+                                    margin-bottom: 32px;
+                                    position: relative;
+                                    z-index: 2;
+                                }
+                                
+                                .success-icon {
+                                    width: 32px;
+                                    height: 32px;
+                                    background: rgba(255,255,255,0.3);
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 16px;
+                                }
+                                
+                                .badge-text {
+                                    font-weight: 600;
+                                    font-size: 14px;
+                                    letter-spacing: 0.5px;
+                                }
+                                
+                                .logo { 
+                                    font-family: 'Poppins', sans-serif;
+                                    font-size: 42px; 
+                                    font-weight: 800; 
+                                    margin-bottom: 12px;
+                                    position: relative;
+                                    z-index: 2;
+                                    text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+                                }
+                                
+                                .header-subtitle {
+                                    font-size: 18px;
+                                    font-weight: 500;
+                                    opacity: 0.9;
+                                    position: relative;
+                                    z-index: 2;
+                                }
+                                
+                                .content { 
+                                    background: linear-gradient(180deg, #0d0d0d 0%, #111111 100%);
+                                    color: #e8e8e8;
+                                    padding: 60px 40px;
+                                    position: relative;
+                                    z-index: 2;
+                                }
+                                
+                                .welcome-title {
+                                    font-family: 'Poppins', sans-serif;
+                                    font-size: 32px;
+                                    font-weight: 700;
+                                    text-align: center;
+                                    margin-bottom: 24px;
+                                    background: linear-gradient(135deg, #E1306C 0%, #F77737 100%);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                    background-clip: text;
+                                    line-height: 1.2;
+                                }
+                                
+                                .main-message {
+                                    font-size: 18px;
+                                    line-height: 1.7;
+                                    margin-bottom: 40px;
+                                    text-align: center;
+                                    color: #c0c0c0;
+                                    font-weight: 500;
+                                }
+                                
+                                .features-grid {
+                                    display: grid;
+                                    gap: 24px;
+                                    margin: 50px 0;
+                                    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                                }
+                                
+                                .feature-card {
+                                    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+                                    border: 1px solid rgba(255,255,255,0.1);
+                                    border-radius: 20px;
+                                    padding: 32px 28px;
+                                    text-align: center;
+                                    position: relative;
+                                    overflow: hidden;
+                                    transition: transform 0.3s ease;
+                                }
+                                
+                                .feature-card::before {
+                                    content: '';
+                                    position: absolute;
+                                    top: 0;
+                                    left: 0;
+                                    right: 0;
+                                    height: 2px;
+                                    background: linear-gradient(90deg, #E1306C 0%, #F77737 100%);
+                                    opacity: 0.6;
+                                }
+                                
+                                .feature-card:hover {
+                                    transform: translateY(-4px);
+                                }
+                                
+                                .feature-icon {
+                                    font-size: 40px;
+                                    margin-bottom: 16px;
+                                    display: block;
+                                }
+                                
+                                .feature-title {
+                                    font-family: 'Poppins', sans-serif;
+                                    font-size: 20px;
+                                    font-weight: 700;
+                                    color: #ffffff;
+                                    margin-bottom: 12px;
+                                    line-height: 1.3;
+                                }
+                                
+                                .feature-description {
+                                    font-size: 15px;
+                                    color: #a0a0a0;
+                                    line-height: 1.6;
+                                    font-weight: 500;
+                                }
+                                
+                                .cta-section {
+                                    text-align: center;
+                                    margin: 50px 0 40px;
+                                    padding: 40px 32px;
+                                    background: linear-gradient(135deg, rgba(225, 48, 108, 0.1) 0%, rgba(247, 119, 55, 0.1) 100%);
+                                    border-radius: 20px;
+                                    border: 1px solid rgba(255,255,255,0.08);
+                                }
+                                
+                                .cta-text {
+                                    font-size: 16px;
+                                    color: #d0d0d0;
+                                    line-height: 1.7;
+                                    font-weight: 500;
+                                }
+                                
+                                .footer-section { 
+                                    text-align: center; 
+                                    padding: 40px 0 20px;
+                                    border-top: 1px solid rgba(255,255,255,0.08);
+                                    margin-top: 40px;
+                                }
+                                
+                                .footer-brand {
+                                    font-family: 'Poppins', sans-serif;
+                                    font-size: 16px;
+                                    font-weight: 700;
+                                    background: linear-gradient(135deg, #E1306C 0%, #F77737 100%);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                    background-clip: text;
+                                    margin-bottom: 8px;
+                                }
+                                
+                                .footer-text {
+                                    color: #808080;
+                                    font-size: 14px;
+                                    font-weight: 500;
+                                }
+                                
+                                @media (max-width: 600px) {
+                                    body { padding: 20px 10px; }
+                                    .header { padding: 40px 24px 35px; }
+                                    .content { padding: 40px 24px; }
+                                    .logo { font-size: 36px; }
+                                    .welcome-title { font-size: 28px; }
+                                    .main-message { font-size: 16px; }
+                                    .features-grid { grid-template-columns: 1fr; gap: 20px; }
+                                    .feature-card { padding: 28px 20px; }
+                                    .cta-section { padding: 32px 20px; margin: 40px 0 30px; }
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="email-wrapper">
+                                <div class="container">
+                                    <div class="header">
+                                        <div class="success-badge">
+                                            <div class="success-icon">✨</div>
+                                            <span class="badge-text">REGISTRO EXITOSO</span>
+                                        </div>
+                                        <div class="logo">Redbee</div>
+                                        <div class="header-subtitle">El futuro del contenido digital</div>
+                                    </div>
+                                    
+                                    <div class="content">
+                                        <h1 class="welcome-title">¡Bienvenido a la revolución!</h1>
+                                        
+                                        <p class="main-message">
+                                            Has dado el primer paso hacia una experiencia completamente nueva en contenido digital. 
+                                            Gracias por unirte a nuestra waiting list exclusiva.
+                                        </p>
+                                        
+                                        <div class="features-grid">
+                                            <div class="feature-card">
+                                                <div class="feature-icon">🚀</div>
+                                                <h3 class="feature-title">Acceso Prioritario</h3>
+                                                <p class="feature-description">
+                                                    Serás de los primeros en experimentar todas las funcionalidades exclusivas y revolucionarias de la plataforma.
+                                                </p>
+                                            </div>
+                                            
+                                            <div class="feature-card">
+                                                <div class="feature-icon">💎</div>
+                                                <h3 class="feature-title">Contenido Premium</h3>
+                                                <p class="feature-description">
+                                                    Acceso temprano a creadores únicos y contenido exclusivo que no encontrarás en ningún otro lugar.
+                                                </p>
+                                            </div>
+                                            
+                                            <div class="feature-card">
+                                                <div class="feature-icon">⚡</div>
+                                                <h3 class="feature-title">Experiencia Única</h3>
+                                                <p class="feature-description">
+                                                    Una plataforma potenciada por IA, diseñada para ofrecer la mejor experiencia en contenido digital.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="cta-section">
+                                            <p class="cta-text">
+                                                <strong>Te mantendremos informado</strong> sobre nuestro lanzamiento y recibirás actualizaciones 
+                                                exclusivas sobre el desarrollo de la plataforma. ¡Prepárate para algo extraordinario!
+                                            </p>
+                                        </div>
+                                        
+                                        <div class="footer-section">
+                                            <div class="footer-brand">Redbee</div>
+                                            <div class="footer-text">© 2025 - El futuro del contenido digital</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>`;
+                        
+                        // Llamar a la función segura de Netlify
+                        const emailResponse = await fetch('/.netlify/functions/send-email', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                email: email,
+                                user_type: userType
+                            })
+                        });
+                        
+                        if (emailResponse.ok) {
+                            const emailResult = await emailResponse.json();
+                            if (emailResult.success) {
+                                console.log('✅ Email sent successfully:', emailResult);
+                            } else {
+                                console.warn('⚠️ Email could not be sent:', emailResult.error);
+                            }
+                        } else {
+                            const errorData = await emailResponse.text();
+                            console.warn('⚠️ Email service error:', errorData);
+                        }
+                    } catch (emailError) {
+                        console.warn('⚠️ Could not send confirmation email:', emailError);
+                        // Don't fail the whole process if email fails
+                    }
+                    
+                    console.log('✅ User added to waiting list:', { email, userType });
                 } else {
-                    throw new Error('Failed to submit');
+                    console.error('Response status:', response.status);
+                    console.error('Response statusText:', response.statusText);
+                    
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                        console.error('Error data:', errorData);
+                    } catch (jsonError) {
+                        console.error('Could not parse error response as JSON:', jsonError);
+                        const textResponse = await response.text();
+                        console.error('Raw error response:', textResponse);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    // Check if it's a duplicate email error
+                    if (errorData.code === '23505' || errorData.message?.includes('duplicate')) {
+                        errorMessage.innerHTML = '📧 Este email ya está en nuestra waiting list. ¡Gracias por tu interés!';
+                        errorMessage.style.display = 'block';
+                    } else {
+                        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                    }
                 }
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error details:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                
+                if (!errorMessage.textContent.includes('waiting list')) {
+                    errorMessage.innerHTML = `❌ Error: ${error.message || 'Hubo un error. Por favor, inténtalo de nuevo.'}`;
+                }
                 errorMessage.style.display = 'block';
             } finally {
                 // Reset button
@@ -724,11 +1385,11 @@
         // Add some interactive effects
         document.querySelectorAll('.feature-card').forEach(card => {
             card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-8px) scale(1.02)';
+                this.style.transform = 'translateY(-12px) scale(1.02)';
             });
             
             card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(-8px) scale(1)';
+                this.style.transform = 'translateY(0) scale(1)';
             });
         });
 
