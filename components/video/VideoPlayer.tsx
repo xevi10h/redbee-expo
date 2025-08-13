@@ -323,7 +323,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 							style={styles.premiumGradient}
 						>
 							<View style={styles.premiumContent}>
-								<MaterialCommunityIcons name="crown" size={32} color={Colors.premium} />
+								<MaterialCommunityIcons
+									name="crown"
+									size={32}
+									color={Colors.premium}
+								/>
 								<Text style={styles.premiumTitle}>
 									{t('video.previewOnly')}
 								</Text>
@@ -492,7 +496,7 @@ const styles = StyleSheet.create({
 	},
 	premiumTitle: {
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		color: Colors.text,
 		marginTop: 12,
 		marginBottom: 4,

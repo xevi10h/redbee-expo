@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
 	},
 	errorTitle: {
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		color: Colors.text,
 		marginTop: 16,
 		marginBottom: 8,

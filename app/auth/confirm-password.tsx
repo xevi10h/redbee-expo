@@ -41,16 +41,12 @@ export default function ConfirmPasswordScreen() {
 		if (token_hash && type === 'recovery') {
 			validateToken();
 		} else {
-			Alert.alert(
-				t('common.error'),
-				t('auth.invalidToken'),
-				[
-					{
-						text: t('common.ok'),
-						onPress: () => router.replace('/auth/sign-in'),
-					},
-				],
-			);
+			Alert.alert(t('common.error'), t('auth.invalidToken'), [
+				{
+					text: t('common.ok'),
+					onPress: () => router.replace('/auth/sign-in'),
+				},
+			]);
 		}
 	}, [token_hash, type]);
 
@@ -65,28 +61,20 @@ export default function ConfirmPasswordScreen() {
 			if (result.success) {
 				setIsValidToken(true);
 			} else {
-				Alert.alert(
-					t('common.error'),
-					t('auth.tokenExpired'),
-					[
-						{
-							text: t('common.ok'),
-							onPress: () => router.replace('/auth/sign-in'),
-						},
-					],
-				);
-			}
-		} catch (error) {
-			Alert.alert(
-				t('common.error'),
-				t('auth.tokenValidationError'),
-				[
+				Alert.alert(t('common.error'), t('auth.tokenExpired'), [
 					{
 						text: t('common.ok'),
 						onPress: () => router.replace('/auth/sign-in'),
 					},
-				],
-			);
+				]);
+			}
+		} catch (error) {
+			Alert.alert(t('common.error'), t('auth.tokenValidationError'), [
+				{
+					text: t('common.ok'),
+					onPress: () => router.replace('/auth/sign-in'),
+				},
+			]);
 		} finally {
 			setIsLoading(false);
 		}
@@ -147,11 +135,9 @@ export default function ConfirmPasswordScreen() {
 				);
 			}
 		} catch (error) {
-			Alert.alert(
-				t('common.error'),
-				t('auth.updatePasswordError'),
-				[{ text: t('common.ok') }],
-			);
+			Alert.alert(t('common.error'), t('auth.updatePasswordError'), [
+				{ text: t('common.ok') },
+			]);
 		} finally {
 			setIsLoading(false);
 		}
@@ -164,7 +150,10 @@ export default function ConfirmPasswordScreen() {
 	// Show loading while validating token
 	if (!isValidToken && isLoading) {
 		return (
-			<LinearGradient colors={Colors.gradientSecondary} style={styles.container}>
+			<LinearGradient
+				colors={Colors.gradientSecondary}
+				style={styles.container}
+			>
 				<StatusBar style="light" />
 				<View style={styles.loadingContainer}>
 					<Feather name="key" size={48} color={Colors.primary} />
@@ -320,7 +309,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 28,
-		fontFamily: 'Poppins-Bold',
+		fontFamily: 'Raleway-Bold',
 		fontWeight: 'bold',
 		color: Colors.text,
 		marginBottom: 12,

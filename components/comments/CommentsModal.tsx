@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
 	},
 	modalTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 	},
@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
 	},
 	emptyTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 16,
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
 	},
 	errorTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 16,

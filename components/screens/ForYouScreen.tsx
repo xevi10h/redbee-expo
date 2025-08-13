@@ -12,8 +12,8 @@ import {
 	ViewToken,
 } from 'react-native';
 
-import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { VideoFeedLoader } from '@/components/ui/VideoFeedLoader';
+import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useVideoFeedWithPermissions } from '@/hooks/useVideoFeedWithPermissions';
@@ -165,9 +165,7 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 				{error ? t('errors.somethingWentWrong') : t('home.noVideos')}
 			</Text>
 			<Text style={styles.emptySubtitle}>
-				{error
-					? t('errors.tryAgainLater')
-					: t('home.refreshToSeeNew')}
+				{error ? t('errors.tryAgainLater') : t('home.refreshToSeeNew')}
 			</Text>
 			{error && (
 				<TouchableOpacity
@@ -241,10 +239,7 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 
 			{/* Loader principal estético */}
 			{showMainLoader && (
-				<VideoFeedLoader 
-					message={t('common.loading')}
-					showIcon={true}
-				/>
+				<VideoFeedLoader message={t('common.loading')} showIcon={true} />
 			)}
 		</View>
 	);
@@ -271,7 +266,7 @@ const styles = StyleSheet.create({
 	},
 	emptyTitle: {
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 8,

@@ -12,16 +12,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HashtagVideoGrid } from '@/components/hashtag/HashtagVideoGrid';
 import { Input } from '@/components/ui/Input';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
-import { useHashtagSearch, useHashtagVideos } from '@/hooks/useHashtagSearch';
+import { useHashtagSearch } from '@/hooks/useHashtagSearch';
 import { useSearch } from '@/hooks/useSearch';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useUserInteractions } from '@/hooks/useUserInteractions';
 import { formatNumber } from '@/shared/functions/utils';
-import { UserProfile, Video } from '@/shared/types';
+import { UserProfile } from '@/shared/types';
 
 // Component for user item
 const UserItem: React.FC<{
@@ -157,8 +156,8 @@ export default function SearchScreen() {
 	const handleHashtagPress = useCallback((hashtag: string) => {
 		router.push({
 			pathname: '/hashtag/[hashtag]',
-			params: { 
-				hashtag: encodeURIComponent(hashtag)
+			params: {
+				hashtag: encodeURIComponent(hashtag),
 			},
 		});
 	}, []);
@@ -571,7 +570,7 @@ const styles = StyleSheet.create({
 	},
 	emptyTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 16,

@@ -83,7 +83,11 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
 							</Text>
 						</View>
 						<View style={styles.premiumBadge}>
-							<MaterialCommunityIcons name="crown" size={16} color={Colors.text} />
+							<MaterialCommunityIcons
+								name="crown"
+								size={16}
+								color={Colors.text}
+							/>
 						</View>
 					</View>
 
@@ -141,7 +145,11 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
 							start={{ x: 0, y: 0 }}
 							end={{ x: 1, y: 0 }}
 						>
-							<MaterialCommunityIcons name="crown" size={20} color={Colors.text} />
+							<MaterialCommunityIcons
+								name="crown"
+								size={20}
+								color={Colors.text}
+							/>
 							<Text style={styles.subscribeText}>{t('video.subscribe')}</Text>
 						</LinearGradient>
 					</TouchableOpacity>
@@ -239,7 +247,7 @@ const styles = StyleSheet.create({
 	},
 	benefitsTitle: {
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		color: Colors.text,
 		marginBottom: 8,
 		textAlign: 'center',
@@ -273,7 +281,7 @@ const styles = StyleSheet.create({
 	},
 	priceAmount: {
 		fontSize: 32,
-		fontFamily: 'Poppins-Bold',
+		fontFamily: 'Raleway-Bold',
 		color: Colors.premium,
 	},
 	pricePeriod: {

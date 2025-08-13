@@ -1,5 +1,4 @@
 import { Feather } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import React from 'react';
 import {
 	Dimensions,
@@ -13,7 +12,7 @@ import {
 
 import { Colors } from '@/constants/Colors';
 import { formatNumber } from '@/shared/functions/utils';
-import { User, Video } from '@/shared/types';
+import { Video } from '@/shared/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ITEM_WIDTH = (SCREEN_WIDTH - 48) / 2; // 16px padding + 16px gap
@@ -36,8 +35,8 @@ const VideoGridItem: React.FC<{
 			{/* Video Thumbnail */}
 			<View style={styles.thumbnailContainer}>
 				{video.thumbnail_url ? (
-					<Image 
-						source={{ uri: video.thumbnail_url }} 
+					<Image
+						source={{ uri: video.thumbnail_url }}
 						style={styles.thumbnail}
 						resizeMode="cover"
 					/>
@@ -46,7 +45,7 @@ const VideoGridItem: React.FC<{
 						<Feather name="play" size={24} color={Colors.text} />
 					</View>
 				)}
-				
+
 				{/* Duration overlay */}
 				{video.duration && (
 					<View style={styles.durationOverlay}>
@@ -70,7 +69,7 @@ const VideoGridItem: React.FC<{
 				<Text style={styles.videoDescription} numberOfLines={2}>
 					{video.description || 'Sin descripción'}
 				</Text>
-				
+
 				{/* Author Info */}
 				<View style={styles.authorInfo}>
 					<View style={styles.authorAvatar}>
@@ -90,7 +89,11 @@ const VideoGridItem: React.FC<{
 						</Text>
 					</View>
 					<View style={styles.statItem}>
-						<Feather name="message-circle" size={12} color={Colors.textTertiary} />
+						<Feather
+							name="message-circle"
+							size={12}
+							color={Colors.textTertiary}
+						/>
 						<Text style={styles.statText}>
 							{formatNumber(video.comments_count || 0)}
 						</Text>
@@ -116,18 +119,13 @@ export const HashtagVideoGrid: React.FC<HashtagVideoGridProps> = ({
 	onVideoPress,
 }) => {
 	const renderVideoItem = ({ item, index }: { item: Video; index: number }) => (
-		<VideoGridItem
-			video={item}
-			onPress={() => onVideoPress(item, index)}
-		/>
+		<VideoGridItem video={item} onPress={() => onVideoPress(item, index)} />
 	);
 
 	const renderEmptyState = () => (
 		<View style={styles.emptyState}>
 			<Feather name="video-off" size={48} color={Colors.textTertiary} />
-			<Text style={styles.emptyTitle}>
-				No hay videos para #{hashtag}
-			</Text>
+			<Text style={styles.emptyTitle}>No hay videos para #{hashtag}</Text>
 			<Text style={styles.emptySubtitle}>
 				Sé el primero en crear contenido con este hashtag
 			</Text>
@@ -349,7 +347,7 @@ const styles = StyleSheet.create({
 	},
 	emptyTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 16,

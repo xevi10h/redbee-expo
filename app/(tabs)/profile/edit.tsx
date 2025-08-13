@@ -6,7 +6,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
 	Alert,
+	Dimensions,
 	Image,
+	PanResponder,
 	ScrollView,
 	StyleSheet,
 	Switch,
@@ -14,8 +16,6 @@ import {
 	TextInput,
 	TouchableOpacity,
 	View,
-	Dimensions,
-	PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -119,12 +119,12 @@ const getRecommendedPricing = (locale: string): PricingData => {
 };
 
 // Drag-responsive Slider with real-time feedback
-const CustomSlider = ({ 
-	value, 
-	minimumValue, 
-	maximumValue, 
-	onValueChange, 
-	step = 0.01 
+const CustomSlider = ({
+	value,
+	minimumValue,
+	maximumValue,
+	onValueChange,
+	step = 0.01,
 }: {
 	value: number;
 	minimumValue: number;
@@ -163,24 +163,24 @@ const CustomSlider = ({
 	const panResponder = PanResponder.create({
 		onStartShouldSetPanResponder: () => true,
 		onMoveShouldSetPanResponder: () => true,
-		
+
 		onPanResponderGrant: (event) => {
 			setIsDragging(true);
 			const newValue = getValueFromX(event.nativeEvent.locationX);
 			setDragValue(newValue);
 			onValueChange(newValue);
 		},
-		
+
 		onPanResponderMove: (event, gestureState) => {
 			const newValue = getValueFromX(event.nativeEvent.locationX);
 			setDragValue(newValue);
 			onValueChange(newValue);
 		},
-		
+
 		onPanResponderRelease: () => {
 			setIsDragging(false);
 		},
-		
+
 		onPanResponderTerminate: () => {
 			setIsDragging(false);
 		},
@@ -196,15 +196,12 @@ const CustomSlider = ({
 		<View style={customSliderStyles.container}>
 			{/* Background track */}
 			<View style={customSliderStyles.track} />
-			
+
 			{/* Active track */}
-			<View 
-				style={[
-					customSliderStyles.activeTrack, 
-					{ width: activeTrackWidth }
-				]} 
+			<View
+				style={[customSliderStyles.activeTrack, { width: activeTrackWidth }]}
 			/>
-			
+
 			{/* Thumb with PanResponder */}
 			<View
 				{...panResponder.panHandlers}
@@ -218,7 +215,7 @@ const CustomSlider = ({
 			/>
 
 			{/* Invisible touch area for better interaction */}
-			<View 
+			<View
 				{...panResponder.panHandlers}
 				style={customSliderStyles.touchArea}
 			/>
@@ -282,7 +279,9 @@ export default function EditProfileScreen() {
 	const [username, setUsername] = useState(user?.username || '');
 	const [bio, setBio] = useState(user?.bio || '');
 	const [avatarUri, setAvatarUri] = useState<string | null>(null);
-	const [hasPremiumContent, setHasPremiumContent] = useState(user?.has_premium_content || false);
+	const [hasPremiumContent, setHasPremiumContent] = useState(
+		user?.has_premium_content || false,
+	);
 	const [subscriptionPrice, setSubscriptionPrice] = useState(0);
 	const [subscriptionCurrency, setSubscriptionCurrency] = useState('EUR');
 	const [pricingData, setPricingData] = useState<PricingData>(
@@ -292,7 +291,7 @@ export default function EditProfileScreen() {
 	// Initialize pricing based on user's locale
 	useEffect(() => {
 		if (!user) return;
-		
+
 		const locale = 'es-ES'; // You can get this from user preferences or device locale
 		const pricing = getRecommendedPricing(locale);
 		setPricingData(pricing);
@@ -301,9 +300,13 @@ export default function EditProfileScreen() {
 		// Set initial price from user data or recommended price
 		// Use recommended price if user price is 0 or undefined
 		const userPrice = user.subscription_price;
-		const initialPrice = (userPrice && userPrice > 0) ? userPrice : pricing.price;
-		
-		console.log('Initializing price:', { userPrice, recommendedPrice: pricing.price, initialPrice });
+		const initialPrice = userPrice && userPrice > 0 ? userPrice : pricing.price;
+
+		console.log('Initializing price:', {
+			userPrice,
+			recommendedPrice: pricing.price,
+			initialPrice,
+		});
 		setSubscriptionPrice(initialPrice);
 	}, [user]);
 
@@ -471,20 +474,28 @@ export default function EditProfileScreen() {
 						<Text style={styles.label}>Contenido Premium</Text>
 						<View style={styles.switchContainer}>
 							<View style={styles.switchInfo}>
-								<MaterialCommunityIcons name="crown" size={24} color={Colors.primary} />
+								<MaterialCommunityIcons
+									name="crown"
+									size={24}
+									color={Colors.primary}
+								/>
 								<View style={styles.switchTextContainer}>
 									<Text style={styles.switchTitle}>
 										Ofrecer contenido exclusivo
 									</Text>
 									<Text style={styles.switchSubtitle}>
-										Permite a tus seguidores suscribirse para acceder a contenido premium
+										Permite a tus seguidores suscribirse para acceder a
+										contenido premium
 									</Text>
 								</View>
 							</View>
 							<Switch
 								value={hasPremiumContent}
 								onValueChange={setHasPremiumContent}
-								trackColor={{ false: Colors.borderSecondary, true: Colors.primary }}
+								trackColor={{
+									false: Colors.borderSecondary,
+									true: Colors.primary,
+								}}
 								thumbColor={Colors.text}
 								ios_backgroundColor={Colors.borderSecondary}
 							/>
@@ -507,7 +518,11 @@ export default function EditProfileScreen() {
 								</View>
 								<View style={styles.recommendedPriceContainer}>
 									<View style={styles.recommendedBadge}>
-										<MaterialCommunityIcons name="crown" size={12} color={Colors.primary} />
+										<MaterialCommunityIcons
+											name="crown"
+											size={12}
+											color={Colors.primary}
+										/>
 										<Text style={styles.recommendedText}>Recomendado</Text>
 									</View>
 									<Text style={styles.recommendedPrice}>
@@ -593,7 +608,7 @@ const styles = StyleSheet.create({
 	title: {
 		flex: 1,
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		textAlign: 'center',
@@ -699,7 +714,7 @@ const styles = StyleSheet.create({
 	},
 	currentPrice: {
 		fontSize: 28,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.primary,
 	},
@@ -719,7 +734,7 @@ const styles = StyleSheet.create({
 	recommendedBadge: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		backgroundColor: Colors.primaryBackground,
+		backgroundColor: Colors.primaryDark,
 		paddingHorizontal: 8,
 		paddingVertical: 4,
 		borderRadius: 6,

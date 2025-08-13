@@ -8,14 +8,12 @@ import {
 	Platform,
 	ScrollView,
 	StyleSheet,
-	Switch,
 	Text,
 	TouchableOpacity,
 	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import * as Haptics from 'expo-haptics';
 import { Colors } from '@/constants/Colors';
 import { useAuth, useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -25,6 +23,7 @@ import {
 } from '@/services/notificationService';
 import { Language } from '@/shared/types';
 import { useAuthStore } from '@/stores/authStore';
+import * as Haptics from 'expo-haptics';
 
 interface SettingsItemProps {
 	title: string;
@@ -110,10 +109,10 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 
 	const handleLanguagePress = () => {
 		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-		
-		const languageOptions = languages.map(lang => lang.name);
+
+		const languageOptions = languages.map((lang) => lang.name);
 		const cancelText = t('common.cancel');
-		
+
 		if (Platform.OS === 'ios') {
 			ActionSheetIOS.showActionSheetWithOptions(
 				{
@@ -127,31 +126,37 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 						const selectedLanguage = languages[buttonIndex];
 						if (selectedLanguage.code !== currentLanguage) {
 							onLanguageChange(selectedLanguage.code);
-							Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+							Haptics.notificationAsync(
+								Haptics.NotificationFeedbackType.Success,
+							);
 						}
 					}
-				}
+				},
 			);
 		} else {
 			// Android - usar Alert tradicional
 			Alert.alert(
 				t('settings.selectLanguage'),
 				t('settings.languageChangeNote'),
-				languages.map((lang) => ({
-					text: lang.name,
-					onPress: () => {
-						if (lang.code !== currentLanguage) {
-							onLanguageChange(lang.code);
-							Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-						}
-					},
-				})).concat([
-					{
-						text: cancelText,
-						style: 'cancel',
-					},
-				]),
-				{ cancelable: true }
+				languages
+					.map((lang) => ({
+						text: lang.name,
+						onPress: () => {
+							if (lang.code !== currentLanguage) {
+								onLanguageChange(lang.code);
+								Haptics.notificationAsync(
+									Haptics.NotificationFeedbackType.Success,
+								);
+							}
+						},
+					}))
+					.concat([
+						{
+							text: cancelText,
+							style: 'cancel',
+						},
+					]),
+				{ cancelable: true },
 			);
 		}
 	};
@@ -190,7 +195,6 @@ export default function SettingsScreen() {
 		router.push('/(tabs)/profile/notifications');
 	};
 
-
 	const handleTermsOfService = () => {
 		console.log('Navigate to terms of service');
 		// TODO: Implement navigation to terms of service screen
@@ -200,7 +204,6 @@ export default function SettingsScreen() {
 		console.log('Navigate to privacy policy');
 		// TODO: Implement navigation to privacy policy screen
 	};
-
 
 	const handleSignOut = () => {
 		Alert.alert(t('settings.logout'), t('settings.logoutConfirmation'), [
@@ -252,7 +255,7 @@ export default function SettingsScreen() {
 	const handleLanguageChange = async (language: Language) => {
 		// Update language in local state immediately
 		setLanguage(language);
-		
+
 		// Update in backend
 		try {
 			const success = await updateProfile({ language });
@@ -367,7 +370,6 @@ export default function SettingsScreen() {
 					/>
 				</View>
 
-
 				{/* Legal Section */}
 				<View style={styles.section}>
 					<Text style={styles.sectionTitle}>{t('settings.legal')}</Text>
@@ -454,7 +456,7 @@ const styles = StyleSheet.create({
 	title: {
 		flex: 1,
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		textAlign: 'center',
@@ -467,7 +469,7 @@ const styles = StyleSheet.create({
 	},
 	sectionTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 16,

@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { VideoEditor } from '@/components/video';
 import { Spinner } from '@/components/ui/Spinner';
+import { VideoEditor } from '@/components/video';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -41,21 +41,19 @@ export default function UploadScreen() {
 
 	const handleSelectFromGallery = async () => {
 		if (isSelectingVideo || isUploading) return;
-		
+
 		try {
 			setIsSelectingVideo(true);
 			setSelecting(true);
-			
+
 			// Request permissions
 			const permissionResult =
 				await ImagePicker.requestMediaLibraryPermissionsAsync();
 
 			if (permissionResult.granted === false) {
-				Alert.alert(
-					t('common.error'),
-					t('upload.galleryPermissionRequired'),
-					[{ text: t('common.ok') }],
-				);
+				Alert.alert(t('common.error'), t('upload.galleryPermissionRequired'), [
+					{ text: t('common.ok') },
+				]);
 				return;
 			}
 
@@ -70,27 +68,23 @@ export default function UploadScreen() {
 			if (!result.canceled && result.assets[0]) {
 				const asset = result.assets[0];
 				const durationInSeconds = (asset.duration || 0) / 1000; // Convert to seconds
-				
+
 				// Validate minimum duration (15 seconds)
 				if (durationInSeconds < 15) {
-					Alert.alert(
-						t('common.error'),
-						t('upload.videoTooShort'),
-						[{ text: t('common.ok') }]
-					);
+					Alert.alert(t('common.error'), t('upload.videoTooShort'), [
+						{ text: t('common.ok') },
+					]);
 					return;
 				}
-				
+
 				// Validate maximum duration (5 minutes = 300 seconds)
 				if (durationInSeconds > 300) {
-					Alert.alert(
-						t('common.error'),
-						t('upload.videoTooLong'),
-						[{ text: t('common.ok') }]
-					);
+					Alert.alert(t('common.error'), t('upload.videoTooLong'), [
+						{ text: t('common.ok') },
+					]);
 					return;
 				}
-				
+
 				setSelectedVideo({
 					uri: asset.uri,
 					duration: asset.duration || 0,
@@ -146,7 +140,10 @@ export default function UploadScreen() {
 					await refreshSession();
 					console.log('✅ User profile refreshed after video upload');
 				} catch (error) {
-					console.warn('⚠️ Failed to refresh user session after video upload:', error);
+					console.warn(
+						'⚠️ Failed to refresh user session after video upload:',
+						error,
+					);
 				}
 
 				Alert.alert(
@@ -235,7 +232,9 @@ export default function UploadScreen() {
 									<Feather name="image" size={32} color={Colors.text} />
 								)}
 								<Text style={styles.selectionButtonText}>
-									{isSelectingVideo ? t('upload.selectingVideo') : t('upload.fromGallery')}
+									{isSelectingVideo
+										? t('upload.selectingVideo')
+										: t('upload.fromGallery')}
 								</Text>
 							</LinearGradient>
 						</TouchableOpacity>
@@ -299,7 +298,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 24,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		textAlign: 'center',
@@ -326,7 +325,7 @@ const styles = StyleSheet.create({
 	},
 	selectionButtonText: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 12,

@@ -112,7 +112,8 @@ export default function ResetPasswordScreen() {
 							</View>
 							<Text style={styles.title}>{t('auth.resetPassword')}</Text>
 							<Text style={styles.subtitle}>
-								Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.
+								Ingresa tu correo electrónico y te enviaremos un enlace para
+								restablecer tu contraseña.
 							</Text>
 						</View>
 					)}
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 28,
-		fontFamily: 'Poppins-Bold',
+		fontFamily: 'Raleway-Bold',
 		fontWeight: 'bold',
 		color: Colors.text,
 		marginBottom: 12,
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
 	},
 	successTitle: {
 		fontSize: 24,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 12,

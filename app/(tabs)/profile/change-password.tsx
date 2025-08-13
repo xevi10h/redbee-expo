@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
 	Alert,
 	ScrollView,
@@ -71,7 +71,10 @@ export default function ChangePasswordScreen() {
 				Alert.alert(t('common.error'), t('profile.passwordChangeError'));
 			} else {
 				Alert.alert(t('common.success'), t('profile.passwordChangeSuccess'), [
-					{ text: t('common.ok'), onPress: () => router.push('/(tabs)/profile/settings') }
+					{
+						text: t('common.ok'),
+						onPress: () => router.push('/(tabs)/profile/settings'),
+					},
 				]);
 			}
 		} catch (error) {
@@ -156,7 +159,9 @@ export default function ChangePasswordScreen() {
 								/>
 							</TouchableOpacity>
 						</View>
-						<Text style={styles.inputHint}>{t('profile.passwordMinLength')}</Text>
+						<Text style={styles.inputHint}>
+							{t('profile.passwordMinLength')}
+						</Text>
 					</View>
 
 					<View style={styles.inputGroup}>
@@ -188,7 +193,11 @@ export default function ChangePasswordScreen() {
 				{/* Change Password Button */}
 				<View style={styles.buttonSection}>
 					<Button
-						title={isLoading ? t('profile.changingPassword') : t('profile.changePasswordButton')}
+						title={
+							isLoading
+								? t('profile.changingPassword')
+								: t('profile.changePasswordButton')
+						}
 						onPress={handleChangePassword}
 						disabled={isLoading}
 						style={styles.changeButton}
@@ -250,7 +259,7 @@ const styles = StyleSheet.create({
 	title: {
 		flex: 1,
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		textAlign: 'center',
@@ -318,7 +327,7 @@ const styles = StyleSheet.create({
 	},
 	tipsTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 16,

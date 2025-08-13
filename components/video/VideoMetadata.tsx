@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
 	Alert,
 	ScrollView,
@@ -104,7 +104,7 @@ export function VideoMetadata({
 			<ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
 				{/* Video Preview */}
 				<View style={styles.previewContainer}>
-					<TouchableOpacity 
+					<TouchableOpacity
 						style={styles.videoPreview}
 						onPress={() => setShowThumbnailSelector(true)}
 						disabled={isUploading}
@@ -176,9 +176,7 @@ export function VideoMetadata({
 					{/* Premium Toggle */}
 					<View style={styles.premiumContainer}>
 						<View style={styles.premiumInfo}>
-							<Text style={styles.premiumTitle}>
-								{t('upload.makePremium')}
-							</Text>
+							<Text style={styles.premiumTitle}>{t('upload.makePremium')}</Text>
 							<Text style={styles.premiumDescription}>
 								{isPremium
 									? t('upload.premiumDescription')
@@ -259,7 +257,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 	},

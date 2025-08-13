@@ -8,7 +8,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View, Platform } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { Colors } from '@/constants/Colors';
@@ -22,15 +22,15 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
 	const { t } = useTranslation();
 	const { isInitialized, isLoading, error } = useAppInitialization();
-	
+
 	// Initialize deep links handling
 	useDeepLinks();
 
 	const [loaded] = useFonts({
-		'Poppins-Regular': require('../assets/fonts/Poppins-Regular.ttf'),
-		'Poppins-Medium': require('../assets/fonts/Poppins-Medium.ttf'),
-		'Poppins-SemiBold': require('../assets/fonts/Poppins-SemiBold.ttf'),
-		'Poppins-Bold': require('../assets/fonts/Poppins-Bold.ttf'),
+		'Raleway-Regular': require('../assets/fonts/Raleway-Regular.ttf'),
+		'Raleway-Medium': require('../assets/fonts/Raleway-Medium.ttf'),
+		'Raleway-SemiBold': require('../assets/fonts/Raleway-SemiBold.ttf'),
+		'Raleway-Bold': require('../assets/fonts/Raleway-Bold.ttf'),
 		'Inter-Regular': require('../assets/fonts/Inter-Regular.ttf'),
 		'Inter-Medium': require('../assets/fonts/Inter-Medium.ttf'),
 		'Inter-SemiBold': require('../assets/fonts/Inter-SemiBold.ttf'),
@@ -51,7 +51,9 @@ export default function RootLayout() {
 			>
 				<StatusBar style="light" />
 				<View style={styles.loadingContent}>
-					<Text style={styles.appName}>Redbee</Text>
+					<Text style={styles.appName}>
+						Red<Text style={{ color: '#FF3539' }}>bee</Text>
+					</Text>
 					<ActivityIndicator
 						size="large"
 						color={Colors.primary}
@@ -87,7 +89,10 @@ export default function RootLayout() {
 				<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 				<Stack.Screen name="video/[id]" options={{ headerShown: false }} />
 				<Stack.Screen name="user/[id]" options={{ headerShown: false }} />
-				<Stack.Screen name="hashtag/[hashtag]" options={{ headerShown: false }} />
+				<Stack.Screen
+					name="hashtag/[hashtag]"
+					options={{ headerShown: false }}
+				/>
 				<Stack.Screen
 					name="auth/sign-in"
 					options={{
@@ -134,7 +139,7 @@ const styles = StyleSheet.create({
 	},
 	appName: {
 		fontSize: 48,
-		fontFamily: 'Poppins-Bold',
+		fontFamily: 'Raleway-Bold',
 		fontWeight: 'bold',
 		color: Colors.text,
 		marginBottom: 48,
@@ -160,7 +165,7 @@ const styles = StyleSheet.create({
 	},
 	errorTitle: {
 		fontSize: 24,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 16,

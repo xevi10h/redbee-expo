@@ -351,7 +351,6 @@ export default function SignUpScreen() {
 							</TouchableOpacity>
 						</View>
 					</View>
-
 				</ScrollView>
 			</KeyboardAvoidingView>
 		</LinearGradient>
@@ -387,7 +386,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 32,
-		fontFamily: 'Poppins-Bold',
+		fontFamily: 'Raleway-Bold',
 		fontWeight: 'bold',
 		color: Colors.text,
 		marginBottom: 8,

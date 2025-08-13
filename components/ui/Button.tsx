@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
 
 	// Text styles
 	baseText: {
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		textAlign: 'center',
 	},

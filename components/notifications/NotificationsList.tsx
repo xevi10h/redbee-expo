@@ -13,9 +13,7 @@ import {
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useUserNotifications } from '@/hooks/useUserNotifications';
-import { 
-	Notification, 
-} from '@/services/notificationService';
+import { Notification } from '@/services/notificationService';
 
 import { NotificationItem } from './NotificationItem';
 
@@ -35,7 +33,7 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({
 		markAllAsRead,
 		refresh,
 	} = useUserNotifications();
-	
+
 	const [refreshing, setRefreshing] = useState(false);
 
 	const handleRefresh = useCallback(async () => {
@@ -63,11 +61,10 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({
 				)}
 			</View>
 			{unreadCount > 0 && (
-				<TouchableOpacity
-					style={styles.markAllButton}
-					onPress={markAllAsRead}
-				>
-					<Text style={styles.markAllButtonText}>{t('notifications.markAllRead')}</Text>
+				<TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
+					<Text style={styles.markAllButtonText}>
+						{t('notifications.markAllRead')}
+					</Text>
 				</TouchableOpacity>
 			)}
 		</View>
@@ -76,13 +73,14 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({
 	const renderEmptyState = () => (
 		<View style={styles.emptyState}>
 			<Feather name="bell" size={48} color={Colors.textTertiary} />
-			<Text style={styles.emptyTitle}>{t('notifications.noNotifications')}</Text>
+			<Text style={styles.emptyTitle}>
+				{t('notifications.noNotifications')}
+			</Text>
 			<Text style={styles.emptySubtitle}>
 				{t('notifications.noNotificationsSubtitle')}
 			</Text>
 		</View>
 	);
-
 
 	if (loading) {
 		return (
@@ -139,7 +137,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginRight: 8,
@@ -179,7 +177,7 @@ const styles = StyleSheet.create({
 	},
 	emptyTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 16,

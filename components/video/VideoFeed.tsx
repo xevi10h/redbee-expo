@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
 	},
 	emptyTitle: {
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		color: Colors.text,
 		marginBottom: 8,
 		textAlign: 'center',

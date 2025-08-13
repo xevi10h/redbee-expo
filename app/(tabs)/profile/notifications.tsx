@@ -42,24 +42,37 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 	return (
 		<View style={[styles.notificationItem, disabled && styles.disabledItem]}>
 			<View style={styles.notificationItemLeft}>
-				<View style={[styles.notificationIcon, disabled && styles.disabledIcon]}>
+				<View
+					style={[styles.notificationIcon, disabled && styles.disabledIcon]}
+				>
 					{iconType === 'materialCommunity' ? (
-						<MaterialCommunityIcons 
-							name={icon as any} 
-							size={20} 
-							color={disabled ? Colors.textTertiary : Colors.primary} 
+						<MaterialCommunityIcons
+							name={icon as any}
+							size={20}
+							color={disabled ? Colors.textTertiary : Colors.primary}
 						/>
 					) : (
-						<Feather 
-							name={icon as any} 
-							size={20} 
-							color={disabled ? Colors.textTertiary : Colors.primary} 
+						<Feather
+							name={icon as any}
+							size={20}
+							color={disabled ? Colors.textTertiary : Colors.primary}
 						/>
 					)}
 				</View>
 				<View style={styles.notificationText}>
-					<Text style={[styles.notificationTitle, disabled && styles.disabledText]}>{title}</Text>
-					<Text style={[styles.notificationSubtitle, disabled && styles.disabledText]}>{subtitle}</Text>
+					<Text
+						style={[styles.notificationTitle, disabled && styles.disabledText]}
+					>
+						{title}
+					</Text>
+					<Text
+						style={[
+							styles.notificationSubtitle,
+							disabled && styles.disabledText,
+						]}
+					>
+						{subtitle}
+					</Text>
 				</View>
 			</View>
 
@@ -100,78 +113,102 @@ export default function NotificationsScreen() {
 		}
 	};
 
-	const updateNotificationPreference = useCallback(async (
-		key: keyof NotificationPreferences,
-		value: boolean,
-	) => {
-		if (!user?.id || !notificationPreferences) return;
+	const updateNotificationPreference = useCallback(
+		async (key: keyof NotificationPreferences, value: boolean) => {
+			if (!user?.id || !notificationPreferences) return;
 
-		try {
-			const { error } = await NotificationService.updatePreferences(user.id, {
-				[key]: value,
-			});
+			try {
+				const { error } = await NotificationService.updatePreferences(user.id, {
+					[key]: value,
+				});
 
-			if (!error) {
-				setNotificationPreferences((prev) =>
-					prev ? { ...prev, [key]: value } : null,
-				);
+				if (!error) {
+					setNotificationPreferences((prev) =>
+						prev ? { ...prev, [key]: value } : null,
+					);
+				}
+			} catch (error) {
+				console.error('Error updating notification preference:', error);
 			}
-		} catch (error) {
-			console.error('Error updating notification preference:', error);
-		}
-	}, [user?.id, notificationPreferences]);
+		},
+		[user?.id, notificationPreferences],
+	);
 
 	// Callbacks optimizados para cada switch
-	const handleVideoLikesChange = useCallback((value: boolean) => {
-		updateNotificationPreference('video_likes_enabled', value);
-	}, [updateNotificationPreference]);
+	const handleVideoLikesChange = useCallback(
+		(value: boolean) => {
+			updateNotificationPreference('video_likes_enabled', value);
+		},
+		[updateNotificationPreference],
+	);
 
-	const handleVideoCommentsChange = useCallback((value: boolean) => {
-		updateNotificationPreference('video_comments_enabled', value);
-	}, [updateNotificationPreference]);
+	const handleVideoCommentsChange = useCallback(
+		(value: boolean) => {
+			updateNotificationPreference('video_comments_enabled', value);
+		},
+		[updateNotificationPreference],
+	);
 
-	const handleCommentLikesChange = useCallback((value: boolean) => {
-		updateNotificationPreference('comment_likes_enabled', value);
-	}, [updateNotificationPreference]);
+	const handleCommentLikesChange = useCallback(
+		(value: boolean) => {
+			updateNotificationPreference('comment_likes_enabled', value);
+		},
+		[updateNotificationPreference],
+	);
 
-	const handleCommentRepliesChange = useCallback((value: boolean) => {
-		updateNotificationPreference('comment_replies_enabled', value);
-	}, [updateNotificationPreference]);
+	const handleCommentRepliesChange = useCallback(
+		(value: boolean) => {
+			updateNotificationPreference('comment_replies_enabled', value);
+		},
+		[updateNotificationPreference],
+	);
 
-	const handleNewFollowersChange = useCallback((value: boolean) => {
-		updateNotificationPreference('new_followers_enabled', value);
-	}, [updateNotificationPreference]);
+	const handleNewFollowersChange = useCallback(
+		(value: boolean) => {
+			updateNotificationPreference('new_followers_enabled', value);
+		},
+		[updateNotificationPreference],
+	);
 
-	const handleNewSubscribersChange = useCallback((value: boolean) => {
-		updateNotificationPreference('new_subscribers_enabled' as keyof NotificationPreferences, value);
-	}, [updateNotificationPreference]);
+	const handleNewSubscribersChange = useCallback(
+		(value: boolean) => {
+			updateNotificationPreference(
+				'new_subscribers_enabled' as keyof NotificationPreferences,
+				value,
+			);
+		},
+		[updateNotificationPreference],
+	);
 
-	const handleMasterSwitchChange = useCallback((value: boolean) => {
-		updateNotificationPreference('push_notifications_enabled', value);
-		
-		const keys: (keyof NotificationPreferences)[] = [
-			'video_likes_enabled',
-			'video_comments_enabled', 
-			'comment_likes_enabled',
-			'comment_replies_enabled',
-			'new_followers_enabled',
-			'new_subscribers_enabled'
-		];
-		
-		// Si se activan todas las notificaciones, activar también todas las individuales
-		if (value) {
-			keys.forEach(key => {
-				updateNotificationPreference(key, true);
-			});
-		} else {
-			// Si se desactivan todas las notificaciones, desactivar también todas las individuales
-			keys.forEach(key => {
-				if (notificationPreferences && notificationPreferences[key]) {
-					updateNotificationPreference(key, false);
-				}
-			});
-		}
-	}, [updateNotificationPreference, notificationPreferences]);
+	const handleMasterSwitchChange = useCallback(
+		(value: boolean) => {
+			updateNotificationPreference('push_notifications_enabled', value);
+
+			const keys: (keyof NotificationPreferences)[] = [
+				'video_likes_enabled',
+				'video_comments_enabled',
+				'comment_likes_enabled',
+				'comment_replies_enabled',
+				'new_followers_enabled',
+				'new_subscribers_enabled',
+			];
+
+			// Si se activan todas las notificaciones, activar también todas las individuales
+			if (value) {
+				keys.forEach((key) => {
+					updateNotificationPreference(key, true);
+				});
+			} else {
+				// Si se desactivan todas las notificaciones, desactivar también todas las individuales
+				keys.forEach((key) => {
+					if (notificationPreferences && notificationPreferences[key]) {
+						updateNotificationPreference(key, false);
+					}
+				});
+			}
+		},
+		[updateNotificationPreference, notificationPreferences],
+	);
 
 	useEffect(() => {
 		loadNotificationPreferences();
@@ -349,7 +386,7 @@ const styles = StyleSheet.create({
 	title: {
 		flex: 1,
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		textAlign: 'center',
@@ -386,7 +423,7 @@ const styles = StyleSheet.create({
 	},
 	sectionTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 16,

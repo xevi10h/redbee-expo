@@ -1,7 +1,7 @@
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -50,7 +50,7 @@ const SortControls: React.FC<{
 			{sorts.map((sort) => {
 				const config = getSortConfig(sort);
 				const isActive = currentSort === sort;
-				
+
 				return (
 					<TouchableOpacity
 						key={sort}
@@ -63,10 +63,12 @@ const SortControls: React.FC<{
 							size={14}
 							color={isActive ? Colors.primary : Colors.textTertiary}
 						/>
-						<Text style={[
-							styles.sortButtonText,
-							isActive && styles.activeSortButtonText
-						]}>
+						<Text
+							style={[
+								styles.sortButtonText,
+								isActive && styles.activeSortButtonText,
+							]}
+						>
 							{config.label}
 						</Text>
 					</TouchableOpacity>
@@ -140,20 +142,24 @@ const VideoThumbnail: React.FC<{ video: Video; onPress: () => void }> = ({
 						<Feather name="video" size={24} color={Colors.textTertiary} />
 					</View>
 				)}
-				
+
 				{/* Play button overlay */}
 				<View style={styles.playOverlay}>
 					<Feather name="play" size={16} color={Colors.text} />
 				</View>
-				
+
 				{/* Premium badge */}
 				{video.is_premium && (
 					<View style={styles.premiumBadge}>
-						<MaterialCommunityIcons name="crown" size={12} color={Colors.text} />
+						<MaterialCommunityIcons
+							name="crown"
+							size={12}
+							color={Colors.text}
+						/>
 					</View>
 				)}
 			</View>
-			
+
 			{/* Video stats at bottom */}
 			<View style={styles.videoStats}>
 				<View style={styles.statItem}>
@@ -192,7 +198,7 @@ export default function UserProfileScreen() {
 	} = useUserProfile(id!, currentUser?.id);
 
 	type ExternalProfileTab = 'public' | 'premium' | 'videos';
-	
+
 	// Determine initial tab based on user's premium content setting
 	const getInitialTab = (): ExternalProfileTab => {
 		if (userProfile?.has_premium_content) {
@@ -200,7 +206,7 @@ export default function UserProfileScreen() {
 		}
 		return 'videos'; // Start with videos when user doesn't have premium content
 	};
-	
+
 	const [currentTab, setCurrentTab] = useState<ExternalProfileTab>('public');
 
 	// Update tab when userProfile loads and changes
@@ -264,9 +270,9 @@ export default function UserProfileScreen() {
 	// Filtrar videos según la tab activa
 	const filteredVideos = React.useMemo(() => {
 		if (currentTab === 'public') {
-			return userVideos.filter(video => !video.is_premium);
+			return userVideos.filter((video) => !video.is_premium);
 		} else if (currentTab === 'premium') {
-			return userVideos.filter(video => video.is_premium);
+			return userVideos.filter((video) => video.is_premium);
 		} else {
 			// currentTab === 'videos'
 			return userVideos;
@@ -280,20 +286,20 @@ export default function UserProfileScreen() {
 					return {
 						icon: 'globe',
 						title: 'No hay videos públicos',
-						subtitle: 'Este usuario no ha publicado videos públicos'
+						subtitle: 'Este usuario no ha publicado videos públicos',
 					};
 				case 'premium':
 					return {
 						icon: 'crown',
 						title: 'No hay videos premium',
-						subtitle: 'Este usuario no tiene contenido premium'
+						subtitle: 'Este usuario no tiene contenido premium',
 					};
 				case 'videos':
 				default:
 					return {
 						icon: 'video',
 						title: 'No hay videos',
-						subtitle: 'Este usuario no ha publicado videos'
+						subtitle: 'Este usuario no ha publicado videos',
 					};
 			}
 		};
@@ -309,7 +315,11 @@ export default function UserProfileScreen() {
 						color={Colors.textTertiary}
 					/>
 				) : (
-					<Feather name={config.icon as any} size={48} color={Colors.textTertiary} />
+					<Feather
+						name={config.icon as any}
+						size={48}
+						color={Colors.textTertiary}
+					/>
 				)}
 				<Text style={styles.emptyTitle}>{config.title}</Text>
 				<Text style={styles.emptySubtitle}>{config.subtitle}</Text>
@@ -474,47 +484,48 @@ export default function UserProfileScreen() {
 								</Text>
 							</TouchableOpacity>
 
-							{userProfile.has_premium_content && userProfile.subscription_price > 0 && (
-								<TouchableOpacity
-									style={styles.subscribeButton}
-									onPress={handleSubscribePress}
-									activeOpacity={0.8}
-								>
-									<LinearGradient
-										colors={
-											isSubscribed
-												? [
-														Colors.backgroundSecondary,
-														Colors.backgroundSecondary,
-												  ]
-												: Colors.gradientPrimary
-										}
-										style={styles.subscribeGradient}
-										start={{ x: 0, y: 0 }}
-										end={{ x: 1, y: 0 }}
+							{userProfile.has_premium_content &&
+								userProfile.subscription_price > 0 && (
+									<TouchableOpacity
+										style={styles.subscribeButton}
+										onPress={handleSubscribePress}
+										activeOpacity={0.8}
 									>
-										<MaterialCommunityIcons
-											name="crown"
-											size={16}
-											color={Colors.text}
-										/>
-										<View style={styles.subscribeTextContainer}>
-											<Text style={styles.subscribeText}>
-												{isSubscribed ? 'Suscrito' : 'Suscribirse'}
-											</Text>
-											{!isSubscribed && (
-												<Text style={styles.subscribePrice}>
-													{formatCurrency(
-														userProfile.subscription_price,
-														userProfile.subscription_currency,
-													)}
-													/mes
+										<LinearGradient
+											colors={
+												isSubscribed
+													? [
+															Colors.backgroundSecondary,
+															Colors.backgroundSecondary,
+													  ]
+													: Colors.gradientPrimary
+											}
+											style={styles.subscribeGradient}
+											start={{ x: 0, y: 0 }}
+											end={{ x: 1, y: 0 }}
+										>
+											<MaterialCommunityIcons
+												name="crown"
+												size={16}
+												color={Colors.text}
+											/>
+											<View style={styles.subscribeTextContainer}>
+												<Text style={styles.subscribeText}>
+													{isSubscribed ? 'Suscrito' : 'Suscribirse'}
 												</Text>
-											)}
-										</View>
-									</LinearGradient>
-								</TouchableOpacity>
-							)}
+												{!isSubscribed && (
+													<Text style={styles.subscribePrice}>
+														{formatCurrency(
+															userProfile.subscription_price,
+															userProfile.subscription_currency,
+														)}
+														/mes
+													</Text>
+												)}
+											</View>
+										</LinearGradient>
+									</TouchableOpacity>
+								)}
 						</View>
 					)}
 				</View>
@@ -525,14 +536,19 @@ export default function UserProfileScreen() {
 					{userProfile.has_premium_content ? (
 						<>
 							<TouchableOpacity
-								style={[styles.tab, currentTab === 'public' && styles.activeTab]}
+								style={[
+									styles.tab,
+									currentTab === 'public' && styles.activeTab,
+								]}
 								onPress={() => setCurrentTab('public')}
 							>
 								<Feather
 									name="globe"
 									size={20}
 									color={
-										currentTab === 'public' ? Colors.primary : Colors.textTertiary
+										currentTab === 'public'
+											? Colors.primary
+											: Colors.textTertiary
 									}
 								/>
 								<Text
@@ -546,14 +562,19 @@ export default function UserProfileScreen() {
 							</TouchableOpacity>
 
 							<TouchableOpacity
-								style={[styles.tab, currentTab === 'premium' && styles.activeTab]}
+								style={[
+									styles.tab,
+									currentTab === 'premium' && styles.activeTab,
+								]}
 								onPress={() => setCurrentTab('premium')}
 							>
 								<MaterialCommunityIcons
 									name="crown"
 									size={20}
 									color={
-										currentTab === 'premium' ? Colors.primary : Colors.textTertiary
+										currentTab === 'premium'
+											? Colors.primary
+											: Colors.textTertiary
 									}
 								/>
 								<Text
@@ -591,10 +612,7 @@ export default function UserProfileScreen() {
 				</View>
 
 				{/* Sort Controls */}
-				<SortControls
-					currentSort={sortOption}
-					onSortChange={setSortOption}
-				/>
+				<SortControls currentSort={sortOption} onSortChange={setSortOption} />
 
 				{/* Video Grid */}
 				<View style={styles.videosContainer}>
@@ -651,7 +669,7 @@ const styles = StyleSheet.create({
 	},
 	errorTitle: {
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 16,
@@ -703,7 +721,7 @@ const styles = StyleSheet.create({
 	},
 	displayName: {
 		fontSize: 20, // Reduced from 24
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 2,
@@ -730,7 +748,7 @@ const styles = StyleSheet.create({
 	},
 	statNumber: {
 		fontSize: 18, // Reduced from 20
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 2, // Reduced from 4
@@ -902,7 +920,7 @@ const styles = StyleSheet.create({
 	},
 	emptyTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 16,

@@ -43,14 +43,14 @@ export const ThumbnailSelector = memo(function ThumbnailSelector({
 		const duration = endTime - startTime;
 		const count = Math.min(12, Math.max(6, Math.ceil(duration / 5))); // 6-12 thumbnails
 		const interval = duration / (count - 1);
-		
+
 		const times: number[] = [];
 		for (let i = 0; i < count; i++) {
 			// Round to avoid decimal precision issues
-			const time = Math.round((startTime + (i * interval)) * 10) / 10;
+			const time = Math.round((startTime + i * interval) * 10) / 10;
 			times.push(time);
 		}
-		
+
 		return times;
 	}, [startTime, endTime]);
 
@@ -66,7 +66,11 @@ export const ThumbnailSelector = memo(function ThumbnailSelector({
 	};
 
 	return (
-		<Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+		<Modal
+			visible={visible}
+			animationType="slide"
+			presentationStyle="pageSheet"
+		>
 			<SafeAreaView style={styles.container} edges={['top']}>
 				{/* Header */}
 				<View style={styles.header}>
@@ -85,7 +89,7 @@ export const ThumbnailSelector = memo(function ThumbnailSelector({
 				</View>
 
 				{/* Thumbnail Grid */}
-				<ScrollView 
+				<ScrollView
 					style={styles.scrollView}
 					contentContainerStyle={styles.gridContainer}
 					showsVerticalScrollIndicator={false}
@@ -135,7 +139,7 @@ const ThumbnailOption = memo(function ThumbnailOption({
 
 		const handleStatusChange = (status: any) => {
 			if (!mounted) return;
-			
+
 			if (status.status === 'readyToPlay' && !isReady) {
 				timeoutId = setTimeout(() => {
 					if (mounted && player) {
@@ -164,7 +168,7 @@ const ThumbnailOption = memo(function ThumbnailOption({
 	}, [player, time, isReady]);
 
 	return (
-		<TouchableOpacity 
+		<TouchableOpacity
 			style={[styles.thumbnailOption, isSelected && styles.selectedThumbnail]}
 			onPress={onPress}
 			activeOpacity={0.8}
@@ -218,7 +222,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		color: Colors.text,
 		textAlign: 'center',
 	},

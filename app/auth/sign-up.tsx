@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
 	},
 	title: {
 		fontSize: 32,
-		fontFamily: 'Poppins-Bold',
+		fontFamily: 'Raleway-Bold',
 		fontWeight: 'bold',
 		color: Colors.text,
 		marginBottom: 8,

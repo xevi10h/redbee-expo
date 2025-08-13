@@ -409,7 +409,6 @@ export function VideoTrimmer({
 							)}
 						</TouchableOpacity>
 					)}
-
 				</View>
 
 				{/* Time Display */}
@@ -426,10 +425,7 @@ export function VideoTrimmer({
 				<View style={styles.trimmerContainer}>
 					<View style={styles.trimmerTrack}>
 						{/* Video thumbnails background */}
-						<VideoThumbnails 
-							videoUri={videoUri}
-							duration={duration}
-						/>
+						<VideoThumbnails videoUri={videoUri} duration={duration} />
 
 						{/* Left overlay (before start) */}
 						<Animated.View style={[styles.overlay, leftOverlayStyle]} />
@@ -512,7 +508,7 @@ const styles = StyleSheet.create({
 	},
 	headerTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		color: Colors.text,
 		textAlign: 'center',
 	},

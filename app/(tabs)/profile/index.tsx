@@ -2,7 +2,7 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
 	ActivityIndicator,
 	Alert,
@@ -52,7 +52,7 @@ const SortControls: React.FC<{
 			{sorts.map((sort) => {
 				const config = getSortConfig(sort);
 				const isActive = currentSort === sort;
-				
+
 				return (
 					<TouchableOpacity
 						key={sort}
@@ -65,10 +65,12 @@ const SortControls: React.FC<{
 							size={14}
 							color={isActive ? Colors.primary : Colors.textTertiary}
 						/>
-						<Text style={[
-							styles.sortButtonText,
-							isActive && styles.activeSortButtonText
-						]}>
+						<Text
+							style={[
+								styles.sortButtonText,
+								isActive && styles.activeSortButtonText,
+							]}
+						>
 							{config.label}
 						</Text>
 					</TouchableOpacity>
@@ -78,25 +80,22 @@ const SortControls: React.FC<{
 	);
 };
 
-
 // Video thumbnail component with proper cover image display
-const VideoThumbnail: React.FC<{ 
-	video: Video; 
+const VideoThumbnail: React.FC<{
+	video: Video;
 	onPress: () => void;
 	onLongPress?: () => void;
-}> = ({
-	video,
-	onPress,
-	onLongPress,
-}) => {
+}> = ({ video, onPress, onLongPress }) => {
 	const [imageError, setImageError] = useState(false);
 
 	// Debug logging
-	console.log(`🖼️ VideoThumbnail for ${video.id}: thumbnail_url = ${video.thumbnail_url}`);
+	console.log(
+		`🖼️ VideoThumbnail for ${video.id}: thumbnail_url = ${video.thumbnail_url}`,
+	);
 
 	return (
-		<TouchableOpacity 
-			style={styles.videoThumbnail} 
+		<TouchableOpacity
+			style={styles.videoThumbnail}
 			onPress={onPress}
 			onLongPress={onLongPress}
 		>
@@ -108,7 +107,10 @@ const VideoThumbnail: React.FC<{
 						style={styles.thumbnailImage}
 						resizeMode="cover"
 						onError={(error) => {
-							console.error(`❌ Image load error for video ${video.id}: ${video.thumbnail_url}`, error);
+							console.error(
+								`❌ Image load error for video ${video.id}: ${video.thumbnail_url}`,
+								error,
+							);
 							setImageError(true);
 						}}
 					/>
@@ -117,20 +119,24 @@ const VideoThumbnail: React.FC<{
 						<Feather name="video" size={24} color={Colors.textTertiary} />
 					</View>
 				)}
-				
+
 				{/* Play button overlay */}
 				<View style={styles.playOverlay}>
 					<Feather name="play" size={16} color={Colors.text} />
 				</View>
-				
+
 				{/* Premium badge */}
 				{video.is_premium && (
 					<View style={styles.premiumBadge}>
-						<MaterialCommunityIcons name="crown" size={12} color={Colors.text} />
+						<MaterialCommunityIcons
+							name="crown"
+							size={12}
+							color={Colors.text}
+						/>
 					</View>
 				)}
 			</View>
-			
+
 			{/* Video stats at bottom */}
 			<View style={styles.videoStats}>
 				<View style={styles.statItem}>
@@ -151,7 +157,7 @@ export default function ProfileScreen() {
 	const { user } = useRequireAuth();
 
 	type ProfileTab = 'public' | 'premium' | 'videos' | 'liked' | 'hidden';
-	
+
 	// Determine initial tab based on user's premium content setting
 	const getInitialTab = (): ProfileTab => {
 		if (user?.has_premium_content) {
@@ -159,15 +165,18 @@ export default function ProfileScreen() {
 		}
 		return 'videos'; // Start with videos when user doesn't have premium content
 	};
-	
+
 	const [currentTab, setCurrentTab] = useState<ProfileTab>(getInitialTab());
-	
+
 	// Update tab when user premium content status changes
 	useEffect(() => {
 		const newInitialTab = getInitialTab();
 		if (currentTab === 'videos' && user?.has_premium_content) {
 			setCurrentTab('public');
-		} else if ((currentTab === 'public' || currentTab === 'premium') && !user?.has_premium_content) {
+		} else if (
+			(currentTab === 'public' || currentTab === 'premium') &&
+			!user?.has_premium_content
+		) {
 			setCurrentTab('videos');
 		}
 	}, [user?.has_premium_content]);
@@ -197,12 +206,11 @@ export default function ProfileScreen() {
 		deleteVideo,
 	} = useProfileVideos(user?.id || '', user?.id);
 
-
 	// Refresh videos when screen comes into focus (e.g., after hiding a video from detail screen)
 	useFocusEffect(
 		useCallback(() => {
 			refreshVideos();
-		}, [refreshVideos])
+		}, [refreshVideos]),
 	);
 
 	const handleVideoPress = (video: Video) => {
@@ -212,37 +220,63 @@ export default function ProfileScreen() {
 
 	const handleVideoLongPress = (video: Video) => {
 		const options = [];
-		
+
 		if (currentTab === 'videos') {
 			// For visible videos
 			options.push(
-				{ text: 'Ocultar video', style: 'default', onPress: () => handleHideVideo(video.id) },
-				{ text: 'Eliminar video', style: 'destructive', onPress: () => handleDeleteVideo(video.id) }
+				{
+					text: 'Ocultar video',
+					style: 'default',
+					onPress: () => handleHideVideo(video.id),
+				},
+				{
+					text: 'Eliminar video',
+					style: 'destructive',
+					onPress: () => handleDeleteVideo(video.id),
+				},
 			);
 		} else if (currentTab === 'hidden') {
 			// For hidden videos
 			options.push(
-				{ text: 'Mostrar video', style: 'default', onPress: () => handleShowVideo(video.id) },
-				{ text: 'Eliminar video', style: 'destructive', onPress: () => handleDeleteVideo(video.id) }
+				{
+					text: 'Mostrar video',
+					style: 'default',
+					onPress: () => handleShowVideo(video.id),
+				},
+				{
+					text: 'Eliminar video',
+					style: 'destructive',
+					onPress: () => handleDeleteVideo(video.id),
+				},
 			);
 		}
-		
+
 		options.push({ text: t('common.cancel'), style: 'cancel' });
 
-		Alert.alert('Opciones del video', `¿Qué quieres hacer con "${video.title || 'este video'}"?`, options);
+		Alert.alert(
+			'Opciones del video',
+			`¿Qué quieres hacer con "${video.title || 'este video'}"?`,
+			options,
+		);
 	};
 
 	const handleHideVideo = async (videoId: string) => {
 		const result = await hideVideo(videoId);
 		if (!result.success) {
-			Alert.alert(t('common.error'), result.error || 'No se pudo ocultar el video');
+			Alert.alert(
+				t('common.error'),
+				result.error || 'No se pudo ocultar el video',
+			);
 		}
 	};
 
 	const handleShowVideo = async (videoId: string) => {
 		const result = await showVideo(videoId);
 		if (!result.success) {
-			Alert.alert(t('common.error'), result.error || 'No se pudo mostrar el video');
+			Alert.alert(
+				t('common.error'),
+				result.error || 'No se pudo mostrar el video',
+			);
 		}
 	};
 
@@ -258,11 +292,14 @@ export default function ProfileScreen() {
 					onPress: async () => {
 						const result = await deleteVideo(videoId);
 						if (!result.success) {
-							Alert.alert(t('common.error'), result.error || 'No se pudo eliminar el video');
+							Alert.alert(
+								t('common.error'),
+								result.error || 'No se pudo eliminar el video',
+							);
 						}
-					}
-				}
-			]
+					},
+				},
+			],
 		);
 	};
 
@@ -278,9 +315,9 @@ export default function ProfileScreen() {
 	const getCurrentVideos = () => {
 		switch (currentTab) {
 			case 'public':
-				return filteredUserVideos.filter(video => !video.is_premium);
+				return filteredUserVideos.filter((video) => !video.is_premium);
 			case 'premium':
-				return filteredUserVideos.filter(video => video.is_premium);
+				return filteredUserVideos.filter((video) => video.is_premium);
 			case 'videos':
 				return filteredUserVideos;
 			case 'liked':
@@ -294,14 +331,30 @@ export default function ProfileScreen() {
 
 	const renderVideoItem = ({ item, index }: { item: Video; index: number }) => {
 		const currentVideos = getCurrentVideos();
-		const hasMore = currentTab === 'videos' || currentTab === 'public' || currentTab === 'premium' ? hasMoreVideos : 
-					   currentTab === 'liked' ? hasMoreLiked : hasMoreHidden;
-		const isLoading = currentTab === 'videos' || currentTab === 'public' || currentTab === 'premium' ? isLoadingVideos : 
-						  currentTab === 'liked' ? isLoadingLiked : isLoadingHidden;
+		const hasMore =
+			currentTab === 'videos' ||
+			currentTab === 'public' ||
+			currentTab === 'premium'
+				? hasMoreVideos
+				: currentTab === 'liked'
+				? hasMoreLiked
+				: hasMoreHidden;
+		const isLoading =
+			currentTab === 'videos' ||
+			currentTab === 'public' ||
+			currentTab === 'premium'
+				? isLoadingVideos
+				: currentTab === 'liked'
+				? isLoadingLiked
+				: isLoadingHidden;
 
 		// Load more when reaching near the end
 		if (index === currentVideos.length - 5 && hasMore && !isLoading) {
-			if (currentTab === 'videos' || currentTab === 'public' || currentTab === 'premium') {
+			if (
+				currentTab === 'videos' ||
+				currentTab === 'public' ||
+				currentTab === 'premium'
+			) {
 				loadMoreUserVideos();
 			} else if (currentTab === 'liked') {
 				loadMoreLikedVideos();
@@ -311,8 +364,8 @@ export default function ProfileScreen() {
 		}
 
 		return (
-			<VideoThumbnail 
-				video={item} 
+			<VideoThumbnail
+				video={item}
 				onPress={() => handleVideoPress(item)}
 				onLongPress={() => handleVideoLongPress(item)}
 			/>
@@ -348,37 +401,37 @@ export default function ProfileScreen() {
 					return {
 						icon: 'video',
 						title: t('profile.noVideos'),
-						subtitle: 'Comparte tu primer video para empezar'
+						subtitle: 'Comparte tu primer video para empezar',
 					};
 				case 'public':
 					return {
 						icon: 'globe',
 						title: 'No hay videos públicos',
-						subtitle: 'Tus videos públicos aparecerán aquí'
+						subtitle: 'Tus videos públicos aparecerán aquí',
 					};
 				case 'premium':
 					return {
 						icon: 'crown',
 						title: 'No hay videos premium',
-						subtitle: 'Tus videos premium aparecerán aquí'
+						subtitle: 'Tus videos premium aparecerán aquí',
 					};
 				case 'liked':
 					return {
 						icon: 'heart',
 						title: 'No hay videos que te gusten',
-						subtitle: 'Los videos que te gusten aparecerán aquí'
+						subtitle: 'Los videos que te gusten aparecerán aquí',
 					};
 				case 'hidden':
 					return {
 						icon: 'eye-off',
 						title: 'No hay videos ocultos',
-						subtitle: 'Los videos que ocultes aparecerán aquí'
+						subtitle: 'Los videos que ocultes aparecerán aquí',
 					};
 				default:
 					return {
 						icon: 'video',
 						title: 'No videos',
-						subtitle: ''
+						subtitle: '',
 					};
 			}
 		};
@@ -407,10 +460,22 @@ export default function ProfileScreen() {
 	};
 
 	const renderLoadingFooter = () => {
-		const isLoading = currentTab === 'videos' || currentTab === 'public' || currentTab === 'premium' ? isLoadingVideos : 
-						  currentTab === 'liked' ? isLoadingLiked : isLoadingHidden;
-		const hasMore = currentTab === 'videos' || currentTab === 'public' || currentTab === 'premium' ? hasMoreVideos : 
-					   currentTab === 'liked' ? hasMoreLiked : hasMoreHidden;
+		const isLoading =
+			currentTab === 'videos' ||
+			currentTab === 'public' ||
+			currentTab === 'premium'
+				? isLoadingVideos
+				: currentTab === 'liked'
+				? isLoadingLiked
+				: isLoadingHidden;
+		const hasMore =
+			currentTab === 'videos' ||
+			currentTab === 'public' ||
+			currentTab === 'premium'
+				? hasMoreVideos
+				: currentTab === 'liked'
+				? hasMoreLiked
+				: hasMoreHidden;
 
 		if (!isLoading || !hasMore) return null;
 
@@ -482,17 +547,31 @@ export default function ProfileScreen() {
 								<Text style={styles.username}>@{user.username}</Text>
 								{user.subscription_price > 0 && (
 									<View style={styles.subscriptionBadge}>
-										<MaterialCommunityIcons name="crown" size={12} color={Colors.premium} />
+										<MaterialCommunityIcons
+											name="crown"
+											size={12}
+											color={Colors.premium}
+										/>
 										<Text style={styles.subscriptionBadgeText}>
-											{user.subscription_currency === 'EUR' ? '€' : 
-											 user.subscription_currency === 'USD' ? '$' : 
-											 user.subscription_currency === 'GBP' ? '£' : 
-											 user.subscription_currency === 'JPY' ? '¥' : 
-											 user.subscription_currency === 'CNY' ? '¥' : 
-											 user.subscription_currency === 'KRW' ? '₩' : 
-											 user.subscription_currency === 'BRL' ? 'R$' : 
-											 user.subscription_currency === 'ARS' ? '$' : 
-											 user.subscription_currency === 'MXN' ? '$' : '$'}
+											{user.subscription_currency === 'EUR'
+												? '€'
+												: user.subscription_currency === 'USD'
+												? '$'
+												: user.subscription_currency === 'GBP'
+												? '£'
+												: user.subscription_currency === 'JPY'
+												? '¥'
+												: user.subscription_currency === 'CNY'
+												? '¥'
+												: user.subscription_currency === 'KRW'
+												? '₩'
+												: user.subscription_currency === 'BRL'
+												? 'R$'
+												: user.subscription_currency === 'ARS'
+												? '$'
+												: user.subscription_currency === 'MXN'
+												? '$'
+												: '$'}
 											{user.subscription_price.toFixed(2)}/mes
 										</Text>
 									</View>
@@ -547,14 +626,20 @@ export default function ProfileScreen() {
 						<>
 							{/* Públicos */}
 							<TouchableOpacity
-								style={[styles.tab, styles.tabWithFour, currentTab === 'public' && styles.activeTab]}
+								style={[
+									styles.tab,
+									styles.tabWithFour,
+									currentTab === 'public' && styles.activeTab,
+								]}
 								onPress={() => setCurrentTab('public')}
 							>
 								<Feather
 									name="globe"
 									size={16}
 									color={
-										currentTab === 'public' ? Colors.primary : Colors.textTertiary
+										currentTab === 'public'
+											? Colors.primary
+											: Colors.textTertiary
 									}
 								/>
 								<Text
@@ -570,14 +655,20 @@ export default function ProfileScreen() {
 
 							{/* Premium */}
 							<TouchableOpacity
-								style={[styles.tab, styles.tabWithFour, currentTab === 'premium' && styles.activeTab]}
+								style={[
+									styles.tab,
+									styles.tabWithFour,
+									currentTab === 'premium' && styles.activeTab,
+								]}
 								onPress={() => setCurrentTab('premium')}
 							>
 								<MaterialCommunityIcons
 									name="crown"
 									size={16}
 									color={
-										currentTab === 'premium' ? Colors.primary : Colors.textTertiary
+										currentTab === 'premium'
+											? Colors.primary
+											: Colors.textTertiary
 									}
 								/>
 								<Text
@@ -593,14 +684,20 @@ export default function ProfileScreen() {
 
 							{/* Ocultos */}
 							<TouchableOpacity
-								style={[styles.tab, styles.tabWithFour, currentTab === 'hidden' && styles.activeTab]}
+								style={[
+									styles.tab,
+									styles.tabWithFour,
+									currentTab === 'hidden' && styles.activeTab,
+								]}
 								onPress={() => setCurrentTab('hidden')}
 							>
 								<Feather
 									name="eye-off"
 									size={16}
 									color={
-										currentTab === 'hidden' ? Colors.primary : Colors.textTertiary
+										currentTab === 'hidden'
+											? Colors.primary
+											: Colors.textTertiary
 									}
 								/>
 								<Text
@@ -616,14 +713,20 @@ export default function ProfileScreen() {
 
 							{/* Me gusta - al final */}
 							<TouchableOpacity
-								style={[styles.tab, styles.tabWithFour, currentTab === 'liked' && styles.activeTab]}
+								style={[
+									styles.tab,
+									styles.tabWithFour,
+									currentTab === 'liked' && styles.activeTab,
+								]}
 								onPress={() => setCurrentTab('liked')}
 							>
 								<Feather
 									name="heart"
 									size={16}
 									color={
-										currentTab === 'liked' ? Colors.primary : Colors.textTertiary
+										currentTab === 'liked'
+											? Colors.primary
+											: Colors.textTertiary
 									}
 								/>
 								<Text
@@ -641,14 +744,19 @@ export default function ProfileScreen() {
 						<>
 							{/* Videos */}
 							<TouchableOpacity
-								style={[styles.tab, currentTab === 'videos' && styles.activeTab]}
+								style={[
+									styles.tab,
+									currentTab === 'videos' && styles.activeTab,
+								]}
 								onPress={() => setCurrentTab('videos')}
 							>
 								<Feather
 									name="grid"
 									size={20}
 									color={
-										currentTab === 'videos' ? Colors.primary : Colors.textTertiary
+										currentTab === 'videos'
+											? Colors.primary
+											: Colors.textTertiary
 									}
 								/>
 								<Text
@@ -670,7 +778,9 @@ export default function ProfileScreen() {
 									name="heart"
 									size={20}
 									color={
-										currentTab === 'liked' ? Colors.primary : Colors.textTertiary
+										currentTab === 'liked'
+											? Colors.primary
+											: Colors.textTertiary
 									}
 								/>
 								<Text
@@ -685,14 +795,19 @@ export default function ProfileScreen() {
 
 							{/* Ocultos */}
 							<TouchableOpacity
-								style={[styles.tab, currentTab === 'hidden' && styles.activeTab]}
+								style={[
+									styles.tab,
+									currentTab === 'hidden' && styles.activeTab,
+								]}
 								onPress={() => setCurrentTab('hidden')}
 							>
 								<Feather
 									name="eye-off"
 									size={20}
 									color={
-										currentTab === 'hidden' ? Colors.primary : Colors.textTertiary
+										currentTab === 'hidden'
+											? Colors.primary
+											: Colors.textTertiary
 									}
 								/>
 								<Text
@@ -709,11 +824,10 @@ export default function ProfileScreen() {
 				</View>
 
 				{/* Sort Controls - Show when in video tabs (videos, public, or premium) */}
-				{(currentTab === 'videos' || currentTab === 'public' || currentTab === 'premium') && (
-					<SortControls
-						currentSort={sortOption}
-						onSortChange={setSortOption}
-					/>
+				{(currentTab === 'videos' ||
+					currentTab === 'public' ||
+					currentTab === 'premium') && (
+					<SortControls currentSort={sortOption} onSortChange={setSortOption} />
 				)}
 
 				{/* Video Grid */}
@@ -791,7 +905,7 @@ const styles = StyleSheet.create({
 	},
 	displayName: {
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 2,
@@ -838,7 +952,7 @@ const styles = StyleSheet.create({
 	},
 	statNumber: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginBottom: 2,
@@ -967,7 +1081,7 @@ const styles = StyleSheet.create({
 	},
 	emptyTitle: {
 		fontSize: 18,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 16,

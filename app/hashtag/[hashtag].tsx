@@ -20,8 +20,8 @@ import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useHashtagVideos } from '@/hooks/useHashtagSearch';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Video } from '@/shared/types';
 import { formatNumber } from '@/shared/functions/utils';
+import { Video } from '@/shared/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const VIDEO_WIDTH = (SCREEN_WIDTH - 48) / 2; // 2 columns with margins
@@ -48,16 +48,20 @@ const VideoCard: React.FC<{
 						<Feather name="video" size={32} color={Colors.textTertiary} />
 					</View>
 				)}
-				
+
 				{/* Play overlay */}
 				<View style={styles.playOverlay}>
 					<Feather name="play" size={16} color={Colors.text} />
 				</View>
-				
+
 				{/* Premium badge */}
 				{video.is_premium && (
 					<View style={styles.premiumBadge}>
-						<MaterialCommunityIcons name="crown" size={12} color={Colors.text} />
+						<MaterialCommunityIcons
+							name="crown"
+							size={12}
+							color={Colors.text}
+						/>
 					</View>
 				)}
 
@@ -65,15 +69,19 @@ const VideoCard: React.FC<{
 				<View style={styles.statsOverlay}>
 					<View style={styles.statItem}>
 						<Feather name="heart" size={12} color={Colors.text} />
-						<Text style={styles.statText}>{formatNumber(video.likes_count)}</Text>
+						<Text style={styles.statText}>
+							{formatNumber(video.likes_count)}
+						</Text>
 					</View>
 					<View style={styles.statItem}>
 						<Feather name="eye" size={12} color={Colors.text} />
-						<Text style={styles.statText}>{formatNumber(video.views_count)}</Text>
+						<Text style={styles.statText}>
+							{formatNumber(video.views_count)}
+						</Text>
 					</View>
 				</View>
 			</View>
-			
+
 			{/* Video info */}
 			<View style={styles.videoInfo}>
 				<Text style={styles.videoTitle} numberOfLines={2}>
@@ -96,15 +104,8 @@ export default function HashtagFeedScreen() {
 	const hashtag = decodeURIComponent(hashtagParam || '');
 
 	// Use hashtag videos hook
-	const {
-		videos,
-		isLoading,
-		error,
-		hasMore,
-		loadMore,
-		refresh,
-		canLoadMore,
-	} = useHashtagVideos(hashtag, user?.id);
+	const { videos, isLoading, error, hasMore, loadMore, refresh, canLoadMore } =
+		useHashtagVideos(hashtag, user?.id);
 
 	// Show error alert when error state changes
 	useEffect(() => {
@@ -139,10 +140,7 @@ export default function HashtagFeedScreen() {
 	// Render video item
 	const renderVideoItem = useCallback(
 		({ item }: { item: Video }) => (
-			<VideoCard
-				video={item}
-				onPress={() => handleVideoPress(item)}
-			/>
+			<VideoCard video={item} onPress={() => handleVideoPress(item)} />
 		),
 		[handleVideoPress],
 	);
@@ -151,9 +149,7 @@ export default function HashtagFeedScreen() {
 	const renderEmptyState = () => (
 		<View style={styles.emptyState}>
 			<Feather name="video-off" size={64} color={Colors.textTertiary} />
-			<Text style={styles.emptyTitle}>
-				No hay videos para #{hashtag}
-			</Text>
+			<Text style={styles.emptyTitle}>No hay videos para #{hashtag}</Text>
 			<Text style={styles.emptySubtitle}>
 				Sé el primero en crear contenido con este hashtag
 			</Text>
@@ -182,7 +178,7 @@ export default function HashtagFeedScreen() {
 	return (
 		<SafeAreaView style={styles.container} edges={['top']}>
 			<StatusBar style="light" />
-			
+
 			{/* Header */}
 			<View style={styles.header}>
 				<TouchableOpacity style={styles.backButton} onPress={handleBack}>
@@ -199,7 +195,7 @@ export default function HashtagFeedScreen() {
 
 			{/* Loader principal estético */}
 			{showMainLoader && (
-				<VideoFeedLoader 
+				<VideoFeedLoader
 					message={`Cargando videos de #${hashtag}...`}
 					showIcon={true}
 				/>
@@ -384,7 +380,7 @@ const styles = StyleSheet.create({
 	},
 	emptyTitle: {
 		fontSize: 20,
-		fontFamily: 'Poppins-SemiBold',
+		fontFamily: 'Raleway-SemiBold',
 		fontWeight: '600',
 		color: Colors.text,
 		marginTop: 24,
