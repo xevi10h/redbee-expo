@@ -174,9 +174,7 @@ export default function SignInScreen() {
 						/>
 						<Text style={styles.title}>
 							Red
-							<Text style={{ ...styles.title, fontSize: 32, color: '#FF3539' }}>
-								Bee
-							</Text>
+							<Text style={{ color: '#FF3539' }}>Bee</Text>
 						</Text>
 						<Text style={styles.subtitle}>{t('auth.welcomeBack')}</Text>
 					</View>

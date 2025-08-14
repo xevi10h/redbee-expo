@@ -110,7 +110,9 @@ export default function SignInScreen() {
 							source={require('../../assets/images/icon.png')}
 							style={styles.logo}
 						/>
-						<Text style={styles.title}>Redbee</Text>
+						<Text style={styles.title}>
+							Red<Text style={{ color: '#FF3539' }}>Bee</Text>
+						</Text>
 						<Text style={styles.subtitle}>{t('auth.welcomeBack')}</Text>
 					</View>
 

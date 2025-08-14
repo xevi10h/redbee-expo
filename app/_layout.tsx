@@ -52,7 +52,7 @@ export default function RootLayout() {
 				<StatusBar style="light" />
 				<View style={styles.loadingContent}>
 					<Text style={styles.appName}>
-						Red<Text style={{ color: '#FF3539' }}>bee</Text>
+						Red<Text style={{ color: '#FF3539' }}>Bee</Text>
 					</Text>
 					<ActivityIndicator
 						size="large"

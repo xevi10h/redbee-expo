@@ -1,0 +1,17 @@
+# Netlify redirects for legal pages
+# Static pages (serve directly)
+/.well-known/*    /.well-known/:splat    200
+/waiting-list     /waiting-list/index.html    200
+
+# Legal pages - exact matches
+/terms/es_ES      /terms/es_ES/index.html     200
+/terms/en_US      /terms/en_US/index.html     200
+/privacy/es_ES    /privacy/es_ES/index.html   200
+/privacy/en_US    /privacy/en_US/index.html   200
+
+# Legal pages - fallback to Spanish for invalid languages
+/terms/*          /terms/es_ES/index.html     302
+/privacy/*        /privacy/es_ES/index.html   302
+
+# SPA fallback (last rule)
+/*                /index.html                 200

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - Redbee</title>
+    <meta name="description" content="Política de privacidad de Redbee. Conoce cómo protegemos y manejamos tus datos personales en nuestra plataforma.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://redbeeapp.com/privacy/es_ES">
+    <meta property="og:title" content="Política de Privacidad - Redbee">
+    <meta property="og:description" content="Política de privacidad de Redbee. Conoce cómo protegemos y manejamos tus datos personales en nuestra plataforma.">
+    <meta property="og:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://redbeeapp.com/privacy/es_ES">
+    <meta property="twitter:title" content="Política de Privacidad - Redbee">
+    <meta property="twitter:description" content="Política de privacidad de Redbee. Conoce cómo protegemos y manejamos tus datos personales en nuestra plataforma.">
+    <meta property="twitter:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <style>
+        :root {
+            --primary: #E1306C;
+            --primary-dark: #892142;
+            --primary-light: #F77737;
+            --secondary: #1C1C1E;
+            --accent: #2C2C2E;
+            --success: #28A745;
+            --warning: #FFC107;
+            --danger: #DC3545;
+            --dark: #000000;
+            --light: #FFFFFF;
+            --gray-50: #f8f9fa;
+            --gray-100: #e9ecef;
+            --gray-200: #dee2e6;
+            --gray-300: #ADB5BD;
+            --gray-400: #6C757D;
+            --gray-500: #495057;
+            --gray-600: #343a40;
+            --gray-700: #212529;
+            --gray-800: #1a1a1a;
+            --gradient-primary: linear-gradient(135deg, #E1306C 0%, #F77737 100%);
+            --gradient-dark: linear-gradient(135deg, #000000 0%, #1C1C1E 100%);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--light);
+            background: var(--gradient-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: var(--gradient-primary);
+            animation: rotate 20s linear infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Header */
+        .header {
+            padding: 24px 0;
+            backdrop-filter: blur(10px);
+            background: rgba(26, 26, 26, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--light);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-image: url('/icon.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        
+        .logo-icon-fallback {
+            background: var(--gradient-primary);
+            background-image: none;
+        }
+
+        .logo-text {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .language-switcher {
+            position: relative;
+        }
+
+        .language-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .language-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary);
+        }
+
+        /* Main content */
+        .main {
+            padding: 60px 0;
+        }
+
+        .document-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .document-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .document-subtitle {
+            font-size: 1.2rem;
+            color: var(--gray-300);
+            margin-bottom: 8px;
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+            font-style: italic;
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 48px;
+            margin-bottom: 40px;
+        }
+
+        .introduction {
+            font-size: 1.1rem;
+            color: var(--gray-200);
+            margin-bottom: 40px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(225, 48, 108, 0.3);
+        }
+
+        .section-content {
+            font-size: 1rem;
+            color: var(--gray-300);
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer p {
+            color: var(--gray-400);
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .footer-link {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content {
+                padding: 32px 24px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <a href="/" class="logo">
+                    <div class="logo-icon" id="logoIcon">
+                        <span id="logoFallback" style="display: none;">R</span>
+                    </div>
+                    <span class="logo-text">Redbee</span>
+                </a>
+                <div class="language-switcher">
+                    <a href="/privacy/en_US" class="language-button">English</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <div class="document-header">
+                <h1 class="document-title">Política de Privacidad</h1>
+                <p class="document-subtitle">Redbee - Plataforma de Contenido Digital</p>
+                <p class="last-updated">Última actualización: 14 de enero de 2025</p>
+            </div>
+
+            <div class="content">
+                <div class="introduction">
+                    En Redbee, respetamos tu privacidad y nos comprometemos a proteger tus datos personales. Esta política explica cómo recopilamos, usamos y protegemos tu información.
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">1. Información que Recopilamos</h2>
+                    <div class="section-content">
+                        Recopilamos información que nos proporcionas directamente (como datos de perfil), información sobre tu uso de la plataforma (como videos vistos), e información técnica (como dirección IP y tipo de dispositivo).
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">2. Cómo Usamos tu Información</h2>
+                    <div class="section-content">
+                        Usamos tu información para proporcionar y mejorar nuestros servicios, personalizar tu experiencia, procesar pagos, comunicarnos contigo, y cumplir con obligaciones legales.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">3. Compartir Información</h2>
+                    <div class="section-content">
+                        No vendemos tu información personal. Podemos compartir información con proveedores de servicios, para cumplir con obligaciones legales, o con tu consentimiento explícito.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">4. Seguridad de los Datos</h2>
+                    <div class="section-content">
+                        Implementamos medidas de seguridad técnicas y organizativas para proteger tu información contra acceso no autorizado, alteración, divulgación o destrucción.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">5. Tus Derechos</h2>
+                    <div class="section-content">
+                        Tienes derecho a acceder, corregir, eliminar o exportar tus datos personales. También puedes objetar ciertos procesamientos de datos. Contacta con nosotros para ejercer estos derechos.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">6. Cookies y Tecnologías Similares</h2>
+                    <div class="section-content">
+                        Usamos cookies y tecnologías similares para mejorar tu experiencia, analizar el uso de la plataforma y proporcionar funcionalidades personalizadas. Puedes controlar las cookies a través de la configuración de tu navegador.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">7. Servicios de Terceros</h2>
+                    <div class="section-content">
+                        Nuestra plataforma puede integrar servicios de terceros (como procesadores de pago). Estos servicios tienen sus propias políticas de privacidad que recomendamos revisar.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">8. Retención de Datos</h2>
+                    <div class="section-content">
+                        Conservamos tu información solo durante el tiempo necesario para los fines descritos en esta política, o según lo requiera la ley. Los datos de cuentas eliminadas se borran de forma segura.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">9. Transferencias Internacionales</h2>
+                    <div class="section-content">
+                        Tu información puede ser transferida y procesada en países fuera de tu ubicación. Implementamos salvaguardas adecuadas para proteger tu información en estas transferencias.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">10. Privacidad de Menores</h2>
+                    <div class="section-content">
+                        Nuestros servicios están dirigidos a usuarios mayores de 13 años. No recopilamos conscientemente información personal de niños menores de 13 años.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">11. Cambios a esta Política</h2>
+                    <div class="section-content">
+                        Podemos actualizar esta política de privacidad ocasionalmente. Te notificaremos sobre cambios significativos a través de la aplicación o por correo electrónico.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">12. Contacto</h2>
+                    <div class="section-content">
+                        Si tienes preguntas sobre esta política de privacidad o el tratamiento de tus datos, contacta con nosotros en <a href="mailto:privacy@redbeeapp.com" style="color: var(--primary);">privacy@redbeeapp.com</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="/terms/es_ES" class="footer-link">Términos de Servicio</a>
+                <a href="/waiting-list" class="footer-link">Lista de Espera</a>
+                <a href="mailto:admin@redbeeapp.com" class="footer-link">Contacto</a>
+            </div>
+            <p>&copy; 2025 Redbee. El futuro del contenido digital.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Handle logo fallback if image fails to load
+        const logoIcon = document.getElementById('logoIcon');
+        const logoFallback = document.getElementById('logoFallback');
+        
+        // Check if background image loads successfully
+        const testImg = new Image();
+        testImg.onload = function() {
+            // Image loaded successfully, keep as is
+        };
+        testImg.onerror = function() {
+            // Image failed to load, show fallback
+            logoIcon.classList.add('logo-icon-fallback');
+            logoFallback.style.display = 'block';
+        };
+        testImg.src = '/icon.png';
+    </script>
+</body>
+</html>

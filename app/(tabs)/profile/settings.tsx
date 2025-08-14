@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import {
 	ActionSheetIOS,
 	Alert,
+	Linking,
 	Platform,
 	ScrollView,
 	StyleSheet,
@@ -17,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { useAuth, useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
+import { getTermsUrl, getPrivacyUrl, areWebPagesAvailable, getWebPagesUnavailableMessage } from '@/shared/utils/webUrls';
 import {
 	NotificationPreferences,
 	NotificationService,
@@ -195,14 +197,58 @@ export default function SettingsScreen() {
 		router.push('/(tabs)/profile/notifications');
 	};
 
-	const handleTermsOfService = () => {
-		console.log('Navigate to terms of service');
-		// TODO: Implement navigation to terms of service screen
+	const handleTermsOfService = async () => {
+		if (!areWebPagesAvailable()) {
+			Alert.alert(t('common.info'), getWebPagesUnavailableMessage(), [
+				{ text: t('common.ok') }
+			]);
+			return;
+		}
+
+		try {
+			const url = getTermsUrl(user?.language || 'es_ES');
+			const canOpen = await Linking.canOpenURL(url);
+			if (canOpen) {
+				await Linking.openURL(url);
+			} else {
+				console.error('Cannot open URL:', url);
+				Alert.alert(t('common.error'), 'No se pudo abrir la página web', [
+					{ text: t('common.ok') }
+				]);
+			}
+		} catch (error) {
+			console.error('Error opening terms URL:', error);
+			Alert.alert(t('common.error'), 'Error al abrir la página web', [
+				{ text: t('common.ok') }
+			]);
+		}
 	};
 
-	const handlePrivacyPolicy = () => {
-		console.log('Navigate to privacy policy');
-		// TODO: Implement navigation to privacy policy screen
+	const handlePrivacyPolicy = async () => {
+		if (!areWebPagesAvailable()) {
+			Alert.alert(t('common.info'), getWebPagesUnavailableMessage(), [
+				{ text: t('common.ok') }
+			]);
+			return;
+		}
+
+		try {
+			const url = getPrivacyUrl(user?.language || 'es_ES');
+			const canOpen = await Linking.canOpenURL(url);
+			if (canOpen) {
+				await Linking.openURL(url);
+			} else {
+				console.error('Cannot open URL:', url);
+				Alert.alert(t('common.error'), 'No se pudo abrir la página web', [
+					{ text: t('common.ok') }
+				]);
+			}
+		} catch (error) {
+			console.error('Error opening privacy URL:', error);
+			Alert.alert(t('common.error'), 'Error al abrir la página web', [
+				{ text: t('common.ok') }
+			]);
+		}
 	};
 
 	const handleSignOut = () => {

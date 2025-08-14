@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termos de Serviço - Redbee</title>
+    <meta name="description" content="Termos de serviço da Redbee. Aprenda sobre as condições para utilizar a nossa plataforma exclusiva de conteúdo digital.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://redbeeapp.com/terms/pt_PT">
+    <meta property="og:title" content="Termos de Serviço - Redbee">
+    <meta property="og:description" content="Termos de serviço da Redbee. Aprenda sobre as condições para utilizar a nossa plataforma exclusiva de conteúdo digital.">
+    <meta property="og:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://redbeeapp.com/terms/pt_PT">
+    <meta property="twitter:title" content="Termos de Serviço - Redbee">
+    <meta property="twitter:description" content="Termos de serviço da Redbee. Aprenda sobre as condições para utilizar a nossa plataforma exclusiva de conteúdo digital.">
+    <meta property="twitter:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <style>
+        :root {
+            --primary: #E1306C;
+            --primary-dark: #892142;
+            --primary-light: #F77737;
+            --secondary: #1C1C1E;
+            --accent: #2C2C2E;
+            --success: #28A745;
+            --warning: #FFC107;
+            --danger: #DC3545;
+            --dark: #000000;
+            --light: #FFFFFF;
+            --gray-50: #f8f9fa;
+            --gray-100: #e9ecef;
+            --gray-200: #dee2e6;
+            --gray-300: #ADB5BD;
+            --gray-400: #6C757D;
+            --gray-500: #495057;
+            --gray-600: #343a40;
+            --gray-700: #212529;
+            --gray-800: #1a1a1a;
+            --gradient-primary: linear-gradient(135deg, #E1306C 0%, #F77737 100%);
+            --gradient-dark: linear-gradient(135deg, #000000 0%, #1C1C1E 100%);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--light);
+            background: var(--gradient-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: var(--gradient-primary);
+            animation: rotate 20s linear infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Header */
+        .header {
+            padding: 24px 0;
+            backdrop-filter: blur(10px);
+            background: rgba(26, 26, 26, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--light);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-image: url('/icon.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        
+        .logo-icon-fallback {
+            background: var(--gradient-primary);
+            background-image: none;
+        }
+
+        .logo-text {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .language-switcher {
+            position: relative;
+        }
+
+        .language-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .language-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary);
+        }
+
+        /* Main content */
+        .main {
+            padding: 60px 0;
+        }
+
+        .document-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .document-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .document-subtitle {
+            font-size: 1.2rem;
+            color: var(--gray-300);
+            margin-bottom: 8px;
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+            font-style: italic;
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 48px;
+            margin-bottom: 40px;
+        }
+
+        .introduction {
+            font-size: 1.1rem;
+            color: var(--gray-200);
+            margin-bottom: 40px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(225, 48, 108, 0.3);
+        }
+
+        .section-content {
+            font-size: 1rem;
+            color: var(--gray-300);
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer p {
+            color: var(--gray-400);
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .footer-link {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content {
+                padding: 32px 24px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <a href="/" class="logo">
+                    <div class="logo-icon" id="logoIcon">
+                        <span id="logoFallback" style="display: none;">R</span>
+                    </div>
+                    <span class="logo-text">Redbee</span>
+                </a>
+                <div class="language-switcher">
+                    <a href="/terms/es_ES" class="language-button">Español</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <div class="document-header">
+                <h1 class="document-title">Termos de Serviço</h1>
+                <p class="document-subtitle">Redbee - Plataforma de Conteúdo Digital</p>
+                <p class="last-updated">Última atualização: 14 de janeiro de 2025</p>
+            </div>
+
+            <div class="content">
+                <div class="introduction">
+                    Bem-vindo à Redbee ("nós", "nossa empresa"). Estes Termos de Serviço abrangentes ("Termos") regem o seu acesso e utilização da nossa plataforma de conteúdo digital e serviços relacionados. Ao aceder ou utilizar a Redbee, concorda em estar legalmente vinculado por estes Termos e pela nossa Política de Privacidade.
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">1. Aceitação e Acordo</h2>
+                    <div class="section-content">
+                        <strong>Acordo Vinculativo:</strong> Ao criar uma conta, aceder ou utilizar a Redbee, entra num acordo legalmente vinculativo connosco e concorda em cumprir estes Termos.<br><br>
+                        
+                        <strong>Requisitos de Idade:</strong> Deve ter pelo menos 18 anos para criar uma conta de criador ou 13 anos para utilizar os nossos serviços com consentimento parental. Ao utilizar os nossos serviços, declara que cumpre estes requisitos de idade.<br><br>
+                        
+                        <strong>Modificações:</strong> Podemos atualizar estes Termos periodicamente. O uso continuado após notificação constitui aceitação dos Termos atualizados.<br><br>
+                        
+                        <strong>Divisibilidade:</strong> Se alguma disposição destes Termos for considerada inaplicável, as disposições restantes permanecerão em pleno vigor e efeito.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">2. Descrição da Plataforma e Serviços</h2>
+                    <div class="section-content">
+                        <strong>Plataforma Principal:</strong> A Redbee é uma plataforma de conteúdo digital que permite aos criadores partilhar conteúdo exclusivo com as suas audiências através de modelos baseados em subscrição.<br><br>
+                        
+                        <strong>Serviços Disponíveis:</strong> Ferramentas de criação e carregamento de conteúdo, gestão de subscrições, processamento de pagamentos, funcionalidades de envolvimento da audiência, análises e insights, sistemas de descoberta e recomendação de conteúdo.<br><br>
+                        
+                        <strong>Evolução da Plataforma:</strong> Melhoramos continuamente os nossos serviços e podemos adicionar, modificar ou descontinuar funcionalidades com aviso apropriado aos utilizadores.<br><br>
+                        
+                        <strong>Integrações de Terceiros:</strong> A nossa plataforma pode integrar-se com serviços de terceiros para melhorar a funcionalidade, sujeito aos respetivos termos e políticas de privacidade.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">3. Contas de Utilizador e Responsabilidades</h2>
+                    <div class="section-content">
+                        <strong>Criação de Conta:</strong> Deve fornecer informação precisa, completa e atual ao criar a sua conta. Informação falsa pode resultar em suspensão ou terminação da conta.<br><br>
+                        
+                        <strong>Segurança da Conta:</strong> É o único responsável por manter a confidencialidade das suas credenciais de login e por todas as atividades sob a sua conta. Use palavras-passe fortes e ative a autenticação de dois fatores quando disponível.<br><br>
+                        
+                        <strong>Tipos de Conta:</strong> Contas de criador têm responsabilidades adicionais incluindo conformidade de conteúdo, informação de faturação precisa e gestão de relacionamentos com subscritores.<br><br>
+                        
+                        <strong>Uso Apenas Autorizado:</strong> A sua conta é pessoal para si e não pode ser partilhada, vendida ou transferida para outros sem o nosso consentimento escrito prévio.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">4. Políticas de Conteúdo e Responsabilidades do Utilizador</h2>
+                    <div class="section-content">
+                        <strong>Propriedade do Conteúdo:</strong> Mantém a propriedade do seu conteúdo mas concede-nos licenças necessárias para operar a nossa plataforma. Garante que tem todos os direitos sobre o conteúdo que carrega.<br><br>
+                        
+                        <strong>Padrões de Conteúdo:</strong> Todo o conteúdo deve cumprir leis aplicáveis e as nossas diretrizes da comunidade. Conteúdo proibido inclui material ilegal, assédio, discurso de ódio, conteúdo não consensual, material com direitos de autor sem permissão e informação enganosa.<br><br>
+                        
+                        <strong>Moderação de Conteúdo:</strong> Reservamo-nos o direito de rever, remover ou restringir o acesso a conteúdo que viole as nossas políticas. Isto inclui processos de moderação automatizados e humanos.<br><br>
+                        
+                        <strong>Conformidade DMCA:</strong> Respondemos a avisos válidos de violação de direitos de autor sob o Digital Millennium Copyright Act. Infratores recorrentes podem ter as suas contas terminadas.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">5. Monetização de Criadores e Partilha de Receitas</h2>
+                    <div class="section-content">
+                        <strong>Partilha de Receitas:</strong> Os criadores obtêm receitas de subscrições e outras funcionalidades de monetização. A nossa estrutura de taxas da plataforma será comunicada claramente e pode variar por tipo de serviço.<br><br>
+                        
+                        <strong>Processamento de Pagamentos:</strong> Todos os pagamentos são processados através de fornecedores de pagamento de terceiros seguros. Não somos responsáveis por taxas ou políticas do processador de pagamentos.<br><br>
+                        
+                        <strong>Cronograma de Pagamentos:</strong> Os ganhos dos criadores são pagos de acordo com o nosso cronograma de pagamentos estabelecido, sujeito a limites mínimos e requisitos de verificação.<br><br>
+                        
+                        <strong>Responsabilidades Fiscais:</strong> Os criadores são responsáveis por todos os impostos aplicáveis sobre os seus ganhos. Podemos fornecer documentação fiscal conforme exigido por lei.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">6. Serviços de Subscrição e Faturação</h2>
+                    <div class="section-content">
+                        <strong>Termos de Subscrição:</strong> As subscrições renovam-se automaticamente até serem canceladas. Os subscritores podem cancelar a qualquer momento através das configurações da sua conta.<br><br>
+                        
+                        <strong>Faturação e Pagamentos:</strong> As taxas de subscrição são cobradas antecipadamente para cada período de faturação. Todas as vendas são finais salvo especificação em contrário na nossa política de reembolso.<br><br>
+                        
+                        <strong>Alterações de Preço:</strong> Os criadores podem modificar preços de subscrição com aviso apropriado aos subscritores existentes. Os subscritores existentes podem cancelar antes dos aumentos de preço entrarem em vigor.<br><br>
+                        
+                        <strong>Política de Reembolso:</strong> Reembolsos geralmente não são fornecidos exceto em casos de erros técnicos, cobrança não autorizada ou conforme exigido pela lei aplicável.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">7. Usos Proibidos e Conduta</h2>
+                    <div class="section-content">
+                        <strong>Uso Indevido da Plataforma:</strong> Não pode usar sistemas automatizados para aceder à nossa plataforma, tentar contornar medidas de segurança, envolver-se em mineração de dados ou scraping, ou interferir com operações da plataforma.<br><br>
+                        
+                        <strong>Atividades Ilegais:</strong> Qualquer atividade ilegal incluindo fraude, lavagem de dinheiro, financiamento de terrorismo ou violação de leis aplicáveis é estritamente proibida.<br><br>
+                        
+                        <strong>Comportamento Prejudicial:</strong> Assédio, bullying, personificação, spam ou qualquer comportamento que prejudique outros utilizadores ou a comunidade da plataforma não é permitido.<br><br>
+                        
+                        <strong>Restrições Comerciais:</strong> Usar a nossa plataforma para fins comerciais não autorizados, revender acesso à plataforma ou competir diretamente com os nossos serviços é proibido.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">8. Direitos de Propriedade Intelectual</h2>
+                    <div class="section-content">
+                        <strong>Propriedade da Plataforma:</strong> Redbee, o nosso logotipo e funcionalidades da plataforma são a nossa propriedade intelectual ou dos nossos licenciadores. Não pode usar as nossas marcas registadas sem permissão.<br><br>
+                        
+                        <strong>Licença de Conteúdo do Utilizador:</strong> Ao carregar conteúdo, concede-nos uma licença não exclusiva, mundial e livre de royalties para usar, reproduzir e distribuir o seu conteúdo para operações da plataforma.<br><br>
+                        
+                        <strong>Respeite os Direitos dos Outros:</strong> Deve respeitar os direitos de propriedade intelectual de outros. Responderemos a avisos válidos de violação e podemos terminar infratores recorrentes.<br><br>
+                        
+                        <strong>Uso Justo e Permissões:</strong> Certifique-se de que tem direitos ou licenças apropriadas para qualquer conteúdo de terceiros que incorpore nos seus carregamentos.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">9. Privacidade e Proteção de Dados</h2>
+                    <div class="section-content">
+                        <strong>Política de Privacidade:</strong> A nossa Política de Privacidade, incorporada por referência, explica como recolhemos, usamos e protegemos a sua informação pessoal.<br><br>
+                        
+                        <strong>Segurança de Dados:</strong> Implementamos medidas de segurança apropriadas para proteger dados de utilizadores, mas não podemos garantir segurança absoluta.<br><br>
+                        
+                        <strong>Configurações de Privacidade do Utilizador:</strong> Pode controlar várias configurações de privacidade através das preferências da sua conta. Reveja e atualize estas configurações regularmente.<br><br>
+                        
+                        <strong>Portabilidade de Dados:</strong> Pode solicitar cópias dos seus dados ou eliminação de conta de acordo com leis de privacidade aplicáveis.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">10. Disponibilidade da Plataforma e Modificações</h2>
+                    <div class="section-content">
+                        <strong>Disponibilidade do Serviço:</strong> Esforçamo-nos para manter a disponibilidade da plataforma mas não garantimos serviço ininterrupto. Manutenção, atualizações ou problemas técnicos podem causar interrupções temporárias.<br><br>
+                        
+                        <strong>Alterações da Plataforma:</strong> Podemos modificar, suspender ou descontinuar qualquer aspeto da nossa plataforma com aviso razoável. Alterações significativas que afetem a monetização incluirão períodos de aviso estendidos.<br><br>
+                        
+                        <strong>Dependências de Terceiros:</strong> A nossa plataforma pode depender de serviços de terceiros. Interrupções destes serviços podem afetar a funcionalidade da plataforma.<br><br>
+                        
+                        <strong>Cópia de Segurança e Recuperação:</strong> Embora mantenhamos sistemas de cópia de segurança, os utilizadores são encorajados a manter as suas próprias cópias de conteúdo importante.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">11. Terminação e Suspensão de Conta</h2>
+                    <div class="section-content">
+                        <strong>Motivos de Terminação:</strong> Podemos suspender ou terminar contas por violações dos Termos, atividades ilegais, dano a outros utilizadores ou inatividade prolongada.<br><br>
+                        
+                        <strong>Terminação Iniciada pelo Utilizador:</strong> Pode eliminar a sua conta a qualquer momento através das configurações da conta. A terminação pode afetar pagamentos pendentes ou subscrições.<br><br>
+                        
+                        <strong>Efeito da Terminação:</strong> Aquando da terminação, o seu acesso à plataforma cessa e podemos eliminar o seu conteúdo após um período razoável.<br><br>
+                        
+                        <strong>Processo de Recurso:</strong> Se acredita que a sua conta foi terminada por erro, pode contactar a nossa equipa de apoio para revisão dentro de 30 dias da terminação.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">12. Isenções de Responsabilidade e Limitação de Responsabilidade</h2>
+                    <div class="section-content">
+                        <strong>Isenção de Responsabilidade da Plataforma:</strong> A Redbee é fornecida "como está" sem garantias de qualquer tipo. Isentamos todas as garantias, expressas ou implícitas, incluindo comercialização e adequação para um propósito particular.<br><br>
+                        
+                        <strong>Isenção de Responsabilidade do Conteúdo:</strong> Não somos responsáveis por conteúdo gerado pelo utilizador e não endossamos opiniões, recomendações ou conselhos expressos por utilizadores.<br><br>
+                        
+                        <strong>Limitação de Responsabilidade:</strong> Até ao máximo permitido por lei, a nossa responsabilidade é limitada ao valor que nos pagou nos 12 meses anteriores à reclamação.<br><br>
+                        
+                        <strong>Danos Excluídos:</strong> Não somos responsáveis por danos indiretos, incidentais, especiais, consequentes ou punitivos, incluindo perda de lucros ou dados.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">13. Indemnização</h2>
+                    <div class="section-content">
+                        Concorda em indemnizar, defender e isentar de responsabilidade a Redbee, os seus oficiais, diretores, funcionários e agentes de quaisquer reivindicações, danos, perdas ou despesas decorrentes de:<br><br>
+                        
+                        • O seu uso da nossa plataforma<br>
+                        • O seu conteúdo ou conduta<br>
+                        • A sua violação destes Termos<br>
+                        • A sua violação de direitos de terceiros<br><br>
+                        
+                        Esta obrigação de indemnização sobrevive à terminação da sua conta e destes Termos.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">14. Resolução de Disputas e Lei Aplicável</h2>
+                    <div class="section-content">
+                        <strong>Lei Aplicável:</strong> Estes Termos são regidos pelas leis de [Jurisdição] sem considerar princípios de conflito de leis.<br><br>
+                        
+                        <strong>Resolução de Disputas:</strong> Encorajamos a resolução de disputas através de comunicação direta. Para disputas formais, podemos requerer mediação ou arbitragem conforme especificado na nossa política de resolução de disputas.<br><br>
+                        
+                        <strong>Renúncia de Ação Coletiva:</strong> Até ao máximo permitido por lei, concorda em resolver disputas individualmente e renuncia à participação em ações coletivas.<br><br>
+                        
+                        <strong>Jurisdição:</strong> Qualquer procedimento legal deve ser apresentado nos tribunais de [Jurisdição], e consente à jurisdição pessoal aí.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">15. Informação de Contacto e Apoio</h2>
+                    <div class="section-content">
+                        <strong>Apoio Geral:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Consultas Legais:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Problemas de Direitos de Autor:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Endereço Postal:</strong><br>
+                        Equipa Legal Redbee<br>
+                        [Endereço da Empresa]<br>
+                        [Cidade, Estado/Província, Código Postal]<br>
+                        [País]<br><br>
+                        
+                        Esforçamo-nos para responder a todas as consultas prontamente e profissionalmente. Para assuntos urgentes, por favor indique claramente a natureza da sua preocupação na linha de assunto.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="/privacy/pt_PT" class="footer-link">Política de Privacidade</a>
+                <a href="/waiting-list" class="footer-link">Lista de Espera</a>
+                <a href="mailto:admin@redbeeapp.com" class="footer-link">Contacto</a>
+            </div>
+            <p>&copy; 2025 Redbee. O futuro do conteúdo digital.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Handle logo fallback if image fails to load
+        const logoIcon = document.getElementById('logoIcon');
+        const logoFallback = document.getElementById('logoFallback');
+        
+        // Check if background image loads successfully
+        const testImg = new Image();
+        testImg.onload = function() {
+            // Image loaded successfully, keep as is
+        };
+        testImg.onerror = function() {
+            // Image failed to load, show fallback
+            logoIcon.classList.add('logo-icon-fallback');
+            logoFallback.style.display = 'block';
+        };
+        testImg.src = '/icon.png';
+    </script>
+</body>
+</html>

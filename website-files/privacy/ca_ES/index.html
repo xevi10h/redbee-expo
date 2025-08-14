@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacitat - Redbee</title>
+    <meta name="description" content="Política de privacitat de Redbee. Aprèn com protegim i gestionem les teves dades personals a la nostra plataforma.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://redbeeapp.com/privacy/ca_ES">
+    <meta property="og:title" content="Política de Privacitat - Redbee">
+    <meta property="og:description" content="Política de privacitat de Redbee. Aprèn com protegim i gestionem les teves dades personals a la nostra plataforma.">
+    <meta property="og:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://redbeeapp.com/privacy/ca_ES">
+    <meta property="twitter:title" content="Política de Privacitat - Redbee">
+    <meta property="twitter:description" content="Política de privacitat de Redbee. Aprèn com protegim i gestionem les teves dades personals a la nostra plataforma.">
+    <meta property="twitter:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <style>
+        :root {
+            --primary: #E1306C;
+            --primary-dark: #892142;
+            --primary-light: #F77737;
+            --secondary: #1C1C1E;
+            --accent: #2C2C2E;
+            --success: #28A745;
+            --warning: #FFC107;
+            --danger: #DC3545;
+            --dark: #000000;
+            --light: #FFFFFF;
+            --gray-50: #f8f9fa;
+            --gray-100: #e9ecef;
+            --gray-200: #dee2e6;
+            --gray-300: #ADB5BD;
+            --gray-400: #6C757D;
+            --gray-500: #495057;
+            --gray-600: #343a40;
+            --gray-700: #212529;
+            --gray-800: #1a1a1a;
+            --gradient-primary: linear-gradient(135deg, #E1306C 0%, #F77737 100%);
+            --gradient-dark: linear-gradient(135deg, #000000 0%, #1C1C1E 100%);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--light);
+            background: var(--gradient-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: var(--gradient-primary);
+            animation: rotate 20s linear infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Header */
+        .header {
+            padding: 24px 0;
+            backdrop-filter: blur(10px);
+            background: rgba(26, 26, 26, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--light);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-image: url('/icon.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        
+        .logo-icon-fallback {
+            background: var(--gradient-primary);
+            background-image: none;
+        }
+
+        .logo-text {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .language-switcher {
+            position: relative;
+        }
+
+        .language-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .language-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary);
+        }
+
+        /* Main content */
+        .main {
+            padding: 60px 0;
+        }
+
+        .document-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .document-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .document-subtitle {
+            font-size: 1.2rem;
+            color: var(--gray-300);
+            margin-bottom: 8px;
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+            font-style: italic;
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 48px;
+            margin-bottom: 40px;
+        }
+
+        .introduction {
+            font-size: 1.1rem;
+            color: var(--gray-200);
+            margin-bottom: 40px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(225, 48, 108, 0.3);
+        }
+
+        .section-content {
+            font-size: 1rem;
+            color: var(--gray-300);
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer p {
+            color: var(--gray-400);
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .footer-link {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content {
+                padding: 32px 24px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <a href="/" class="logo">
+                    <div class="logo-icon" id="logoIcon">
+                        <span id="logoFallback" style="display: none;">R</span>
+                    </div>
+                    <span class="logo-text">Redbee</span>
+                </a>
+                <div class="language-switcher">
+                    <a href="/privacy/es_ES" class="language-button">Español</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <div class="document-header">
+                <h1 class="document-title">Política de Privacitat</h1>
+                <p class="document-subtitle">Redbee - Plataforma de Contingut Digital</p>
+                <p class="last-updated">Última actualització: 14 de gener de 2025</p>
+            </div>
+
+            <div class="content">
+                <div class="introduction">
+                    A Redbee ("nosaltres", "la nostra empresa"), respectem la teva privacitat i estem compromesos amb la protecció de les teves dades personals. Aquesta política integral de privacitat explica com recopilem, utilitzem, emmagatzemem i protegim la teva informació quan fas servir la nostra plataforma de contingut digital i els serveis relacionats.
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">1. Informació que Recopilem</h2>
+                    <div class="section-content">
+                        <strong>Informació que Proporciones:</strong> Informació del compte (correu electrònic, nom d'usuari, nom de visualització, contrasenya), dades del perfil (biografia, foto de perfil, preus de subscripció), informació de pagament, contingut que puges (vídeos, comentaris, missatges) i comunicacions amb nosaltres.<br><br>
+                        
+                        <strong>Informació Recopilada Automàticament:</strong> Informació del dispositiu (tipus de dispositiu, sistema operatiu, tipus de navegador), dades d'ús (vídeos vistos, temps passat, interaccions), adreça IP i dades de localització, galetes i tecnologies de seguiment similars, i fitxers de registre.<br><br>
+                        
+                        <strong>Informació de Tercers:</strong> Plataformes de xarxes socials (si connectes els teus comptes), processadors de pagament, proveïdors d'analítiques i altres usuaris que et poden etiquetar o mencionar.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">2. Com Utilitzem la Teva Informació</h2>
+                    <div class="section-content">
+                        <strong>Prestació del Servei:</strong> Crear i gestionar el teu compte, processar càrregues i subscripcions, facilitar la descoberta de contingut, processar pagaments i guanys.<br><br>
+                        
+                        <strong>Millora de la Plataforma:</strong> Analitzar patrons d'ús, personalitzar el teu feed, millorar recomanacions, desenvolupar noves funcionalitats, garantir la seguretat de la plataforma.<br><br>
+                        
+                        <strong>Comunicació:</strong> Enviar notificacions sobre l'activitat del compte, actualitzacions sobre els nostres serveis, respondre a les teves consultes, comunicacions de màrqueting (amb el teu consentiment).<br><br>
+                        
+                        <strong>Legal i Seguretat:</strong> Complir obligacions legals, prevenir frau i abusos, fer complir els nostres termes de servei, protegir la seguretat dels usuaris.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">3. Base Legal per al Tractament (GDPR)</h2>
+                    <div class="section-content">
+                        <strong>Necessitat Contractual:</strong> Tractament necessari per proporcionar els nostres serveis i complir el nostre acord amb tu.<br><br>
+                        
+                        <strong>Interessos Legítims:</strong> Millorar els nostres serveis, garantir la seguretat, prevenir frau i personalitzar la teva experiència.<br><br>
+                        
+                        <strong>Consentiment:</strong> Comunicacions de màrqueting, funcionalitats opcionals i certs usos de dades on demanem el teu consentiment explícit.<br><br>
+                        
+                        <strong>Obligacions Legals:</strong> Compliment de les lleis aplicables, ordres judicials i requisits regulatoris.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">4. Compartició i Divulgació d'Informació</h2>
+                    <div class="section-content">
+                        <strong>Mai Venem les Teves Dades.</strong> No venem, lloguem ni intercanviem la teva informació personal a tercers amb fins de màrqueting.<br><br>
+                        
+                        <strong>Proveïdors de Serveis:</strong> Proveïdors d'allotjament al núvol, processadors de pagament, serveis d'analítiques, eines de suport al client, xarxes de distribució de contingut (tots sota acords estrictes de confidencialitat).<br><br>
+                        
+                        <strong>Requisits Legals:</strong> Quan sigui requerit per llei, ordres judicials o per protegir els nostres drets i la seguretat dels nostres usuaris.<br><br>
+                        
+                        <strong>Transferències de Negoci:</strong> En cas de fusió, adquisició o venda d'actius (amb notificació als usuaris).<br><br>
+                        
+                        <strong>Amb el Teu Consentiment:</strong> Qualsevol altra compartició només es produirà amb el teu permís explícit.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">5. Seguretat i Protecció de Dades</h2>
+                    <div class="section-content">
+                        <strong>Mesures Tècniques:</strong> Xifratge d'extrem a extrem per a dades sensibles, connexions HTTPS segures, auditories de seguretat regulars, controls d'accés i sistemes d'autenticació.<br><br>
+                        
+                        <strong>Mesures Organitzatives:</strong> Formació dels empleats sobre protecció de dades, accés limitat segons necessitat de coneixement, actualitzacions regulars de polítiques de seguretat, procediments de resposta a incidents.<br><br>
+                        
+                        <strong>Còpia de Seguretat i Recuperació de Dades:</strong> Còpies de seguretat regulars i segures, plans de recuperació de desastres, sistemes d'emmagatzematge redundants.<br><br>
+                        
+                        Tot i que implementem mesures de seguretat estàndard de la indústria, cap sistema és 100% segur. T'animem a utilitzar contrasenyes fortes i habilitar l'autenticació de dos factors quan estigui disponible.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">6. Els Teus Drets de Privacitat</h2>
+                    <div class="section-content">
+                        <strong>Accés:</strong> Sol·licitar una còpia de les teves dades personals que tenim.<br><br>
+                        
+                        <strong>Rectificació:</strong> Corregir informació inexacta o incompleta.<br><br>
+                        
+                        <strong>Supressió:</strong> Sol·licitar l'eliminació de les teves dades personals (subjecte a requisits legals).<br><br>
+                        
+                        <strong>Portabilitat:</strong> Rebre les teves dades en un format estructurat i llegible per màquina.<br><br>
+                        
+                        <strong>Restricció:</strong> Limitar com processem les teves dades en certes circumstàncies.<br><br>
+                        
+                        <strong>Oposició:</strong> Oposar-te al tractament basat en interessos legítims o amb fins de màrqueting.<br><br>
+                        
+                        <strong>Retirar Consentiment:</strong> Retirar el consentiment per al tractament quan el consentiment sigui la base legal.<br><br>
+                        
+                        Per exercir aquests drets, contacta amb nosaltres a <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a>. Respondrem dins de 30 dies.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">7. Galetes i Tecnologies de Seguiment</h2>
+                    <div class="section-content">
+                        <strong>Galetes Essencials:</strong> Necessàries per a la funcionalitat bàsica, seguretat i autenticació d'usuaris.<br><br>
+                        
+                        <strong>Galetes de Rendiment:</strong> Ens ajuden a entendre com els usuaris interactuen amb la nostra plataforma per millorar el rendiment.<br><br>
+                        
+                        <strong>Galetes de Funcionalitat:</strong> Recordar les teves preferències i configuracions de personalització.<br><br>
+                        
+                        <strong>Galetes d'Analítiques:</strong> Proporcionar informació sobre patrons d'ús i rendiment de la plataforma.<br><br>
+                        
+                        Pots controlar les galetes a través de la configuració del teu navegador. No obstant això, desactivar certes galetes pot afectar la funcionalitat de la plataforma. També utilitzem emmagatzematge local, píxels i tecnologies similars per a propòsits semblants.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">8. Serveis de Tercers i Integracions</h2>
+                    <div class="section-content">
+                        <strong>Processadors de Pagament:</strong> Stripe, PayPal i altres proveïdors de pagament segurs gestionen dades de transaccions segons les seves polítiques de privacitat.<br><br>
+                        
+                        <strong>Xarxes Socials:</strong> Integració amb plataformes com Google, Apple, Facebook per funcions d'autenticació i compartició.<br><br>
+                        
+                        <strong>Serveis d'Analítiques:</strong> Analítiques de tercers per entendre el comportament dels usuaris i millorar els nostres serveis.<br><br>
+                        
+                        <strong>Serveis al Núvol:</strong> AWS, Google Cloud o proveïdors similars per allotjament i emmagatzematge.<br><br>
+                        
+                        Aquests serveis tenen les seves pròpies polítiques de privacitat que regeixen com gestionen les teves dades. Recomanem revisar les seves polítiques i triar proveïdors amb reputació i pràctiques sòlides de privacitat.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">9. Retenció i Eliminació de Dades</h2>
+                    <div class="section-content">
+                        <strong>Comptes Actius:</strong> Conservem les teves dades mentre el teu compte estigui actiu i durant un període raonable posterior.<br><br>
+                        
+                        <strong>Comptes Eliminats:</strong> Les dades personals s'eliminen dins de 90 dies després de l'eliminació del compte, excepte quan sigui requerit per llei.<br><br>
+                        
+                        <strong>Contingut:</strong> El contingut pujat s'elimina immediatament quan l'elimines, encara que les còpies en memòria cau poden persistir fins a 30 dies.<br><br>
+                        
+                        <strong>Requisits Legals:</strong> Algunes dades poden conservar-se més temps per complir obligacions legals, resoldre disputes o fer complir acords.<br><br>
+                        
+                        <strong>Sistemes de Còpia de Seguretat:</strong> Les dades en sistemes de còpia de seguretat s'eliminen automàticament segons el nostre calendari de retenció de dades.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">10. Transferències Internacionals de Dades</h2>
+                    <div class="section-content">
+                        Redbee opera globalment i la teva informació pot ser transferida i processada en països fora de la teva ubicació, incloent-hi els Estats Units i la Unió Europea.<br><br>
+                        
+                        <strong>Mesures de Protecció:</strong> Implementem mesures de protecció adequades com Clàusules Contractuals Estàndard (CCE), decisions d'adequació i altres mecanismes legals per protegir les teves dades durant transferències internacionals.<br><br>
+                        
+                        <strong>Localització de Dades:</strong> Quan sigui requerit per la llei local, garantim que les dades romanguin dins de límits geogràfics específics.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">11. Privacitat dels Menors</h2>
+                    <div class="section-content">
+                        Redbee no està destinat a menors de 13 anys. No recopilem consciemment informació personal de menors de 13 anys. Si ens adonem que hem recopilit informació personal d'un menor de 13 anys, prendrem mesures per eliminar aquesta informació ràpidament.<br><br>
+                        
+                        Per als usuaris d'entre 13 i 17 anys, recomanem supervisió paterna i proporcionem proteccions addicionals de privacitat quan sigui requerit per llei.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">12. Drets de Privacitat Regionals</h2>
+                    <div class="section-content">
+                        <strong>Residents de Califòrnia (CCPA/CPRA):</strong> Tens drets per saber, eliminar, corregir i optar per no participar en la venda d'informació personal. No venem informació personal.<br><br>
+                        
+                        <strong>Residents Europeus (GDPR):</strong> Tens drets millorats incloent-hi portabilitat de dades, dret a l'oblit i dret a presentar queixes davant autoritats supervisores.<br><br>
+                        
+                        <strong>Altres Jurisdiccions:</strong> Complim les lleis de privacitat aplicables en totes les jurisdiccions on operem.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">13. Canvis en aquesta Política de Privacitat</h2>
+                    <div class="section-content">
+                        Podem actualitzar aquesta política de privacitat periòdicament per reflectir canvis en les nostres pràctiques, serveis o lleis aplicables. Et notificarem canvis materials mitjançant:<br><br>
+                        
+                        • Notificació per correu electrònic a la teva adreça registrada<br>
+                        • Notificacions dins de l'aplicació<br>
+                        • Avís prominent al nostre lloc web<br><br>
+                        
+                        L'ús continuat dels nostres serveis després de la notificació constitueix l'acceptació de la política actualitzada. La data d'"Última Actualització" indica quan es va revisar la política per última vegada.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">14. Informació de Contacte i Responsable de Protecció de Dades</h2>
+                    <div class="section-content">
+                        <strong>Preguntes Generals sobre Privacitat:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Responsable de Protecció de Dades:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Adreça Postal:</strong><br>
+                        Equip de Privacitat de Redbee<br>
+                        [Adreça de l'Empresa]<br>
+                        [Ciutat, Estat/Província, Codi Postal]<br>
+                        [País]<br><br>
+                        
+                        Estem compromesos amb abordar les teves preocupacions sobre privacitat de manera ràpida i transparent. Si us plau, permet fins a 30 dies per a una resposta completa a la teva consulta.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="/terms/ca_ES" class="footer-link">Termes del Servei</a>
+                <a href="/waiting-list" class="footer-link">Llista d'Espera</a>
+                <a href="mailto:admin@redbeeapp.com" class="footer-link">Contacte</a>
+            </div>
+            <p>&copy; 2025 Redbee. El futur del contingut digital.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Handle logo fallback if image fails to load
+        const logoIcon = document.getElementById('logoIcon');
+        const logoFallback = document.getElementById('logoFallback');
+        
+        // Check if background image loads successfully
+        const testImg = new Image();
+        testImg.onload = function() {
+            // Image loaded successfully, keep as is
+        };
+        testImg.onerror = function() {
+            // Image failed to load, show fallback
+            logoIcon.classList.add('logo-icon-fallback');
+            logoFallback.style.display = 'block';
+        };
+        testImg.src = '/icon.png';
+    </script>
+</body>
+</html>

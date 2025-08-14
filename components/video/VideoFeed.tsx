@@ -100,6 +100,7 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({
 	const flashListRef = useRef<FlashList<Video>>(null);
 	const [activeVideoIndex, setActiveVideoIndex] = useState(0);
 	const [viewableItems, setViewableItems] = useState<ViewToken[]>([]);
+	const [showFixedLastVideo, setShowFixedLastVideo] = useState(false);
 
 	// Handle viewable items change to determine active video
 	const onViewableItemsChanged = useCallback(
@@ -112,11 +113,27 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({
 				);
 
 				if (activeItem && activeItem.index !== null) {
-					setActiveVideoIndex(activeItem.index);
+					const newIndex = activeItem.index;
+					setActiveVideoIndex(newIndex);
+					
+					// Show fixed overlay when on last video
+					const isLastVideo = newIndex === videos.length - 1;
+					setShowFixedLastVideo(isLastVideo);
+					
+					if (isLastVideo) {
+						// Force exact position
+						setTimeout(() => {
+							const expectedPosition = newIndex * SCREEN_HEIGHT;
+							flashListRef.current?.scrollToOffset({
+								offset: expectedPosition,
+								animated: false,
+							});
+						}, 50);
+					}
 				}
 			}
 		},
-		[],
+		[videos.length],
 	);
 
 	// Configuration for viewability
@@ -131,6 +148,46 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({
 			onLoadMore();
 		}
 	}, [isLoading, isRefreshing, onLoadMore]);
+
+	// Prevent scroll when on last video
+	const handleScrollBeginDrag = useCallback((event: any) => {
+		if (activeVideoIndex === videos.length - 1) {
+			// Prevent the scroll from starting
+			event.preventDefault?.();
+			const expectedPosition = activeVideoIndex * SCREEN_HEIGHT;
+			flashListRef.current?.scrollToOffset({
+				offset: expectedPosition,
+				animated: false,
+			});
+		}
+	}, [activeVideoIndex, videos.length]);
+
+	// Override scroll to maintain position
+	const handleMomentumScrollBegin = useCallback((event: any) => {
+		if (activeVideoIndex === videos.length - 1) {
+			const expectedPosition = activeVideoIndex * SCREEN_HEIGHT;
+			flashListRef.current?.scrollToOffset({
+				offset: expectedPosition,
+				animated: false,
+			});
+		}
+	}, [activeVideoIndex, videos.length]);
+
+	// Block any scroll on last video
+	const handleScroll = useCallback((event: any) => {
+		if (activeVideoIndex === videos.length - 1) {
+			const { contentOffset } = event.nativeEvent;
+			const expectedPosition = activeVideoIndex * SCREEN_HEIGHT;
+			
+			// If position is not exactly where it should be, force it back
+			if (Math.abs(contentOffset.y - expectedPosition) > 1) {
+				flashListRef.current?.scrollToOffset({
+					offset: expectedPosition,
+					animated: false,
+				});
+			}
+		}
+	}, [activeVideoIndex, videos.length]);
 
 	// Render individual video item
 	const renderVideoItem = useCallback(
@@ -207,37 +264,62 @@ export const VideoFeed: React.FC<VideoFeedProps> = ({
 			{videos.length === 0 ? (
 				renderEmptyState()
 			) : (
-				<FlashList
-					ref={flashListRef}
-					data={videos}
-					renderItem={renderVideoItem}
-					keyExtractor={keyExtractor}
-					estimatedItemSize={SCREEN_HEIGHT}
-					showsVerticalScrollIndicator={false}
-					pagingEnabled
-					snapToInterval={SCREEN_HEIGHT}
-					snapToAlignment="start"
-					decelerationRate="fast"
-					onViewableItemsChanged={onViewableItemsChanged}
-					viewabilityConfig={viewabilityConfig}
-					onEndReached={handleEndReached}
-					onEndReachedThreshold={0.5}
-					refreshControl={
-						<RefreshControl
-							refreshing={isRefreshing}
-							onRefresh={onRefresh}
-							tintColor={Colors.primary}
-							colors={[Colors.primary]}
-							progressBackgroundColor={Colors.background}
-						/>
-					}
-					ListFooterComponent={renderFooter}
-					removeClippedSubviews={true}
-					maintainVisibleContentPosition={{
-						minIndexForVisible: 0,
-						autoscrollToTopThreshold: 10,
-					}}
-				/>
+				<>
+					<FlashList
+						ref={flashListRef}
+						data={videos}
+						renderItem={renderVideoItem}
+						keyExtractor={keyExtractor}
+						estimatedItemSize={SCREEN_HEIGHT}
+						showsVerticalScrollIndicator={false}
+						pagingEnabled
+						snapToInterval={SCREEN_HEIGHT}
+						snapToAlignment="start"
+						decelerationRate="fast"
+						scrollEnabled={!showFixedLastVideo}
+						onViewableItemsChanged={onViewableItemsChanged}
+						viewabilityConfig={viewabilityConfig}
+						onEndReached={handleEndReached}
+						onEndReachedThreshold={0.5}
+						onScroll={handleScroll}
+						onScrollBeginDrag={handleScrollBeginDrag}
+						onMomentumScrollBegin={handleMomentumScrollBegin}
+						scrollEventThrottle={1}
+						refreshControl={
+							<RefreshControl
+								refreshing={isRefreshing}
+								onRefresh={onRefresh}
+								tintColor={Colors.primary}
+								colors={[Colors.primary]}
+								progressBackgroundColor={Colors.background}
+							/>
+						}
+						ListFooterComponent={renderFooter}
+						removeClippedSubviews={true}
+						maintainVisibleContentPosition={{
+							minIndexForVisible: 0,
+							autoscrollToTopThreshold: 10,
+						}}
+					/>
+					
+					{/* Fixed overlay for last video to prevent any movement */}
+					{showFixedLastVideo && videos.length > 0 && (
+						<View style={styles.fixedVideoOverlay} pointerEvents="box-none">
+							<VideoItem
+								video={videos[videos.length - 1]}
+								isActive={true}
+								currentUser={currentUser}
+								onLike={() => onVideoLike(videos[videos.length - 1].id)}
+								onComment={() => onVideoComment(videos[videos.length - 1].id)}
+								onFollow={() => videos[videos.length - 1].user?.id && onUserFollow(videos[videos.length - 1].user.id)}
+								onSubscribe={() => videos[videos.length - 1].user?.id && onUserSubscribe(videos[videos.length - 1].user.id)}
+								onReport={() => onVideoReport(videos[videos.length - 1].id, 'inappropriate')}
+								onUserPress={() => videos[videos.length - 1].user?.id && onUserPress(videos[videos.length - 1].user.id)}
+								onCommentAdded={onCommentAdded}
+							/>
+						</View>
+					)}
+				</>
 			)}
 		</View>
 	);
@@ -577,6 +659,17 @@ const styles = StyleSheet.create({
 	videoItem: {
 		width: '100%',
 		height: SCREEN_HEIGHT,
+	},
+	fixedVideoOverlay: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+		bottom: 0,
+		width: '100%',
+		height: SCREEN_HEIGHT,
+		backgroundColor: Colors.videoBackground,
+		zIndex: 1000,
 	},
 	emptyState: {
 		flex: 1,

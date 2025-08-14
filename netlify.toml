@@ -17,7 +17,39 @@
   to = "/waiting-list/index.html"
   status = 200
 
-# Redirect rules for SPA (after excluding .well-known)
+# Static legal pages (exclude from SPA redirects)
+[[redirects]]
+  from = "/terms/es_ES"
+  to = "/terms/es_ES/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/terms/en_US"
+  to = "/terms/en_US/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy/es_ES"
+  to = "/privacy/es_ES/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/privacy/en_US"
+  to = "/privacy/en_US/index.html"
+  status = 200
+
+# Fallback redirects for legal pages - default to Spanish if language not found
+[[redirects]]
+  from = "/terms/*"
+  to = "/terms/es_ES/index.html"
+  status = 302
+
+[[redirects]]
+  from = "/privacy/*"
+  to = "/privacy/es_ES/index.html"
+  status = 302
+
+# Redirect rules for SPA (after excluding .well-known and legal pages)
 [[redirects]]
   from = "/*"
   to = "/index.html"

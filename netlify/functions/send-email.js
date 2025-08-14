@@ -273,7 +273,7 @@ exports.handler = async (event, context) => {
 				'X-Mailer': 'Redbee Platform',
 				'List-Unsubscribe': '<mailto:unsubscribe@redbeeapp.com>',
 				'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-				'Reply-To': 'support@redbeeapp.com', // Evita no-reply
+				'Reply-To': 'admin@redbeeapp.com', // Evita no-reply
 			},
 			tags: [
 				{

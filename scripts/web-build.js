@@ -116,6 +116,30 @@ try {
     console.warn('⚠️  waiting list page not found at', waitingListSource);
   }
   
+  // Copy legal pages (terms and privacy)
+  console.log('📋 Copying legal pages...');
+  
+  const legalPages = [
+    { source: 'website-files/terms/es_ES/index.html', target: path.join(distDir, 'terms', 'es_ES', 'index.html') },
+    { source: 'website-files/terms/en_US/index.html', target: path.join(distDir, 'terms', 'en_US', 'index.html') },
+    { source: 'website-files/privacy/es_ES/index.html', target: path.join(distDir, 'privacy', 'es_ES', 'index.html') },
+    { source: 'website-files/privacy/en_US/index.html', target: path.join(distDir, 'privacy', 'en_US', 'index.html') }
+  ];
+  
+  legalPages.forEach(({ source, target }) => {
+    if (fs.existsSync(source)) {
+      const targetDir = path.dirname(target);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+      
+      fs.copyFileSync(source, target);
+      console.log(`✅ Copied ${path.basename(path.dirname(source))}/${path.basename(source)} to ${target}`);
+    } else {
+      console.warn('⚠️  legal page not found at', source);
+    }
+  });
+  
   // Copy icon assets for waiting list
   console.log('📋 Copying icon assets...');
   
@@ -139,7 +163,20 @@ try {
     console.warn('⚠️  favicon.png not found at', faviconSource);
   }
   
-  console.log('🔗 Deep links files ready for deployment!');
+  // Copy _redirects file for Netlify
+  console.log('📋 Copying _redirects file...');
+  
+  const redirectsSource = 'website-files/_redirects';
+  const redirectsTarget = path.join(distDir, '_redirects');
+  
+  if (fs.existsSync(redirectsSource)) {
+    fs.copyFileSync(redirectsSource, redirectsTarget);
+    console.log('✅ Copied _redirects file for Netlify routing');
+  } else {
+    console.warn('⚠️  _redirects file not found at', redirectsSource);
+  }
+  
+  console.log('🔗 Deep links, legal pages, and routing ready for deployment!');
   
 } catch (error) {
   console.error('❌ Build failed:', error.message);

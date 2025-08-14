@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidade - Redbee</title>
+    <meta name="description" content="Política de privacidade da Redbee. Aprenda como protegemos e gerimos os seus dados pessoais na nossa plataforma.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://redbeeapp.com/privacy/pt_PT">
+    <meta property="og:title" content="Política de Privacidade - Redbee">
+    <meta property="og:description" content="Política de privacidade da Redbee. Aprenda como protegemos e gerimos os seus dados pessoais na nossa plataforma.">
+    <meta property="og:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://redbeeapp.com/privacy/pt_PT">
+    <meta property="twitter:title" content="Política de Privacidade - Redbee">
+    <meta property="twitter:description" content="Política de privacidade da Redbee. Aprenda como protegemos e gerimos os seus dados pessoais na nossa plataforma.">
+    <meta property="twitter:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <style>
+        :root {
+            --primary: #E1306C;
+            --primary-dark: #892142;
+            --primary-light: #F77737;
+            --secondary: #1C1C1E;
+            --accent: #2C2C2E;
+            --success: #28A745;
+            --warning: #FFC107;
+            --danger: #DC3545;
+            --dark: #000000;
+            --light: #FFFFFF;
+            --gray-50: #f8f9fa;
+            --gray-100: #e9ecef;
+            --gray-200: #dee2e6;
+            --gray-300: #ADB5BD;
+            --gray-400: #6C757D;
+            --gray-500: #495057;
+            --gray-600: #343a40;
+            --gray-700: #212529;
+            --gray-800: #1a1a1a;
+            --gradient-primary: linear-gradient(135deg, #E1306C 0%, #F77737 100%);
+            --gradient-dark: linear-gradient(135deg, #000000 0%, #1C1C1E 100%);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--light);
+            background: var(--gradient-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: var(--gradient-primary);
+            animation: rotate 20s linear infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Header */
+        .header {
+            padding: 24px 0;
+            backdrop-filter: blur(10px);
+            background: rgba(26, 26, 26, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--light);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-image: url('/icon.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        
+        .logo-icon-fallback {
+            background: var(--gradient-primary);
+            background-image: none;
+        }
+
+        .logo-text {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .language-switcher {
+            position: relative;
+        }
+
+        .language-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .language-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary);
+        }
+
+        /* Main content */
+        .main {
+            padding: 60px 0;
+        }
+
+        .document-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .document-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .document-subtitle {
+            font-size: 1.2rem;
+            color: var(--gray-300);
+            margin-bottom: 8px;
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+            font-style: italic;
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 48px;
+            margin-bottom: 40px;
+        }
+
+        .introduction {
+            font-size: 1.1rem;
+            color: var(--gray-200);
+            margin-bottom: 40px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(225, 48, 108, 0.3);
+        }
+
+        .section-content {
+            font-size: 1rem;
+            color: var(--gray-300);
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer p {
+            color: var(--gray-400);
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .footer-link {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content {
+                padding: 32px 24px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <a href="/" class="logo">
+                    <div class="logo-icon" id="logoIcon">
+                        <span id="logoFallback" style="display: none;">R</span>
+                    </div>
+                    <span class="logo-text">Redbee</span>
+                </a>
+                <div class="language-switcher">
+                    <a href="/privacy/es_ES" class="language-button">Español</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <div class="document-header">
+                <h1 class="document-title">Política de Privacidade</h1>
+                <p class="document-subtitle">Redbee - Plataforma de Conteúdo Digital</p>
+                <p class="last-updated">Última atualização: 14 de janeiro de 2025</p>
+            </div>
+
+            <div class="content">
+                <div class="introduction">
+                    Na Redbee ("nós", "nossa empresa"), respeitamos a sua privacidade e comprometemo-nos a proteger os seus dados pessoais. Esta política de privacidade abrangente explica como recolhemos, utilizamos, armazenamos e protegemos as suas informações quando utiliza a nossa plataforma de conteúdo digital e serviços relacionados.
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">1. Informação que Recolhemos</h2>
+                    <div class="section-content">
+                        <strong>Informação que Fornece:</strong> Informação da conta (e-mail, nome de utilizador, nome de visualização, palavra-passe), dados do perfil (biografia, foto de perfil, preços de subscrição), informação de pagamento, conteúdo que carrega (vídeos, comentários, mensagens) e comunicações connosco.<br><br>
+                        
+                        <strong>Informação Recolhida Automaticamente:</strong> Informação do dispositivo (tipo de dispositivo, sistema operativo, tipo de navegador), dados de utilização (vídeos vistos, tempo gasto, interações), endereço IP e dados de localização, cookies e tecnologias de rastreamento similares, e ficheiros de registo.<br><br>
+                        
+                        <strong>Informação de Terceiros:</strong> Plataformas de redes sociais (se conectar as suas contas), processadores de pagamento, fornecedores de análises e outros utilizadores que o possam marcar ou mencionar.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">2. Como Utilizamos a Sua Informação</h2>
+                    <div class="section-content">
+                        <strong>Prestação de Serviço:</strong> Criar e gerir a sua conta, processar carregamentos e subscrições, facilitar a descoberta de conteúdo, processar pagamentos e ganhos.<br><br>
+                        
+                        <strong>Melhoria da Plataforma:</strong> Analisar padrões de utilização, personalizar o seu feed, melhorar recomendações, desenvolver novas funcionalidades, garantir a segurança da plataforma.<br><br>
+                        
+                        <strong>Comunicação:</strong> Enviar notificações sobre atividade da conta, atualizações sobre os nossos serviços, responder às suas consultas, comunicações de marketing (com o seu consentimento).<br><br>
+                        
+                        <strong>Legal e Segurança:</strong> Cumprir obrigações legais, prevenir fraude e abusos, fazer cumprir os nossos termos de serviço, proteger a segurança dos utilizadores.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">3. Base Legal para Processamento (GDPR)</h2>
+                    <div class="section-content">
+                        <strong>Necessidade Contratual:</strong> Processamento necessário para fornecer os nossos serviços e cumprir o nosso acordo consigo.<br><br>
+                        
+                        <strong>Interesses Legítimos:</strong> Melhorar os nossos serviços, garantir segurança, prevenir fraude e personalizar a sua experiência.<br><br>
+                        
+                        <strong>Consentimento:</strong> Comunicações de marketing, funcionalidades opcionais e certas utilizações de dados onde pedimos o seu consentimento explícito.<br><br>
+                        
+                        <strong>Obrigações Legais:</strong> Conformidade com leis aplicáveis, ordens judiciais e requisitos regulamentares.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">4. Partilha e Divulgação de Informação</h2>
+                    <div class="section-content">
+                        <strong>Nunca Vendemos os Seus Dados.</strong> Não vendemos, alugamos ou trocamos as suas informações pessoais a terceiros para fins de marketing.<br><br>
+                        
+                        <strong>Prestadores de Serviços:</strong> Fornecedores de alojamento na nuvem, processadores de pagamento, serviços de análise, ferramentas de apoio ao cliente, redes de distribuição de conteúdo (todos sob rigorosos acordos de confidencialidade).<br><br>
+                        
+                        <strong>Requisitos Legais:</strong> Quando exigido por lei, ordens judiciais ou para proteger os nossos direitos e a segurança dos nossos utilizadores.<br><br>
+                        
+                        <strong>Transferências de Negócio:</strong> Em caso de fusão, aquisição ou venda de ativos (com notificação aos utilizadores).<br><br>
+                        
+                        <strong>Com o Seu Consentimento:</strong> Qualquer outra partilha só ocorrerá com a sua permissão explícita.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">5. Segurança e Proteção de Dados</h2>
+                    <div class="section-content">
+                        <strong>Salvaguardas Técnicas:</strong> Encriptação ponto-a-ponto para dados sensíveis, ligações HTTPS seguras, auditorias de segurança regulares, controlos de acesso e sistemas de autenticação.<br><br>
+                        
+                        <strong>Medidas Organizacionais:</strong> Formação de funcionários sobre proteção de dados, acesso limitado numa base de necessidade de saber, atualizações regulares de políticas de segurança, procedimentos de resposta a incidentes.<br><br>
+                        
+                        <strong>Cópia de Segurança e Recuperação de Dados:</strong> Cópias de segurança regulares e seguras, planos de recuperação de desastres, sistemas de armazenamento redundantes.<br><br>
+                        
+                        Embora implementemos medidas de segurança padrão da indústria, nenhum sistema é 100% seguro. Encorajamos-o a usar palavras-passe fortes e ativar a autenticação de dois fatores quando disponível.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">6. Os Seus Direitos de Privacidade</h2>
+                    <div class="section-content">
+                        <strong>Acesso:</strong> Solicitar uma cópia dos seus dados pessoais que detemos.<br><br>
+                        
+                        <strong>Retificação:</strong> Corrigir informação incorreta ou incompleta.<br><br>
+                        
+                        <strong>Apagamento:</strong> Solicitar a eliminação dos seus dados pessoais (sujeito a requisitos legais).<br><br>
+                        
+                        <strong>Portabilidade:</strong> Receber os seus dados num formato estruturado e legível por máquina.<br><br>
+                        
+                        <strong>Restrição:</strong> Limitar como processamos os seus dados em certas circunstâncias.<br><br>
+                        
+                        <strong>Oposição:</strong> Opor-se ao processamento baseado em interesses legítimos ou para fins de marketing.<br><br>
+                        
+                        <strong>Retirar Consentimento:</strong> Retirar consentimento para processamento quando o consentimento é a base legal.<br><br>
+                        
+                        Para exercer estes direitos, contacte-nos em <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a>. Responderemos dentro de 30 dias.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">7. Cookies e Tecnologias de Rastreamento</h2>
+                    <div class="section-content">
+                        <strong>Cookies Essenciais:</strong> Necessários para funcionalidade básica, segurança e autenticação de utilizadores.<br><br>
+                        
+                        <strong>Cookies de Performance:</strong> Ajudam-nos a entender como os utilizadores interagem com a nossa plataforma para melhorar a performance.<br><br>
+                        
+                        <strong>Cookies de Funcionalidade:</strong> Lembram-se das suas preferências e configurações de personalização.<br><br>
+                        
+                        <strong>Cookies de Análise:</strong> Fornecem insights sobre padrões de utilização e performance da plataforma.<br><br>
+                        
+                        Pode controlar cookies através das configurações do seu navegador. No entanto, desativar certos cookies pode afetar a funcionalidade da plataforma. Também utilizamos armazenamento local, píxeis e tecnologias similares para fins semelhantes.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">8. Serviços de Terceiros e Integrações</h2>
+                    <div class="section-content">
+                        <strong>Processadores de Pagamento:</strong> Stripe, PayPal e outros fornecedores de pagamento seguros gerem dados de transação de acordo com as suas políticas de privacidade.<br><br>
+                        
+                        <strong>Redes Sociais:</strong> Integração com plataformas como Google, Apple, Facebook para funcionalidades de autenticação e partilha.<br><br>
+                        
+                        <strong>Serviços de Análise:</strong> Análises de terceiros para compreender o comportamento dos utilizadores e melhorar os nossos serviços.<br><br>
+                        
+                        <strong>Serviços na Nuvem:</strong> AWS, Google Cloud ou fornecedores similares para alojamento e armazenamento.<br><br>
+                        
+                        Estes serviços têm as suas próprias políticas de privacidade que governam como gerem os seus dados. Recomendamos rever as suas políticas e escolher fornecedores respeitáveis com práticas sólidas de privacidade.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">9. Retenção e Eliminação de Dados</h2>
+                    <div class="section-content">
+                        <strong>Contas Ativas:</strong> Retemos os seus dados enquanto a sua conta estiver ativa e por um período razoável após.<br><br>
+                        
+                        <strong>Contas Eliminadas:</strong> Dados pessoais são eliminados dentro de 90 dias da eliminação da conta, exceto onde exigido por lei.<br><br>
+                        
+                        <strong>Conteúdo:</strong> Conteúdo carregado é eliminado imediatamente quando o elimina, embora cópias em cache possam persistir até 30 dias.<br><br>
+                        
+                        <strong>Requisitos Legais:</strong> Alguns dados podem ser retidos por mais tempo para cumprir obrigações legais, resolver disputas ou fazer cumprir acordos.<br><br>
+                        
+                        <strong>Sistemas de Cópia de Segurança:</strong> Dados em sistemas de cópia de segurança são automaticamente eliminados de acordo com o nosso calendário de retenção de dados.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">10. Transferências Internacionais de Dados</h2>
+                    <div class="section-content">
+                        A Redbee opera globalmente, e a sua informação pode ser transferida e processada em países fora da sua localização, incluindo Estados Unidos e União Europeia.<br><br>
+                        
+                        <strong>Salvaguardas:</strong> Implementamos salvaguardas apropriadas como Cláusulas Contratuais Padrão (CCP), decisões de adequação e outros mecanismos legais para proteger os seus dados durante transferências internacionais.<br><br>
+                        
+                        <strong>Localização de Dados:</strong> Onde exigido pela lei local, garantimos que os dados permanecem dentro de fronteiras geográficas específicas.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">11. Privacidade de Crianças</h2>
+                    <div class="section-content">
+                        A Redbee não se destina a crianças menores de 13 anos. Não recolhemos conscientemente informação pessoal de crianças menores de 13 anos. Se tomarmos conhecimento de que recolhemos informação pessoal de uma criança menor de 13 anos, tomaremos medidas para eliminar tal informação prontamente.<br><br>
+                        
+                        Para utilizadores entre 13-17 anos, recomendamos supervisão parental e fornecemos proteções de privacidade adicionais onde exigido por lei.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">12. Direitos de Privacidade Regionais</h2>
+                    <div class="section-content">
+                        <strong>Residentes da Califórnia (CCPA/CPRA):</strong> Tem direitos de saber, eliminar, corrigir e optar por não participar na venda de informação pessoal. Não vendemos informação pessoal.<br><br>
+                        
+                        <strong>Residentes Europeus (GDPR):</strong> Tem direitos reforçados incluindo portabilidade de dados, direito ao esquecimento e direito de apresentar queixas a autoridades supervisoras.<br><br>
+                        
+                        <strong>Outras Jurisdições:</strong> Cumprimos leis de privacidade aplicáveis em todas as jurisdições onde operamos.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">13. Alterações a Esta Política de Privacidade</h2>
+                    <div class="section-content">
+                        Podemos atualizar esta política de privacidade periodicamente para refletir mudanças nas nossas práticas, serviços ou leis aplicáveis. Notificaremos alterações materiais através de:<br><br>
+                        
+                        • Notificação por e-mail para o seu endereço registado<br>
+                        • Notificações na aplicação<br>
+                        • Aviso proeminente no nosso website<br><br>
+                        
+                        O uso continuado dos nossos serviços após notificação constitui aceitação da política atualizada. A data "Última Atualização" indica quando a política foi revista pela última vez.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">14. Informação de Contacto e Encarregado de Proteção de Dados</h2>
+                    <div class="section-content">
+                        <strong>Questões Gerais sobre Privacidade:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Encarregado de Proteção de Dados:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Endereço Postal:</strong><br>
+                        Equipa de Privacidade Redbee<br>
+                        [Endereço da Empresa]<br>
+                        [Cidade, Estado/Província, Código Postal]<br>
+                        [País]<br><br>
+                        
+                        Comprometemo-nos a abordar as suas preocupações de privacidade prontamente e transparentemente. Por favor permita até 30 dias para uma resposta completa à sua consulta.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="/terms/pt_PT" class="footer-link">Termos de Serviço</a>
+                <a href="/waiting-list" class="footer-link">Lista de Espera</a>
+                <a href="mailto:admin@redbeeapp.com" class="footer-link">Contacto</a>
+            </div>
+            <p>&copy; 2025 Redbee. O futuro do conteúdo digital.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Handle logo fallback if image fails to load
+        const logoIcon = document.getElementById('logoIcon');
+        const logoFallback = document.getElementById('logoFallback');
+        
+        // Check if background image loads successfully
+        const testImg = new Image();
+        testImg.onload = function() {
+            // Image loaded successfully, keep as is
+        };
+        testImg.onerror = function() {
+            // Image failed to load, show fallback
+            logoIcon.classList.add('logo-icon-fallback');
+            logoFallback.style.display = 'block';
+        };
+        testImg.src = '/icon.png';
+    </script>
+</body>
+</html>

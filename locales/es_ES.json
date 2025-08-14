@@ -435,5 +435,103 @@
 		"videoInteractions": "Interacciones de video",
 		"commentInteractions": "Interacciones de comentarios",
 		"socialNotifications": "Notificaciones sociales"
+	},
+	"termsOfService": {
+		"title": "Términos de Servicio",
+		"lastUpdated": "Última actualización: {{date}}",
+		"introduction": "Bienvenido a Redbee. Estos términos de servicio rigen el uso de nuestra plataforma de contenido digital. Al usar Redbee, aceptas cumplir con estos términos.",
+		"acceptance": {
+			"title": "1. Aceptación de los Términos",
+			"content": "Al acceder y usar Redbee, aceptas estar legalmente vinculado por estos términos de servicio. Si no aceptas estos términos, no debes usar nuestros servicios."
+		},
+		"services": {
+			"title": "2. Descripción del Servicio",
+			"content": "Redbee es una plataforma que permite a los creadores compartir contenido exclusivo con sus audiencias. Proporcionamos herramientas para crear, monetizar y distribuir contenido digital."
+		},
+		"userAccounts": {
+			"title": "3. Cuentas de Usuario",
+			"content": "Debes crear una cuenta para usar ciertos servicios. Eres responsable de mantener la confidencialidad de tu cuenta y contraseña, y de todas las actividades que ocurran bajo tu cuenta."
+		},
+		"content": {
+			"title": "4. Contenido del Usuario",
+			"content": "Eres responsable de todo el contenido que publiques en Redbee. Al subir contenido, garantizas que tienes los derechos necesarios y que el contenido no viola ninguna ley o derecho de terceros."
+		},
+		"payment": {
+			"title": "5. Pagos y Facturación",
+			"content": "Los creadores pueden establecer precios para su contenido premium. Los pagos se procesan de forma segura a través de proveedores de pago terceros. Las tarifas y políticas de reembolso se especifican por separado."
+		},
+		"prohibited": {
+			"title": "6. Uso Prohibido",
+			"content": "No puedes usar Redbee para actividades ilegales, acoso, spam, distribución de malware, o cualquier actividad que viole estos términos o las leyes aplicables."
+		},
+		"termination": {
+			"title": "7. Terminación",
+			"content": "Podemos suspender o terminar tu cuenta en cualquier momento por violación de estos términos. Puedes cancelar tu cuenta en cualquier momento desde la configuración de tu perfil."
+		},
+		"disclaimer": {
+			"title": "8. Descargo de Responsabilidad",
+			"content": "Redbee se proporciona 'tal como está' sin garantías. No somos responsables de cualquier daño directo, indirecto, incidental o consecuente que resulte del uso de nuestros servicios."
+		},
+		"changes": {
+			"title": "9. Cambios a los Términos",
+			"content": "Nos reservamos el derecho de modificar estos términos en cualquier momento. Te notificaremos sobre cambios significativos a través de la aplicación o por correo electrónico."
+		},
+		"contact": {
+			"title": "10. Contacto",
+			"content": "Si tienes preguntas sobre estos términos, puedes contactarnos en admin@redbeeapp.com"
+		}
+	},
+	"privacyPolicy": {
+		"title": "Política de Privacidad",
+		"lastUpdated": "Última actualización: {{date}}",
+		"introduction": "En Redbee, respetamos tu privacidad y nos comprometemos a proteger tus datos personales. Esta política explica cómo recopilamos, usamos y protegemos tu información.",
+		"dataCollection": {
+			"title": "1. Información que Recopilamos",
+			"content": "Recopilamos información que nos proporcionas directamente (como datos de perfil), información sobre tu uso de la plataforma (como videos vistos), e información técnica (como dirección IP y tipo de dispositivo)."
+		},
+		"dataUse": {
+			"title": "2. Cómo Usamos tu Información",
+			"content": "Usamos tu información para proporcionar y mejorar nuestros servicios, personalizar tu experiencia, procesar pagos, comunicarnos contigo, y cumplir con obligaciones legales."
+		},
+		"dataSharing": {
+			"title": "3. Compartir Información",
+			"content": "No vendemos tu información personal. Podemos compartir información con proveedores de servicios, para cumplir con obligaciones legales, o con tu consentimiento explícito."
+		},
+		"dataSecurity": {
+			"title": "4. Seguridad de los Datos",
+			"content": "Implementamos medidas de seguridad técnicas y organizativas para proteger tu información contra acceso no autorizado, alteración, divulgación o destrucción."
+		},
+		"userRights": {
+			"title": "5. Tus Derechos",
+			"content": "Tienes derecho a acceder, corregir, eliminar o exportar tus datos personales. También puedes objetar ciertos procesamientos de datos. Contacta con nosotros para ejercer estos derechos."
+		},
+		"cookies": {
+			"title": "6. Cookies y Tecnologías Similares",
+			"content": "Usamos cookies y tecnologías similares para mejorar tu experiencia, analizar el uso de la plataforma y proporcionar funcionalidades personalizadas. Puedes controlar las cookies a través de la configuración de tu navegador."
+		},
+		"thirdParty": {
+			"title": "7. Servicios de Terceros",
+			"content": "Nuestra plataforma puede integrar servicios de terceros (como procesadores de pago). Estos servicios tienen sus propias políticas de privacidad que recomendamos revisar."
+		},
+		"dataRetention": {
+			"title": "8. Retención de Datos",
+			"content": "Conservamos tu información solo durante el tiempo necesario para los fines descritos en esta política, o según lo requiera la ley. Los datos de cuentas eliminadas se borran de forma segura."
+		},
+		"international": {
+			"title": "9. Transferencias Internacionales",
+			"content": "Tu información puede ser transferida y procesada en países fuera de tu ubicación. Implementamos salvaguardas adecuadas para proteger tu información en estas transferencias."
+		},
+		"children": {
+			"title": "10. Privacidad de Menores",
+			"content": "Nuestros servicios están dirigidos a usuarios mayores de 13 años. No recopilamos conscientemente información personal de niños menores de 13 años."
+		},
+		"changes": {
+			"title": "11. Cambios a esta Política",
+			"content": "Podemos actualizar esta política de privacidad ocasionalmente. Te notificaremos sobre cambios significativos a través de la aplicación o por correo electrónico."
+		},
+		"contact": {
+			"title": "12. Contacto",
+			"content": "Si tienes preguntas sobre esta política de privacidad o el tratamiento de tus datos, contacta con nosotros en privacy@redbeeapp.com"
+		}
 	}
 }

@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+	ActivityIndicator,
 	Animated,
 	Dimensions,
 	Platform,
@@ -308,9 +309,11 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 							colors={Colors.gradientSecondary}
 							style={styles.loadingGradient}
 						>
-							<Animated.View style={styles.loadingSpinner}>
-								<Feather name="loader" size={32} color={Colors.primary} />
-							</Animated.View>
+							<ActivityIndicator 
+								size="large" 
+								color={Colors.primary}
+								style={styles.loadingSpinner}
+							/>
 							<Text style={styles.loadingText}>Cargando video...</Text>
 						</LinearGradient>
 					</View>

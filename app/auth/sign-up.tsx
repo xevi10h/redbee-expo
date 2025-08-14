@@ -7,6 +7,7 @@ import {
 	Alert,
 	Image,
 	KeyboardAvoidingView,
+	Linking,
 	Platform,
 	ScrollView,
 	StyleSheet,
@@ -25,6 +26,8 @@ import {
 	useUsernameAvailability,
 } from '@/hooks/useAvailabilityCheck';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuthStore } from '@/stores/authStore';
+import { getTermsUrl, getPrivacyUrl, areWebPagesAvailable, getWebPagesUnavailableMessage } from '@/shared/utils/webUrls';
 import {
 	sanitizeUsername,
 	validateEmail,
@@ -35,6 +38,7 @@ import { RegisterCredentials } from '@/shared/types';
 
 export default function SignUpScreen() {
 	const { t } = useTranslation();
+	const language = useAuthStore((state) => state.language);
 	const {
 		signUp,
 		signInWithGoogle,
@@ -239,6 +243,60 @@ export default function SignUpScreen() {
 		'Email',
 	);
 
+	const handleTermsPress = async () => {
+		if (!areWebPagesAvailable()) {
+			Alert.alert(t('common.info'), getWebPagesUnavailableMessage(), [
+				{ text: t('common.ok') }
+			]);
+			return;
+		}
+
+		try {
+			const url = getTermsUrl(language);
+			const canOpen = await Linking.canOpenURL(url);
+			if (canOpen) {
+				await Linking.openURL(url);
+			} else {
+				console.error('Cannot open URL:', url);
+				Alert.alert(t('common.error'), 'No se pudo abrir la página web', [
+					{ text: t('common.ok') }
+				]);
+			}
+		} catch (error) {
+			console.error('Error opening terms URL:', error);
+			Alert.alert(t('common.error'), 'Error al abrir la página web', [
+				{ text: t('common.ok') }
+			]);
+		}
+	};
+
+	const handlePrivacyPress = async () => {
+		if (!areWebPagesAvailable()) {
+			Alert.alert(t('common.info'), getWebPagesUnavailableMessage(), [
+				{ text: t('common.ok') }
+			]);
+			return;
+		}
+
+		try {
+			const url = getPrivacyUrl(language);
+			const canOpen = await Linking.canOpenURL(url);
+			if (canOpen) {
+				await Linking.openURL(url);
+			} else {
+				console.error('Cannot open URL:', url);
+				Alert.alert(t('common.error'), 'No se pudo abrir la página web', [
+					{ text: t('common.ok') }
+				]);
+			}
+		} catch (error) {
+			console.error('Error opening privacy URL:', error);
+			Alert.alert(t('common.error'), 'Error al abrir la página web', [
+				{ text: t('common.ok') }
+			]);
+		}
+	};
+
 	return (
 		<LinearGradient colors={Colors.gradientSecondary} style={styles.container}>
 			<StatusBar style="light" />
@@ -258,7 +316,9 @@ export default function SignUpScreen() {
 							source={require('../../assets/images/icon.png')}
 							style={styles.logo}
 						/>
-						<Text style={styles.title}>Redbee</Text>
+						<Text style={styles.title}>
+							Red<Text style={{ color: '#FF3539' }}>Bee</Text>
+						</Text>
 						<Text style={styles.subtitle}>{t('auth.welcome')}</Text>
 					</View>
 
@@ -403,27 +463,41 @@ export default function SignUpScreen() {
 						/>
 
 						{/* Terms and Conditions */}
-						<TouchableOpacity
-							style={styles.termsContainer}
-							onPress={() => setAgreedToTerms(!agreedToTerms)}
-						>
-							<View
-								style={[
-									styles.checkbox,
-									agreedToTerms && styles.checkboxChecked,
-								]}
+						<View style={styles.termsContainer}>
+							<TouchableOpacity
+								style={styles.checkboxContainer}
+								onPress={() => setAgreedToTerms(!agreedToTerms)}
 							>
-								{agreedToTerms && (
-									<Feather name="check" size={14} color={Colors.text} />
-								)}
+								<View
+									style={[
+										styles.checkbox,
+										agreedToTerms && styles.checkboxChecked,
+									]}
+								>
+									{agreedToTerms && (
+										<Feather name="check" size={14} color={Colors.text} />
+									)}
+								</View>
+							</TouchableOpacity>
+							<View style={styles.termsTextContainer}>
+								<Text style={styles.termsText}>
+									{t('auth.agreeToTerms')}{' '}
+									<Text 
+										style={styles.termsLink}
+										onPress={handleTermsPress}
+									>
+										{t('auth.termsOfService')}
+									</Text>
+									{' '}{t('auth.and')}{' '}
+									<Text 
+										style={styles.termsLink}
+										onPress={handlePrivacyPress}
+									>
+										{t('auth.privacyPolicy')}
+									</Text>
+								</Text>
 							</View>
-							<Text style={styles.termsText}>
-								{t('auth.agreeToTerms')}{' '}
-								<Text style={styles.termsLink}>{t('auth.termsOfService')}</Text>{' '}
-								{t('auth.and')}{' '}
-								<Text style={styles.termsLink}>{t('auth.privacyPolicy')}</Text>
-							</Text>
-						</TouchableOpacity>
+						</View>
 
 						<Button
 							title={t('auth.createAccount')}
@@ -524,6 +598,10 @@ const styles = StyleSheet.create({
 		marginBottom: 24,
 		paddingHorizontal: 4,
 	},
+	checkboxContainer: {
+		paddingTop: 2,
+		paddingRight: 12,
+	},
 	checkbox: {
 		width: 20,
 		height: 20,
@@ -531,8 +609,6 @@ const styles = StyleSheet.create({
 		borderWidth: 2,
 		borderColor: Colors.textTertiary,
 		backgroundColor: 'transparent',
-		marginRight: 12,
-		marginTop: 2,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
@@ -540,8 +616,10 @@ const styles = StyleSheet.create({
 		backgroundColor: Colors.primary,
 		borderColor: Colors.primary,
 	},
-	termsText: {
+	termsTextContainer: {
 		flex: 1,
+	},
+	termsText: {
 		fontSize: 13,
 		fontFamily: 'Inter-Regular',
 		color: Colors.textSecondary,
@@ -551,6 +629,8 @@ const styles = StyleSheet.create({
 		color: Colors.primary,
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '600',
+		fontSize: 13,
+		lineHeight: 18,
 	},
 	signUpButton: {
 		marginTop: 8,

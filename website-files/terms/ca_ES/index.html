@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termes del Servei - Redbee</title>
+    <meta name="description" content="Termes del servei de Redbee. Aprèn sobre les condicions per utilitzar la nostra plataforma exclusiva de contingut digital.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://redbeeapp.com/terms/ca_ES">
+    <meta property="og:title" content="Termes del Servei - Redbee">
+    <meta property="og:description" content="Termes del servei de Redbee. Aprèn sobre les condicions per utilitzar la nostra plataforma exclusiva de contingut digital.">
+    <meta property="og:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://redbeeapp.com/terms/ca_ES">
+    <meta property="twitter:title" content="Termes del Servei - Redbee">
+    <meta property="twitter:description" content="Termes del servei de Redbee. Aprèn sobre les condicions per utilitzar la nostra plataforma exclusiva de contingut digital.">
+    <meta property="twitter:image" content="https://redbeeapp.com/og-image.jpg">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Raleway:wght@600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <style>
+        :root {
+            --primary: #E1306C;
+            --primary-dark: #892142;
+            --primary-light: #F77737;
+            --secondary: #1C1C1E;
+            --accent: #2C2C2E;
+            --success: #28A745;
+            --warning: #FFC107;
+            --danger: #DC3545;
+            --dark: #000000;
+            --light: #FFFFFF;
+            --gray-50: #f8f9fa;
+            --gray-100: #e9ecef;
+            --gray-200: #dee2e6;
+            --gray-300: #ADB5BD;
+            --gray-400: #6C757D;
+            --gray-500: #495057;
+            --gray-600: #343a40;
+            --gray-700: #212529;
+            --gray-800: #1a1a1a;
+            --gradient-primary: linear-gradient(135deg, #E1306C 0%, #F77737 100%);
+            --gradient-dark: linear-gradient(135deg, #000000 0%, #1C1C1E 100%);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--light);
+            background: var(--gradient-dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: var(--gradient-primary);
+            animation: rotate 20s linear infinite;
+            border-radius: 50%;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Header */
+        .header {
+            padding: 24px 0;
+            backdrop-filter: blur(10px);
+            background: rgba(26, 26, 26, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--light);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-image: url('/icon.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 18px;
+        }
+        
+        .logo-icon-fallback {
+            background: var(--gradient-primary);
+            background-image: none;
+        }
+
+        .logo-text {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .language-switcher {
+            position: relative;
+        }
+
+        .language-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--light);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .language-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary);
+        }
+
+        /* Main content */
+        .main {
+            padding: 60px 0;
+        }
+
+        .document-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .document-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: clamp(2.5rem, 5vw, 3.5rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+
+        .document-subtitle {
+            font-size: 1.2rem;
+            color: var(--gray-300);
+            margin-bottom: 8px;
+        }
+
+        .last-updated {
+            font-size: 0.9rem;
+            color: var(--gray-400);
+            font-style: italic;
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 48px;
+            margin-bottom: 40px;
+        }
+
+        .introduction {
+            font-size: 1.1rem;
+            color: var(--gray-200);
+            margin-bottom: 40px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-family: 'Raleway', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(225, 48, 108, 0.3);
+        }
+
+        .section-content {
+            font-size: 1rem;
+            color: var(--gray-300);
+            line-height: 1.8;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 48px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer p {
+            color: var(--gray-400);
+            margin-bottom: 16px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .footer-link {
+            color: var(--gray-400);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content {
+                padding: 32px 24px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <a href="/" class="logo">
+                    <div class="logo-icon" id="logoIcon">
+                        <span id="logoFallback" style="display: none;">R</span>
+                    </div>
+                    <span class="logo-text">Redbee</span>
+                </a>
+                <div class="language-switcher">
+                    <a href="/terms/es_ES" class="language-button">Español</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <div class="document-header">
+                <h1 class="document-title">Termes del Servei</h1>
+                <p class="document-subtitle">Redbee - Plataforma de Contingut Digital</p>
+                <p class="last-updated">Última actualització: 14 de gener de 2025</p>
+            </div>
+
+            <div class="content">
+                <div class="introduction">
+                    Benvingut a Redbee ("nosaltres", "la nostra empresa"). Aquests Termes del Servei ("Termes") integrals regeixen el teu accés i ús de la nostra plataforma de contingut digital i serveis relacionats. En accedir o utilitzar Redbee, acceptes estar legalment vinculat per aquests Termes i la nostra Política de Privacitat.
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">1. Acceptació i Acord</h2>
+                    <div class="section-content">
+                        <strong>Acord Vinculant:</strong> En crear un compte, accedir o utilitzar Redbee, entres en un acord legalment vinculant amb nosaltres i acceptes complir aquests Termes.<br><br>
+                        
+                        <strong>Requisits d'Edat:</strong> Has de tenir almenys 18 anys per crear un compte de creador o 13 anys per utilitzar els nostres serveis amb consentiment dels pares. En utilitzar els nostres serveis, declares que compleixes aquests requisits d'edat.<br><br>
+                        
+                        <strong>Modificacions:</strong> Podem actualitzar aquests Termes periòdicament. L'ús continuat després de la notificació constitueix l'acceptació dels Termes actualitzats.<br><br>
+                        
+                        <strong>Divisibilitat:</strong> Si es troba que alguna disposició d'aquests Termes és inaplicable, les disposicions restants romandran en plena vigor i efecte.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">2. Descripció de la Plataforma i Serveis</h2>
+                    <div class="section-content">
+                        <strong>Plataforma Principal:</strong> Redbee és una plataforma de contingut digital que permet als creadors compartir contingut exclusiu amb les seves audiències a través de models basats en subscripcions.<br><br>
+                        
+                        <strong>Serveis Disponibles:</strong> Eines de creació i càrrega de contingut, gestió de subscripcions, processament de pagaments, funcions d'interacció amb l'audiència, anàlisi i informació, sistemes de descoberta i recomanació de contingut.<br><br>
+                        
+                        <strong>Evolució de la Plataforma:</strong> Millorem contínuament els nostres serveis i podem afegir, modificar o discontinuar funcions amb l'avís adequat als usuaris.<br><br>
+                        
+                        <strong>Integracions de Tercers:</strong> La nostra plataforma pot integrar-se amb serveis de tercers per millorar la funcionalitat, subjecte als seus respectius termes i polítiques de privacitat.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">3. Comptes d'Usuari i Responsabilitats</h2>
+                    <div class="section-content">
+                        <strong>Creació de Compte:</strong> Has de proporcionar informació precisa, completa i actual quan creis el teu compte. La informació falsa pot resultar en suspensió o terminació del compte.<br><br>
+                        
+                        <strong>Seguretat del Compte:</strong> Ets únicament responsable de mantenir la confidencialitat de les teves credencials d'inici de sessió i de totes les activitats sota el teu compte. Utilitza contrasenyes fortes i habilita l'autenticació de dos factors quan estigui disponible.<br><br>
+                        
+                        <strong>Tipus de Comptes:</strong> Els comptes de creador tenen responsabilitats addicionals incloent el compliment del contingut, informació de facturació precisa i gestió de relacions amb subscriptors.<br><br>
+                        
+                        <strong>Només Ús Autoritzat:</strong> El teu compte és personal per a tu i no pot ser compartit, venut o transferit a altres sense el nostre consentiment escrit previ.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">4. Polítiques de Contingut i Responsabilitats d'Usuari</h2>
+                    <div class="section-content">
+                        <strong>Propietat del Contingut:</strong> Mantens la propietat del teu contingut però ens atorgues les llicències necessàries per operar la nostra plataforma. Garanteixes que tens tots els drets sobre el contingut que puges.<br><br>
+                        
+                        <strong>Estàndards de Contingut:</strong> Tot el contingut ha de complir amb les lleis aplicables i les nostres directrius de la comunitat. El contingut prohibit inclou material il·legal, assetjament, discurs d'odi, contingut no consensual, material amb drets d'autor sense permís i informació enganyosa.<br><br>
+                        
+                        <strong>Moderació de Contingut:</strong> Ens reservem el dret de revisar, eliminar o restringir l'accés al contingut que viola les nostres polítiques. Això inclou processos de moderació automatitzada i humana.<br><br>
+                        
+                        <strong>Compliment DMCA:</strong> Responem a avisos vàlids d'infracció de drets d'autor sota la Llei de Copyright del Mil·lenni Digital. Els reincidents poden tenir els seus comptes terminats.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">5. Monetització de Creadors i Compartició d'Ingressos</h2>
+                    <div class="section-content">
+                        <strong>Compartició d'Ingressos:</strong> Els creadors obtenen ingressos de subscripcions i altres funcions de monetització. La nostra estructura de comissions de plataforma serà comunicada clarament i pot variar segons el tipus de servei.<br><br>
+                        
+                        <strong>Processament de Pagaments:</strong> Tots els pagaments es processen a través de proveïdors de pagament de tercers segurs. No som responsables de les comissions o polítiques del processador de pagaments.<br><br>
+                        
+                        <strong>Calendari de Pagaments:</strong> Els guanys dels creadors es paguen segons el nostre calendari de pagaments establert, subjecte a llindars mínims i requisits de verificació.<br><br>
+                        
+                        <strong>Responsabilitats Fiscals:</strong> Els creadors són responsables de tots els impostos aplicables sobre els seus guanys. Podem proporcionar documentació fiscal segons sigui requerit per llei.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">6. Serveis de Subscripció i Facturació</h2>
+                    <div class="section-content">
+                        <strong>Termes de Subscripció:</strong> Les subscripcions es renoven automàticament fins que es cancel·len. Els subscriptors poden cancel·lar en qualsevol moment a través de la configuració del seu compte.<br><br>
+                        
+                        <strong>Facturació i Pagaments:</strong> Les comissions de subscripció es cobren per avançat per a cada període de facturació. Totes les vendes són finals llevat que s'especifiqui el contrari en la nostra política de reemborsament.<br><br>
+                        
+                        <strong>Canvis de Preus:</strong> Els creadors poden modificar els preus de subscripció amb l'avís adequat als subscriptors existents. Els subscriptors existents poden cancel·lar abans que els increments de preus tinguin efecte.<br><br>
+                        
+                        <strong>Política de Reemborsament:</strong> Generalment no es proporcionen reemborsaments excepte en casos d'errors tècnics, càrregues no autoritzades o segons sigui requerit per la llei aplicable.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">7. Usos Prohibits i Conducta</h2>
+                    <div class="section-content">
+                        <strong>Mal Ús de la Plataforma:</strong> No pots utilitzar sistemes automatitzats per accedir a la nostra plataforma, intentar eludir mesures de seguretat, participar en mineria de dades o raspat, o interferir amb les operacions de la plataforma.<br><br>
+                        
+                        <strong>Activitats Il·legals:</strong> Qualsevol activitat il·legal incloent frau, blanqueig de diners, finançament del terrorisme o violació de lleis aplicables està estrictament prohibida.<br><br>
+                        
+                        <strong>Comportament Perjudicial:</strong> Assetjament, intimidació, suplantació d'identitat, spam o qualsevol comportament que perjudiqui altres usuaris o la comunitat de la plataforma no està permès.<br><br>
+                        
+                        <strong>Restriccions Comercials:</strong> Utilitzar la nostra plataforma per propòsits comercials no autoritzats, revendre accés a la plataforma o competir directament amb els nostres serveis està prohibit.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">8. Drets de Propietat Intel·lectual</h2>
+                    <div class="section-content">
+                        <strong>Propietat de la Plataforma:</strong> Redbee, el nostre logotip i les funcions de la plataforma són la nostra propietat intel·lectual o la dels nostres llicenciadors. No pots utilitzar les nostres marques comercials sense permís.<br><br>
+                        
+                        <strong>Llicència de Contingut d'Usuari:</strong> En pujar contingut, ens atorgues una llicència no exclusiva, mundial i lliure de regalies per utilitzar, reproduir i distribuir el teu contingut per a les operacions de la plataforma.<br><br>
+                        
+                        <strong>Respecta els Drets dels Altres:</strong> Has de respectar els drets de propietat intel·lectual dels altres. Respondrem a avisos vàlids d'infracció i podem terminar reincidents.<br><br>
+                        
+                        <strong>Ús Just i Permisos:</strong> Assegura't que tens els drets o llicències adequades per a qualsevol contingut de tercers que incorporis en les teves càrregues.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">9. Privacitat i Protecció de Dades</h2>
+                    <div class="section-content">
+                        <strong>Política de Privacitat:</strong> La nostra Política de Privacitat, incorporada per referència, explica com recopilem, utilitzem i protegim la teva informació personal.<br><br>
+                        
+                        <strong>Seguretat de Dades:</strong> Implementem mesures de seguretat adequades per protegir les dades dels usuaris, però no podem garantir seguretat absoluta.<br><br>
+                        
+                        <strong>Configuració de Privacitat d'Usuari:</strong> Pots controlar diverses configuracions de privacitat a través de les preferències del teu compte. Revisa i actualitza aquestes configuracions regularment.<br><br>
+                        
+                        <strong>Portabilitat de Dades:</strong> Pots sol·licitar còpies de les teves dades o eliminació del compte d'acord amb les lleis de privacitat aplicables.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">10. Disponibilitat de la Plataforma i Modificacions</h2>
+                    <div class="section-content">
+                        <strong>Disponibilitat del Servei:</strong> Ens esforcem per mantenir la disponibilitat de la plataforma però no garantim un servei ininterromput. El manteniment, actualitzacions o problemes tècnics poden causar interrupcions temporals.<br><br>
+                        
+                        <strong>Canvis en la Plataforma:</strong> Podem modificar, suspendre o discontinuar qualsevol aspecte de la nostra plataforma amb avís raonable. Els canvis significatius que afectin la monetització inclouran períodes d'avís estesos.<br><br>
+                        
+                        <strong>Dependencies de Tercers:</strong> La nostra plataforma pot dependre de serveis de tercers. Les interrupcions d'aquests serveis poden afectar la funcionalitat de la plataforma.<br><br>
+                        
+                        <strong>Còpia de Seguretat i Recuperació:</strong> Tot i que mantenim sistemes de còpia de seguretat, s'anima els usuaris a mantenir les seves pròpies còpies del contingut important.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">11. Terminació i Suspensió de Compte</h2>
+                    <div class="section-content">
+                        <strong>Motius de Terminació:</strong> Podem suspendre o terminar comptes per violacions dels Termes, activitats il·legals, perjudici a altres usuaris o inactivitat estesa.<br><br>
+                        
+                        <strong>Terminació Iniciada per l'Usuari:</strong> Pots eliminar el teu compte en qualsevol moment a través de la configuració del compte. La terminació pot afectar pagaments pendents o subscripcions.<br><br>
+                        
+                        <strong>Efecte de la Terminació:</strong> Amb la terminació, el teu accés a la plataforma cessa i podem eliminar el teu contingut després d'un període raonable.<br><br>
+                        
+                        <strong>Procés d'Apel·lació:</strong> Si creus que el teu compte va ser terminat per error, pots contactar el nostre equip de suport per a revisió dins de 30 dies de la terminació.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">12. Exoneracions i Limitació de Responsabilitat</h2>
+                    <div class="section-content">
+                        <strong>Exoneració de la Plataforma:</strong> Redbee es proporciona "tal com és" sense garanties de cap tipus. Exonerem totes les garanties, expresses o implícites, incloent-hi comerciabilitat i adequació per a un propòsit particular.<br><br>
+                        
+                        <strong>Exoneració de Contingut:</strong> No som responsables del contingut generat pels usuaris i no avalem cap opinió, recomanació o consell expressat pels usuaris.<br><br>
+                        
+                        <strong>Limitació de Responsabilitat:</strong> Fins al màxim permès per llei, la nostra responsabilitat està limitada a la quantitat que ens has pagat en els 12 mesos precedents a la reclamació.<br><br>
+                        
+                        <strong>Danys Exclosos:</strong> No som responsables de danys indirectes, incidentals, especials, conseqüencials o punitius, incloent-hi pèrdua de beneficis o dades.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">13. Indemnització</h2>
+                    <div class="section-content">
+                        Acceptes indemnitzar, defensar i mantenir indemne Redbee, els seus oficials, directors, empleats i agents de qualsevol reclamació, danys, pèrdues o despeses que resultin de:<br><br>
+                        
+                        • El teu ús de la nostra plataforma<br>
+                        • El teu contingut o conducta<br>
+                        • La teva violació d'aquests Termes<br>
+                        • La teva violació de qualsevol dret de tercers<br><br>
+                        
+                        Aquesta obligació d'indemnització sobreviu a la terminació del teu compte i aquests Termes.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">14. Resolució de Disputes i Llei Aplicable</h2>
+                    <div class="section-content">
+                        <strong>Llei Aplicable:</strong> Aquests Termes es regeixen per les lleis de [Jurisdicció] sense tenir en compte els principis de conflicte de lleis.<br><br>
+                        
+                        <strong>Resolució de Disputes:</strong> Animem a resoldre disputes a través de comunicació directa. Per a disputes formals, podem requerir mediació o arbitratge segons s'especifiqui en la nostra política de resolució de disputes.<br><br>
+                        
+                        <strong>Renúncia d'Acció de Classe:</strong> Fins al màxim permès per llei, acceptes resoldre disputes individualment i renúncies a la participació en accions de classe.<br><br>
+                        
+                        <strong>Jurisdicció:</strong> Qualsevol procediment legal ha de ser presentat als tribunals de [Jurisdicció], i consents a la jurisdicció personal allí.
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">15. Informació de Contacte i Suport</h2>
+                    <div class="section-content">
+                        <strong>Suport General:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Consultes Legals:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Problemes de Drets d'Autor:</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
+                        
+                        <strong>Adreça Postal:</strong><br>
+                        Equip Legal de Redbee<br>
+                        [Adreça de l'Empresa]<br>
+                        [Ciutat, Estat/Província, Codi Postal]<br>
+                        [País]<br><br>
+                        
+                        Ens esforcem per respondre a totes les consultes de manera ràpida i professional. Per a assumptes urgents, si us plau indica clarament la naturalesa de la teva preocupació en la línia d'assumpte.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="/privacy/ca_ES" class="footer-link">Política de Privacitat</a>
+                <a href="/waiting-list" class="footer-link">Llista d'Espera</a>
+                <a href="mailto:admin@redbeeapp.com" class="footer-link">Contacte</a>
+            </div>
+            <p>&copy; 2025 Redbee. El futur del contingut digital.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Handle logo fallback if image fails to load
+        const logoIcon = document.getElementById('logoIcon');
+        const logoFallback = document.getElementById('logoFallback');
+        
+        // Check if background image loads successfully
+        const testImg = new Image();
+        testImg.onload = function() {
+            // Image loaded successfully, keep as is
+        };
+        testImg.onerror = function() {
+            // Image failed to load, show fallback
+            logoIcon.classList.add('logo-icon-fallback');
+            logoFallback.style.display = 'block';
+        };
+        testImg.src = '/icon.png';
+    </script>
+</body>
+</html>
