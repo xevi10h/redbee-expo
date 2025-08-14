@@ -6,7 +6,6 @@ import {
 	Text,
 	TextStyle,
 	TouchableOpacity,
-	View,
 	ViewStyle,
 } from 'react-native';
 
@@ -91,19 +90,22 @@ export const Button: React.FC<ButtonProps> = ({
 			<TouchableOpacity
 				onPress={onPress}
 				disabled={disabled || loading}
-				style={[buttonStyle, { paddingHorizontal: 0, paddingVertical: 0 }]}
+				style={[
+					styles.base,
+					fullWidth && styles.fullWidth,
+					disabled && styles.disabled,
+					style,
+				]}
 				activeOpacity={0.8}
 			>
-				<View style={{ flex: 1 }}>
-					<LinearGradient
-						colors={Colors.gradientPrimary}
-						style={[styles.gradient]}
-						start={{ x: 0, y: 0 }}
-						end={{ x: 1, y: 0 }}
-					>
-						{renderContent()}
-					</LinearGradient>
-				</View>
+				<LinearGradient
+					colors={Colors.gradientPrimary}
+					style={[styles.gradient, styles[size]]}
+					start={{ x: 0, y: 0 }}
+					end={{ x: 1, y: 0 }}
+				>
+					{renderContent()}
+				</LinearGradient>
 			</TouchableOpacity>
 		);
 	}
@@ -132,6 +134,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		flexDirection: 'row',
+		width: '100%',
 		flex: 1,
 	},
 	fullWidth: {

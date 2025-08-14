@@ -13,7 +13,7 @@
 		"build:netlify": "node scripts/web-build.js",
 		"preview": "npx serve dist",
 		"lint": "expo lint",
-		"web:deploy": "npx expo export -p web && netlify deploy --dir dist --prod"
+		"web:deploy": "node scripts/web-build.js && netlify deploy --dir dist --prod"
 	},
 	"dependencies": {
 		"@expo/vector-icons": "^14.1.0",

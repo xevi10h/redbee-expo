@@ -567,15 +567,16 @@ const styles = StyleSheet.create({
 		backgroundColor: Colors.backgroundSecondary,
 		paddingHorizontal: 16,
 		paddingTop: 10,
-		paddingBottom: 16,
+		paddingBottom: 50,
 	},
 	trimmerTrack: {
-		height: 60,
+		height: 70,
 		width: TRIMMER_WIDTH,
 		position: 'relative',
 		borderRadius: 8,
 		overflow: 'hidden',
-		backgroundColor: '#000', // Fallback while thumbnails load
+		backgroundColor: 'transparent', // Fallback while thumbnails load
+		paddingTop: 10,
 	},
 	overlay: {
 		position: 'absolute',
@@ -596,7 +597,7 @@ const styles = StyleSheet.create({
 	},
 	currentTimeIndicator: {
 		position: 'absolute',
-		bottom: 0,
+		top: 10,
 		width: 3,
 		height: 60,
 		backgroundColor: Colors.warning,
@@ -629,13 +630,13 @@ const styles = StyleSheet.create({
 		height: 60, // Match trimmer height
 		backgroundColor: 'transparent',
 		left: -13.5, // Center the touch area over the indicator
-		top: 0,
+		top: 10,
 	},
 	trimHandle: {
 		position: 'absolute',
-		top: -5,
+		top: 8,
 		width: HANDLE_WIDTH,
-		height: 70,
+		height: 60,
 		backgroundColor: Colors.primary,
 		borderRadius: 6,
 		alignItems: 'center',

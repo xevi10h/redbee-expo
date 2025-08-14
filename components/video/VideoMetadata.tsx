@@ -393,10 +393,10 @@ const styles = StyleSheet.create({
 		padding: 16,
 	},
 	cancelButton: {
-		flex: 1,
+		width: '50%',
 	},
 	shareButton: {
-		flex: 1,
+		width: '50%',
 	},
 	uploadOverlay: {
 		position: 'absolute',

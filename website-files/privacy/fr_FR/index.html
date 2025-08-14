@@ -165,6 +165,7 @@
 
         .language-switcher {
             position: relative;
+            display: inline-block;
         }
 
         .language-button {
@@ -176,13 +177,72 @@
             font-size: 14px;
             cursor: pointer;
             text-decoration: none;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             transition: all 0.3s ease;
+            min-width: 120px;
+            justify-content: space-between;
         }
 
         .language-button:hover {
             background: rgba(255, 255, 255, 0.15);
             border-color: var(--primary);
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 180px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .language-switcher:hover .language-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .language-option {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            padding: 8px 16px;
+            color: var(--gray-300);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .language-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+        }
+
+        .language-option.current {
+            color: var(--primary);
+            background: rgba(225, 48, 108, 0.1);
+        }
+
+        /* .language-flag styles removed since flags are no longer used */
+
+        .dropdown-arrow {
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .language-switcher:hover .dropdown-arrow {
+            transform: rotate(180deg);
         }
 
         /* Main content */
@@ -316,7 +376,30 @@
                     <span class="logo-text">Redbee</span>
                 </a>
                 <div class="language-switcher">
-                    <a href="/privacy/es_ES" class="language-button">Español</a>
+                    <div class="language-button">
+                        <span>Français</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div class="language-dropdown">
+                        <a href="/privacy/en_US" class="language-option">
+                            <span>English</span>
+                        </a>
+                        <a href="/privacy/es_ES" class="language-option">
+                            <span>Español</span>
+                        </a>
+                        <a href="/privacy/ca_ES" class="language-option">
+                            <span>Català</span>
+                        </a>
+                        <a href="/privacy/fr_FR" class="language-option current">
+                            <span>Français</span>
+                        </a>
+                        <a href="/privacy/it_IT" class="language-option">
+                            <span>Italiano</span>
+                        </a>
+                        <a href="/privacy/pt_PT" class="language-option">
+                            <span>Português</span>
+                        </a>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -517,12 +600,6 @@
                         <strong>Questions Générales sur la Confidentialité :</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
                         
                         <strong>Délégué à la Protection des Données :</strong> <a href="mailto:admin@redbeeapp.com" style="color: var(--primary);">admin@redbeeapp.com</a><br><br>
-                        
-                        <strong>Adresse Postale :</strong><br>
-                        Équipe Confidentialité Redbee<br>
-                        [Adresse de l'Entreprise]<br>
-                        [Ville, État/Province, Code Postal]<br>
-                        [Pays]<br><br>
                         
                         Nous nous engageons à traiter vos préoccupations de confidentialité de manière rapide et transparente. Veuillez prévoir jusqu'à 30 jours pour une réponse complète à votre demande.
                     </div>

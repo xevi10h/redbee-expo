@@ -5,28 +5,28 @@
 
 // Configuration for different environments
 const WEB_URLS = {
-  // Production URLs (when deployed)
-  production: 'https://redbeeapp.com',
-  
-  // Staging URLs (Netlify)
-  staging: 'https://redbee-expo.netlify.app',
-  
-  // Development URLs (local server)
-  development: 'http://localhost:3000', // Local serve of dist folder
+	// Production URLs (when deployed)
+	production: 'https://redbeeapp.com',
+
+	// Staging URLs (Netlify)
+	staging: 'https://redbee-expo.netlify.app',
+
+	// Development URLs (local server)
+	development: 'http://localhost:3000', // Local serve of dist folder
 } as const;
 
 /**
  * Get the base URL for web pages based on current environment
  */
 export function getWebBaseUrl(): string {
-  // In development, try to detect if we're running Expo web dev server
-  if (__DEV__) {
-    return WEB_URLS.development;
-  }
-  
-  // Use staging URL for now (Netlify), which redirects to production
-  // Once redbeeapp.com is fully configured, we can switch to production
-  return WEB_URLS.staging;
+	// In development, try to detect if we're running Expo web dev server
+	if (__DEV__) {
+		return WEB_URLS.development;
+	}
+
+	// Use staging URL for now (Netlify), which redirects to production
+	// Once redbeeapp.com is fully configured, we can switch to production
+	return WEB_URLS.staging;
 }
 
 /**
@@ -35,8 +35,7 @@ export function getWebBaseUrl(): string {
  * @returns Complete URL to the terms page
  */
 export function getTermsUrl(language: string): string {
-  const baseUrl = getWebBaseUrl();
-  return `${baseUrl}/terms/${language}`;
+	return `https://redbeeapp.com/terms/${language}`;
 }
 
 /**
@@ -45,8 +44,7 @@ export function getTermsUrl(language: string): string {
  * @returns Complete URL to the privacy policy page
  */
 export function getPrivacyUrl(language: string): string {
-  const baseUrl = getWebBaseUrl();
-  return `${baseUrl}/privacy/${language}`;
+	return `https://redbeeapp.com/privacy/${language}`;
 }
 
 /**
@@ -54,20 +52,20 @@ export function getPrivacyUrl(language: string): string {
  * @returns true if web pages should be available
  */
 export function areWebPagesAvailable(): boolean {
-  const baseUrl = getWebBaseUrl();
-  
-  // In development, assume pages are available if running web build
-  if (__DEV__) {
-    return true; // You can set this to false to disable links in development
-  }
-  
-  // In production, always try to open (pages should be deployed)
-  return true;
+	const baseUrl = getWebBaseUrl();
+
+	// In development, assume pages are available if running web build
+	if (__DEV__) {
+		return true; // You can set this to false to disable links in development
+	}
+
+	// In production, always try to open (pages should be deployed)
+	return true;
 }
 
 /**
  * Get fallback message when web pages are not available
  */
 export function getWebPagesUnavailableMessage(): string {
-  return 'Las páginas web aún no están disponibles. Por favor, inténtalo más tarde.';
+	return 'Las páginas web aún no están disponibles. Por favor, inténtalo más tarde.';
 }

@@ -261,8 +261,6 @@
 		"publishing": "Publicando...",
 		"draft": "Borrador",
 		"saveDraft": "Guardar borrador",
-		"videoTooShort": "El video debe durar al menos 15 segundos",
-		"videoTooLong": "El video no puede durar más de 5 minutos",
 		"uploadFailed": "Error al subir el video",
 		"uploadSuccess": "Video subido exitosamente",
 		"processingVideo": "Procesando video...",
