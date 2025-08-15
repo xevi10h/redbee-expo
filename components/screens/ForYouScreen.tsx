@@ -214,6 +214,9 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 						onRefresh={handleRefresh}
 						tintColor={Colors.primary}
 						colors={[Colors.primary]}
+						progressBackgroundColor={Colors.backgroundSecondary}
+						title="Cargando videos..."
+						titleColor={Colors.textSecondary}
 					/>
 				}
 				onEndReached={handleLoadMore}

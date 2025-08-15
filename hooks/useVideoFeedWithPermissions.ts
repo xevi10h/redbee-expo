@@ -305,10 +305,10 @@ export const useVideoFeedWithPermissions = (
 	}, [feedType, currentUser?.id]);
 
 	// Refresh handler
-	const handleRefresh = useCallback(() => {
+	const handleRefresh = useCallback(async () => {
 		if (!isRefreshing && !isLoading) {
 			setHasMore(true);
-			loadVideos(true);
+			await loadVideos(true);
 		}
 	}, [isRefreshing, isLoading, loadVideos]);
 

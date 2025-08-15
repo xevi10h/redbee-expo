@@ -514,6 +514,9 @@ export default function ProfileScreen() {
 						onRefresh={handleRefresh}
 						tintColor={Colors.primary}
 						colors={[Colors.primary]}
+						progressBackgroundColor={Colors.backgroundSecondary}
+						title="Actualizando..."
+						titleColor={Colors.textSecondary}
 					/>
 				}
 			>
@@ -545,7 +548,7 @@ export default function ProfileScreen() {
 							</Text>
 							<View style={styles.usernameContainer}>
 								<Text style={styles.username}>@{user.username}</Text>
-								{user.subscription_price > 0 && (
+								{user.has_premium_content && user.subscription_price > 0 && (
 									<View style={styles.subscriptionBadge}>
 										<MaterialCommunityIcons
 											name="crown"

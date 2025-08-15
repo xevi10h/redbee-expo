@@ -389,14 +389,15 @@ const styles = StyleSheet.create({
 	},
 	actionButtons: {
 		flexDirection: 'row',
-		gap: 12,
+		justifyContent: 'space-between',
 		padding: 16,
+		marginBottom: 60,
 	},
 	cancelButton: {
-		width: '50%',
+		width: '48%',
 	},
 	shareButton: {
-		width: '50%',
+		width: '48%',
 	},
 	uploadOverlay: {
 		position: 'absolute',

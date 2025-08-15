@@ -60,7 +60,7 @@ export default function ResetPasswordScreen() {
 				setEmailSent(true);
 				Alert.alert(
 					t('auth.resetEmailSent'),
-					t('auth.resetEmailInstructions'),
+					`${t('auth.resetEmailInstructions')} Si no lo encuentras, revisa tu carpeta de spam.`,
 					[{ text: t('common.ok') }],
 				);
 			} else {
@@ -159,6 +159,8 @@ export default function ResetPasswordScreen() {
 							</Text>
 							<Text style={styles.successText}>
 								{t('auth.resetEmailInstructions')}
+								{'\n\n'}
+								Si no lo encuentras en tu bandeja de entrada, revisa la carpeta de spam.
 							</Text>
 
 							<Button
@@ -177,7 +179,7 @@ export default function ResetPasswordScreen() {
 								}}
 							>
 								<Text style={styles.resendText}>
-									¿No recibiste el correo?{' '}
+									¿No recibiste el correo? Revisa también tu spam.{' '}
 									<Text style={styles.resendLink}>Enviar de nuevo</Text>
 								</Text>
 							</TouchableOpacity>

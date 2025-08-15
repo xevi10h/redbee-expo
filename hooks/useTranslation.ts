@@ -7,12 +7,26 @@ export function useTranslation() {
 	const language = user?.language || 'es_ES';
 
 	useEffect(() => {
-		changeLanguage(language);
+		try {
+			changeLanguage(language);
+		} catch (error) {
+			console.warn('Failed to change language:', error);
+		}
 	}, [language]);
 
+	// Provide fallback if i18n is not available
+	const t = (key: string, options?: any) => {
+		try {
+			return i18n?.t ? i18n.t(key, options) : key;
+		} catch (error) {
+			console.warn('Translation error for key:', key, error);
+			return key;
+		}
+	};
+
 	return {
-		t: i18n.t.bind(i18n),
-		locale: i18n.locale,
+		t,
+		locale: i18n?.locale || language,
 		changeLanguage,
 	};
 }

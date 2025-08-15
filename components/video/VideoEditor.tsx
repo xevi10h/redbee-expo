@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
-import { VideoMetadata, VideoTrimmer } from '@/components/video';
+import { VideoMetadata } from './VideoMetadata';
+import { VideoTrimmer } from './VideoTrimmer';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface VideoEditorProps {

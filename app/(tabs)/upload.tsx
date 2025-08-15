@@ -46,6 +46,7 @@ export default function UploadScreen() {
 			setIsSelectingVideo(true);
 			setSelecting(true);
 
+
 			// Request permissions
 			const permissionResult =
 				await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -59,10 +60,10 @@ export default function UploadScreen() {
 
 			// Launch image picker
 			const result = await ImagePicker.launchImageLibraryAsync({
-				mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-				allowsEditing: false, // We'll do our own editing
-				quality: 1,
-				videoMaxDuration: 300, // 5 minutes max
+				mediaTypes: ['videos'],
+				allowsEditing: false,
+				quality: 1.0, // Restore full quality
+				videoMaxDuration: 300,
 			});
 
 			if (!result.canceled && result.assets[0]) {
@@ -84,6 +85,10 @@ export default function UploadScreen() {
 					]);
 					return;
 				}
+
+				// Log file size for debugging
+				const fileSizeInMB = (asset.fileSize || 0) / (1024 * 1024);
+				console.log(`📱 Video file size: ${fileSizeInMB.toFixed(2)}MB`);
 
 				setSelectedVideo({
 					uri: asset.uri,

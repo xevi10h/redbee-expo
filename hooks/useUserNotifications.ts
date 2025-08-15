@@ -118,15 +118,20 @@ export const useUserNotifications = () => {
 		};
 	}, [subscription]);
 
+	// Refresh function that waits for both operations to complete
+	const refresh = useCallback(async () => {
+		await Promise.all([
+			loadNotifications(),
+			loadUnreadCount()
+		]);
+	}, [loadNotifications, loadUnreadCount]);
+
 	return {
 		notifications,
 		unreadCount,
 		loading,
 		markAsRead,
 		markAllAsRead,
-		refresh: () => {
-			loadNotifications();
-			loadUnreadCount();
-		},
+		refresh,
 	};
 };

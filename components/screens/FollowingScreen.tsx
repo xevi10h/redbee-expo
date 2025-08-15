@@ -214,6 +214,9 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 						onRefresh={handleRefresh}
 						tintColor={Colors.primary}
 						colors={[Colors.primary]}
+						progressBackgroundColor={Colors.backgroundSecondary}
+						title="Cargando videos..."
+						titleColor={Colors.textSecondary}
 					/>
 				}
 				onEndReached={handleLoadMore}

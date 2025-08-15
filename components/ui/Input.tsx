@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { forwardRef, useState } from 'react';
 import {
 	StyleSheet,
 	Text,
@@ -26,7 +26,7 @@ interface InputProps extends TextInputProps {
 	containerStyle?: ViewStyle;
 }
 
-export const Input: React.FC<InputProps> = ({
+export const Input = forwardRef<TextInput, InputProps>(({
 	label,
 	error,
 	success,
@@ -40,7 +40,7 @@ export const Input: React.FC<InputProps> = ({
 	containerStyle,
 	style,
 	...props
-}) => {
+}, ref) => {
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 	const [isFocused, setIsFocused] = useState(false);
 
@@ -136,6 +136,7 @@ export const Input: React.FC<InputProps> = ({
 				)}
 
 				<TextInput
+					ref={ref}
 					{...props}
 					style={inputStyle}
 					secureTextEntry={isPassword && !isPasswordVisible}
@@ -164,7 +165,9 @@ export const Input: React.FC<InputProps> = ({
 			)}
 		</View>
 	);
-};
+});
+
+Input.displayName = 'Input';
 
 const styles = StyleSheet.create({
 	container: {

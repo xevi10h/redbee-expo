@@ -194,6 +194,26 @@ export const useSearch = (searchType: SearchType, viewerId?: string) => {
 		}
 	}, [clearResults]);
 
+	// Handle suggestion selection - immediately search and close suggestions
+	const handleSuggestionSelect = useCallback(
+		(suggestion: string) => {
+			// Remove @ or # prefix for search
+			const cleanSuggestion = suggestion.replace(/^[@#]/, '');
+			setQuery(cleanSuggestion);
+			setSuggestions([]); // Close suggestions immediately
+			
+			// Clear any pending debounced search
+			if (debounceTimeoutRef.current) {
+				clearTimeout(debounceTimeoutRef.current);
+			}
+			
+			// Perform immediate search
+			setPage(0);
+			performSearch(cleanSuggestion, 0, false);
+		},
+		[performSearch],
+	);
+
 	// Update specific user in results (for follow/unfollow updates)
 	const updateUserInResults = useCallback(
 		(userId: string, updates: Partial<UserProfile>) => {
@@ -243,6 +263,7 @@ export const useSearch = (searchType: SearchType, viewerId?: string) => {
 		clearResults,
 		updateUserInResults,
 		removeUserFromResults,
+		handleSuggestionSelect,
 
 		// Computed
 		isEmpty:

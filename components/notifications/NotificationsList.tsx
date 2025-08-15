@@ -103,6 +103,10 @@ export const NotificationsList: React.FC<NotificationsListProps> = ({
 						refreshing={refreshing}
 						onRefresh={handleRefresh}
 						tintColor={Colors.primary}
+						colors={[Colors.primary]}
+						progressBackgroundColor={Colors.backgroundSecondary}
+						title="Actualizando..."
+						titleColor={Colors.textSecondary}
 					/>
 				}
 				showsVerticalScrollIndicator={false}

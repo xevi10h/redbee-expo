@@ -1405,7 +1405,7 @@ CREATE OR REPLACE FUNCTION "public"."update_updated_at_column"() RETURNS "trigge
     LANGUAGE "plpgsql"
     AS $$
 BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
+    NEW.updated_at = NOW();
     RETURN NEW;
 END;
 $$;
@@ -1604,7 +1604,8 @@ CREATE TABLE IF NOT EXISTS "public"."notification_preferences" (
     "push_notifications_enabled" boolean DEFAULT true,
     "email_notifications_enabled" boolean DEFAULT false,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "new_subscribers_enabled" boolean DEFAULT true
 );
 
 
@@ -1643,7 +1644,9 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "updated_at" timestamp with time zone DEFAULT "now"(),
     "locale" character varying(10) DEFAULT 'es-ES'::character varying,
     "preferred_language" character varying(5) DEFAULT 'es'::character varying,
-    "pricing_region" character varying(5) DEFAULT 'ES'::character varying
+    "pricing_region" character varying(5) DEFAULT 'ES'::character varying,
+    "has_premium_content" boolean DEFAULT false NOT NULL,
+    "language" character varying(5) DEFAULT 'es_ES'::character varying
 );
 
 
@@ -1663,6 +1666,10 @@ COMMENT ON COLUMN "public"."profiles"."preferred_language" IS 'User preferred la
 
 
 COMMENT ON COLUMN "public"."profiles"."pricing_region" IS 'Region code for pricing recommendations (e.g., ES, US, FR)';
+
+
+
+COMMENT ON COLUMN "public"."profiles"."has_premium_content" IS 'Indicates if the user offers premium content subscriptions';
 
 
 
@@ -1699,32 +1706,14 @@ ALTER TABLE "public"."subscriptions" OWNER TO "postgres";
 
 
 CREATE OR REPLACE VIEW "public"."users_with_email" AS
- SELECT "p"."id",
-    "p"."username",
-    "p"."display_name",
-    "p"."bio",
-    "p"."avatar_url",
-    "p"."subscription_price",
-    "p"."subscription_currency",
-    "p"."commission_rate",
-    "p"."followers_count",
-    "p"."subscribers_count",
-    "p"."videos_count",
-    "p"."created_at",
-    "p"."updated_at",
-    "u"."email",
-    "u"."email_confirmed_at",
-    "u"."created_at" AS "auth_created_at",
-    "u"."updated_at" AS "auth_updated_at"
-   FROM ("public"."profiles" "p"
-     JOIN "auth"."users" "u" ON (("p"."id" = "u"."id")));
+ SELECT "au"."id",
+    "au"."email",
+    "p"."language"
+   FROM ("auth"."users" "au"
+     LEFT JOIN "public"."profiles" "p" ON (("au"."id" = "p"."id")));
 
 
 ALTER VIEW "public"."users_with_email" OWNER TO "postgres";
-
-
-COMMENT ON VIEW "public"."users_with_email" IS 'Complete user data including email from auth.users';
-
 
 
 CREATE TABLE IF NOT EXISTS "public"."videos" (
@@ -1784,6 +1773,20 @@ COMMENT ON COLUMN "public"."videos"."is_hidden" IS 'Whether the video is hidden 
 
 COMMENT ON COLUMN "public"."videos"."hidden_at" IS 'Timestamp when the video was hidden';
 
+
+
+CREATE TABLE IF NOT EXISTS "public"."waiting_list" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "email" "text" NOT NULL,
+    "user_type" "text" NOT NULL,
+    "source" "text" DEFAULT 'waiting_list'::"text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "waiting_list_user_type_check" CHECK (("user_type" = ANY (ARRAY['fan'::"text", 'creator'::"text", 'brand'::"text"])))
+);
+
+
+ALTER TABLE "public"."waiting_list" OWNER TO "postgres";
 
 
 ALTER TABLE ONLY "public"."app_config"
@@ -1871,6 +1874,16 @@ ALTER TABLE ONLY "public"."videos"
 
 
 
+ALTER TABLE ONLY "public"."waiting_list"
+    ADD CONSTRAINT "waiting_list_email_key" UNIQUE ("email");
+
+
+
+ALTER TABLE ONLY "public"."waiting_list"
+    ADD CONSTRAINT "waiting_list_pkey" PRIMARY KEY ("id");
+
+
+
 CREATE INDEX "idx_comment_likes_comment_id" ON "public"."comment_likes" USING "btree" ("comment_id");
 
 
@@ -1944,6 +1957,10 @@ CREATE INDEX "idx_profiles_display_name" ON "public"."profiles" USING "btree" ("
 
 
 CREATE INDEX "idx_profiles_followers_count" ON "public"."profiles" USING "btree" ("followers_count");
+
+
+
+CREATE INDEX "idx_profiles_has_premium_content" ON "public"."profiles" USING "btree" ("has_premium_content");
 
 
 
@@ -2031,6 +2048,18 @@ CREATE INDEX "idx_videos_views_count" ON "public"."videos" USING "btree" ("views
 
 
 
+CREATE INDEX "idx_waiting_list_created_at" ON "public"."waiting_list" USING "btree" ("created_at");
+
+
+
+CREATE INDEX "idx_waiting_list_email" ON "public"."waiting_list" USING "btree" ("email");
+
+
+
+CREATE INDEX "idx_waiting_list_user_type" ON "public"."waiting_list" USING "btree" ("user_type");
+
+
+
 CREATE OR REPLACE TRIGGER "comment_like_notification_trigger" AFTER INSERT ON "public"."comment_likes" FOR EACH ROW EXECUTE FUNCTION "public"."notify_comment_like"();
 
 
@@ -2076,6 +2105,10 @@ CREATE OR REPLACE TRIGGER "update_video_comments_count_trigger" AFTER INSERT OR 
 
 
 CREATE OR REPLACE TRIGGER "update_video_likes_count_trigger" AFTER INSERT OR DELETE ON "public"."likes" FOR EACH ROW EXECUTE FUNCTION "public"."update_video_likes_count"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_waiting_list_updated_at" BEFORE UPDATE ON "public"."waiting_list" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
@@ -2342,6 +2375,10 @@ CREATE POLICY "Users can view their own subscriptions" ON "public"."subscription
 ALTER TABLE "public"."app_config" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "authenticated_read" ON "public"."waiting_list" FOR SELECT TO "authenticated" USING (true);
+
+
+
 ALTER TABLE "public"."comment_likes" ENABLE ROW LEVEL SECURITY;
 
 
@@ -2363,6 +2400,10 @@ ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "public_insert" ON "public"."waiting_list" FOR INSERT WITH CHECK (true);
+
+
+
 ALTER TABLE "public"."reports" ENABLE ROW LEVEL SECURITY;
 
 
@@ -2370,6 +2411,9 @@ ALTER TABLE "public"."subscriptions" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."videos" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."waiting_list" ENABLE ROW LEVEL SECURITY;
 
 
 
@@ -2922,6 +2966,12 @@ GRANT ALL ON TABLE "public"."users_with_email" TO "service_role";
 GRANT ALL ON TABLE "public"."videos" TO "anon";
 GRANT ALL ON TABLE "public"."videos" TO "authenticated";
 GRANT ALL ON TABLE "public"."videos" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."waiting_list" TO "anon";
+GRANT ALL ON TABLE "public"."waiting_list" TO "authenticated";
+GRANT ALL ON TABLE "public"."waiting_list" TO "service_role";
 
 
 

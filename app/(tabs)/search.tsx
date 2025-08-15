@@ -1,17 +1,20 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
 	Alert,
 	FlatList,
+	RefreshControl,
 	StyleSheet,
 	Text,
+	TextInput,
 	TouchableOpacity,
 	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/ui/Avatar';
 import { Input } from '@/components/ui/Input';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
@@ -31,8 +34,12 @@ const UserItem: React.FC<{
 }> = ({ user, onPress, onFollowPress, isFollowLoading }) => {
 	return (
 		<TouchableOpacity style={styles.userItem} onPress={onPress}>
-			<View style={styles.userAvatar}>
-				<Feather name="user" size={24} color={Colors.textTertiary} />
+			<View style={styles.avatarContainer}>
+				<Avatar 
+					avatarUrl={user.avatar_url} 
+					size={48} 
+					username={user.username} 
+				/>
 			</View>
 			<View style={styles.userInfo}>
 				<Text style={styles.username}>@{user.username}</Text>
@@ -120,8 +127,10 @@ export default function SearchScreen() {
 	const { t } = useTranslation();
 	const { user } = useRequireAuth();
 	const { handleFollow } = useUserInteractions();
+	const searchInputRef = useRef<TextInput>(null);
 
 	const [currentTab, setCurrentTab] = useState<'users' | 'hashtags'>('users');
+	const [isRefreshing, setIsRefreshing] = useState(false);
 
 	const {
 		query,
@@ -129,23 +138,36 @@ export default function SearchScreen() {
 		results,
 		suggestions,
 		error,
-		hasMore,
 		handleSearch,
 		handleLoadMore,
 		clearSearch,
-		isEmpty,
 		hasQuery,
 		canLoadMore,
 		updateUserInResults,
+		handleSuggestionSelect,
 	} = useSearch(currentTab, user?.id);
 
 	// Hashtag trending hook
 	const {
 		trendingHashtags,
 		isLoadingTrending,
-		trendingError,
 		loadTrendingHashtags,
 	} = useHashtagSearch(user?.id);
+
+	// Refresh functions
+	const handleRefresh = useCallback(async () => {
+		setIsRefreshing(true);
+		try {
+			// Refresh search results if we have a query
+			if (hasQuery && query) {
+				await handleSearch(query);
+			}
+			// Refresh trending hashtags
+			await loadTrendingHashtags();
+		} finally {
+			setIsRefreshing(false);
+		}
+	}, [hasQuery, query, handleSearch, loadTrendingHashtags]);
 
 	// Handle user press - navigate to profile
 	const handleUserPress = useCallback((userId: string) => {
@@ -186,11 +208,11 @@ export default function SearchScreen() {
 	// Handle suggestion press
 	const handleSuggestionPress = useCallback(
 		(suggestion: string) => {
-			// Remove @ or # prefix for search
-			const cleanSuggestion = suggestion.replace(/^[@#]/, '');
-			handleSearch(cleanSuggestion);
+			handleSuggestionSelect(suggestion);
+			// Remove focus from the search input
+			searchInputRef.current?.blur();
 		},
-		[handleSearch],
+		[handleSuggestionSelect],
 	);
 
 	// Render user item
@@ -263,8 +285,17 @@ export default function SearchScreen() {
 					<Text style={styles.trendingTitle}>Hashtags trending</Text>
 				</View>
 			)}
-			refreshing={isLoadingTrending}
-			onRefresh={loadTrendingHashtags}
+			refreshControl={
+				<RefreshControl
+					refreshing={isLoadingTrending}
+					onRefresh={loadTrendingHashtags}
+					tintColor={Colors.primary}
+					colors={[Colors.primary]}
+					progressBackgroundColor={Colors.backgroundSecondary}
+					title="Cargando hashtags..."
+					titleColor={Colors.textSecondary}
+				/>
+			}
 		/>
 	);
 
@@ -290,6 +321,7 @@ export default function SearchScreen() {
 			{/* Header */}
 			<View style={styles.header}>
 				<Input
+					ref={searchInputRef}
 					value={query}
 					onChangeText={handleSearch}
 					placeholder={t('search.searchPlaceholder')}
@@ -352,6 +384,17 @@ export default function SearchScreen() {
 						keyExtractor={(item) => item.id}
 						style={styles.list}
 						showsVerticalScrollIndicator={false}
+						refreshControl={
+							<RefreshControl
+								refreshing={isRefreshing}
+								onRefresh={handleRefresh}
+								tintColor={Colors.primary}
+								colors={[Colors.primary]}
+								progressBackgroundColor={Colors.backgroundSecondary}
+								title="Actualizando..."
+								titleColor={Colors.textSecondary}
+							/>
+						}
 						ListEmptyComponent={renderEmptyState}
 						ListFooterComponent={renderFooter}
 						onEndReached={canLoadMore ? handleLoadMore : undefined}
@@ -365,6 +408,17 @@ export default function SearchScreen() {
 						keyExtractor={(item) => item.hashtag}
 						style={styles.list}
 						showsVerticalScrollIndicator={false}
+						refreshControl={
+							<RefreshControl
+								refreshing={isRefreshing}
+								onRefresh={handleRefresh}
+								tintColor={Colors.primary}
+								colors={[Colors.primary]}
+								progressBackgroundColor={Colors.backgroundSecondary}
+								title="Actualizando..."
+								titleColor={Colors.textSecondary}
+							/>
+						}
 						ListEmptyComponent={renderEmptyState}
 						ListFooterComponent={renderFooter}
 						onEndReached={canLoadMore ? handleLoadMore : undefined}
@@ -476,13 +530,7 @@ const styles = StyleSheet.create({
 		borderBottomWidth: 1,
 		borderBottomColor: Colors.borderSecondary,
 	},
-	userAvatar: {
-		width: 48,
-		height: 48,
-		borderRadius: 24,
-		backgroundColor: Colors.backgroundSecondary,
-		alignItems: 'center',
-		justifyContent: 'center',
+	avatarContainer: {
 		marginRight: 12,
 	},
 	userInfo: {

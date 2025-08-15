@@ -654,7 +654,7 @@ export class VideoService {
 
 
 	/**
-	 * Upload a new video with immediate thumbnail generation
+	 * Upload a new video with thumbnail generation
 	 */
 	static async uploadVideo(data: {
 		videoUri: string;
@@ -667,38 +667,25 @@ export class VideoService {
 		endTime?: number;
 		thumbnailTime?: number;
 	}): Promise<AuthResponse<{ videoId: string }>> {
+		const { videoUri, title, description, hashtags, isPremium, userId, thumbnailTime } = data;
+		const timestamp = Date.now();
+		const videoFileName = `video_${userId}_${timestamp}.mp4`;
+		const thumbnailFileName = `thumbnail_${userId}_${timestamp}.jpg`;
+		let thumbnailUrl: string | null = null;
+
 		try {
-			const { videoUri, title, description, hashtags, isPremium, userId, thumbnailTime } = data;
-
-			// Generate unique filenames
-			const timestamp = Date.now();
-			const videoFileName = `video_${userId}_${timestamp}.mp4`;
-			const thumbnailFileName = `thumbnail_${userId}_${timestamp}.jpg`;
+			console.log('📱 Starting video upload process...');
 			
-			// Get auth session
-			const { data: { session } } = await supabase.auth.getSession();
-			const authToken = session?.access_token;
-			
-			if (!authToken) {
-				throw new Error('No authentication token found');
-			}
-
-			let thumbnailUrl: string | null = null;
-
-			// Generate thumbnail - use specified time or default to 1 second
+			// Generate thumbnail first
 			const thumbTime = thumbnailTime !== undefined && thumbnailTime >= 0 ? thumbnailTime : 1;
-			
 			try {
 				const timeInMilliseconds = Math.round(Number(thumbTime) * 1000);
-				
-				// Generate thumbnail using expo-video-thumbnails
 				const { uri: thumbnailUri } = await getThumbnailAsync(videoUri, {
 					time: timeInMilliseconds,
 					quality: 0.8,
 				});
 
 				if (thumbnailUri) {
-					// Upload thumbnail using Supabase client
 					const { error: thumbnailUploadError } = await supabase.storage
 						.from('thumbnails')
 						.upload(thumbnailFileName, {
@@ -708,406 +695,240 @@ export class VideoService {
 						} as any);
 
 					if (!thumbnailUploadError) {
-						// Get thumbnail public URL
 						const { data: thumbUrlData } = supabase.storage
 							.from('thumbnails')
 							.getPublicUrl(thumbnailFileName);
-						
 						thumbnailUrl = thumbUrlData.publicUrl;
+						console.log('✅ Thumbnail uploaded successfully');
 					}
 				}
 			} catch (thumbnailError) {
-				console.error('Failed to generate thumbnail:', thumbnailError);
-				// Continue without thumbnail rather than failing the whole upload
+				console.warn('⚠️ Thumbnail generation failed, continuing without thumbnail:', thumbnailError);
 			}
 			
-			// Comprehensive diagnostic before upload
-			console.log('=== STARTING COMPLETE SUPABASE DIAGNOSTIC ===');
+			// Upload video with comprehensive diagnostics and fallback strategies
+			console.log('📹 Uploading video file...');
 			
-			// 1. Check authentication
-			console.log('1. Checking authentication...');
-			console.log('Auth token present:', !!authToken);
-			console.log('Auth token length:', authToken?.length);
-			console.log('User ID:', userId);
-			
-			// 2. Check bucket access with detailed logging
-			console.log('2. Checking videos bucket access...');
-			try {
-				const { data: files, error: listError } = await supabase.storage
-					.from('videos')
-					.list('', { limit: 1 });
-				
-				if (listError) {
-					console.error('BUCKET ACCESS ERROR:', listError);
-					console.error('Error code:', listError.statusCode);
-					console.error('Error message:', listError.message);
-					throw new Error(`Videos bucket issue: ${listError.message} (Code: ${listError.statusCode})`);
-				}
-				console.log('✅ Videos bucket accessible, files:', files?.length || 0);
-			} catch (bucketError) {
-				console.error('BUCKET CHECK FAILED:', bucketError);
-				throw bucketError;
-			}
-			
-			// 3. Test small upload first to isolate the issue
-			console.log('3. Testing small file upload to videos bucket...');
-			try {
-				const testFileName = `test_${Date.now()}.txt`;
-				const testContent = 'Test upload to videos bucket';
-				
-				const { error: testUploadError } = await supabase.storage
-					.from('videos')
-					.upload(testFileName, testContent, {
-						contentType: 'text/plain'
-					});
-				
-				if (testUploadError) {
-					console.error('SMALL FILE UPLOAD FAILED:', testUploadError);
-					console.error('Test upload error code:', testUploadError.statusCode);
-					console.error('Test upload error message:', testUploadError.message);
-					throw new Error(`Videos bucket upload test failed: ${testUploadError.message}`);
-				} else {
-					console.log('✅ Small file upload successful');
-					// Clean up test file
-					await supabase.storage.from('videos').remove([testFileName]);
-					console.log('✅ Test file cleaned up');
-				}
-			} catch (testError) {
-				console.error('TEST UPLOAD ERROR:', testError);
-				throw testError;
-			}
-			
-			// 4. Check if we can upload video using Supabase client first
-			console.log('4. Testing video upload with Supabase client...');
-			try {
-				const { data: videoUploadData, error: videoUploadError } = await supabase.storage
-					.from('videos')
-					.upload(videoFileName, {
-						uri: videoUri,
-						type: 'video/mp4',
-						name: videoFileName,
-					} as any);
-				
-				if (videoUploadError) {
-					console.error('SUPABASE CLIENT UPLOAD FAILED:', videoUploadError);
-					console.error('Client error code:', videoUploadError.statusCode);
-					console.error('Client error message:', videoUploadError.message);
-					console.log('Will try fetch method as fallback...');
-				} else {
-					console.log('✅ SUPABASE CLIENT UPLOAD SUCCESSFUL!');
-					console.log('Upload data:', videoUploadData);
-					
-					// Get video public URL and complete upload
-					const { data: videoUrlData } = supabase.storage
-						.from('videos')
-						.getPublicUrl(videoFileName);
-
-					// Insert video record in database
-					const { data: videoData, error: dbError } = await supabase
-						.from('videos')
-						.insert({
-							user_id: userId,
-							title,
-							description: description || '',
-							hashtags: hashtags || [],
-							video_url: videoUrlData.publicUrl,
-							thumbnail_url: thumbnailUrl,
-							is_premium: isPremium,
-							duration: 0,
-						})
-						.select('id')
-						.single();
-
-					if (dbError) {
-						await Promise.all([
-							supabase.storage.from('videos').remove([videoFileName]),
-							thumbnailUrl ? supabase.storage.from('thumbnails').remove([thumbnailFileName]) : Promise.resolve()
-						]);
-						return {
-							success: false,
-							error: `Failed to save video record: ${dbError.message}`,
-						};
-					}
-
-					return {
-						success: true,
-						data: { videoId: videoData.id },
-					};
-				}
-			} catch (clientUploadError) {
-				console.error('SUPABASE CLIENT EXCEPTION:', clientUploadError);
-				console.log('Will try fetch method as fallback...');
-			}
-			
-			console.log('=== FALLING BACK TO FETCH METHOD ===');
-
-			// Get video file info for better debugging
+			// Get file info for debugging
 			const videoFileInfo = await FileSystem.getInfoAsync(videoUri);
 			console.log('Video file info:', {
 				exists: videoFileInfo.exists,
-				size: videoFileInfo.size,
-				isDirectory: videoFileInfo.isDirectory,
+				size: videoFileInfo.size ? `${Math.round(videoFileInfo.size / 1024 / 1024 * 100) / 100}MB` : 'Unknown',
 				uri: videoUri,
 			});
 			
-			// Check if file is too large (100MB = 104,857,600 bytes)
-			const MAX_FILE_SIZE = 104857600; // 100MB
-			if (videoFileInfo.size && videoFileInfo.size > MAX_FILE_SIZE) {
-				throw new Error(`Video file too large: ${Math.round(videoFileInfo.size / 1024 / 1024)}MB. Maximum allowed: 100MB`);
+			if (!videoFileInfo.exists) {
+				throw new Error('Video file not found at URI');
 			}
 			
+			// Get auth session for upload
+			const { data: { session } } = await supabase.auth.getSession();
+			const authToken = session?.access_token;
+			
+			if (!authToken) {
+				throw new Error('No authentication token found');
+			}
+
 			const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 			const uploadUrl = `${supabaseUrl}/storage/v1/object/videos/${videoFileName}`;
 			console.log('Upload URL:', uploadUrl);
-			console.log('Video file size:', videoFileInfo.size ? `${Math.round(videoFileInfo.size / 1024 / 1024 * 100) / 100}MB` : 'Unknown');
 			
-			// Strategy 1: Try direct fetch with binary data instead of FormData
-			console.log('=== STRATEGY 1: BINARY UPLOAD ===');
-			const attemptBinaryUpload = async (): Promise<Response | null> => {
-				try {
-					console.log('Reading video file as binary...');
-					const videoData = await FileSystem.readAsStringAsync(videoUri, {
-						encoding: FileSystem.EncodingType.Base64,
-					});
-					
-					console.log('Converting base64 to binary...');
-					const binaryString = atob(videoData);
-					const bytes = new Uint8Array(binaryString.length);
-					for (let i = 0; i < binaryString.length; i++) {
-						bytes[i] = binaryString.charCodeAt(i);
-					}
-					
-					console.log('Uploading binary data...');
-					const response = await fetch(uploadUrl, {
-						method: 'POST',
-						headers: {
-							'Authorization': `Bearer ${authToken}`,
-							'Content-Type': 'video/mp4',
-							'Content-Length': bytes.length.toString(),
-						},
-						body: bytes,
-					});
-					
-					console.log('Binary upload response status:', response.status);
-					return response;
-				} catch (error) {
-					console.error('Binary upload failed:', error);
-					return null;
+			// Simple upload approach - back to basics
+			let uploadSuccessful = false;
+			
+			console.log('Testing Supabase connection first...');
+			try {
+				// Test basic Supabase connection
+				const { data: testData, error: testError } = await supabase.storage
+					.from('videos')
+					.list('', { limit: 1 });
+				
+				if (testError) {
+					console.log('❌ Supabase connection test failed:', testError.message);
+					throw new Error(`Supabase connection issue: ${testError.message}`);
 				}
-			};
+				console.log('✅ Supabase connection OK');
+			} catch (connectionError) {
+				console.log('❌ Connection test failed:', connectionError);
+				throw new Error('Cannot connect to Supabase');
+			}
 			
-			// Strategy 2: FormData upload with iOS fixes
-			const attemptFormDataUpload = async (retryCount = 0): Promise<Response | null> => {
-				try {
-					console.log(`=== STRATEGY 2: FORMDATA UPLOAD (Attempt ${retryCount + 1}) ===`);
-					
-					const videoFormData = new FormData();
-					// iOS fix: Use file:// protocol explicitly
-					const fileUri = videoUri.startsWith('file://') ? videoUri : `file://${videoUri}`;
-					
-					videoFormData.append('file', {
-						uri: fileUri,
+			// Try the simplest approach first - copy file to temp location and upload
+			console.log('Trying simple file copy and upload...');
+			try {
+				// Copy file to a clean temp location
+				const tempDir = FileSystem.documentDirectory + 'temp/';
+				const tempFilePath = tempDir + videoFileName;
+				
+				// Ensure temp directory exists
+				await FileSystem.makeDirectoryAsync(tempDir, { intermediates: true });
+				
+				// Copy the video file
+				await FileSystem.copyAsync({
+					from: videoUri,
+					to: tempFilePath,
+				});
+				
+				console.log('File copied to temp location:', tempFilePath);
+				
+				// Verify the copied file
+				const tempFileInfo = await FileSystem.getInfoAsync(tempFilePath);
+				console.log('Temp file info:', {
+					exists: tempFileInfo.exists,
+					size: tempFileInfo.size ? `${Math.round(tempFileInfo.size / 1024 / 1024 * 100) / 100}MB` : 'Unknown',
+				});
+				
+				if (!tempFileInfo.exists) {
+					throw new Error('Failed to copy file to temp location');
+				}
+				
+				// Now upload from the clean temp location
+				const { data: uploadData, error: uploadError } = await supabase.storage
+					.from('videos')
+					.upload(videoFileName, {
+						uri: tempFilePath,
 						type: 'video/mp4',
 						name: videoFileName,
 					} as any);
-					
-					const response = await fetch(uploadUrl, {
-						method: 'POST',
-						headers: {
-							'Authorization': `Bearer ${authToken}`,
-							// Let React Native set Content-Type automatically
-						},
-						body: videoFormData,
-					});
-					
-					console.log(`FormData attempt ${retryCount + 1} response status:`, response.status);
-					
-					if (!response.ok && retryCount < 2) {
-						console.log('FormData upload failed, retrying...');
-						await new Promise(resolve => setTimeout(resolve, 1500));
-						return attemptFormDataUpload(retryCount + 1);
-					}
-					
-					return response;
-				} catch (error) {
-					console.error(`FormData upload attempt ${retryCount + 1} failed:`, error);
-					if (retryCount < 2) {
-						await new Promise(resolve => setTimeout(resolve, 1500));
-						return attemptFormDataUpload(retryCount + 1);
-					}
-					return null;
+				
+				// Clean up temp file
+				try {
+					await FileSystem.deleteAsync(tempFilePath);
+					await FileSystem.deleteAsync(tempDir);
+				} catch (cleanupError) {
+					console.log('Warning: Could not clean up temp files:', cleanupError);
 				}
-			};
+				
+				if (uploadError) {
+					console.log('❌ Upload failed:', uploadError.message);
+					throw new Error(uploadError.message);
+				}
+				
+				console.log('✅ Upload successful!', uploadData);
+				uploadSuccessful = true;
+				
+			} catch (tempUploadError) {
+				console.log('❌ Temp file upload failed:', tempUploadError.message);
+			}
 			
-			// Strategy 3: XMLHttpRequest approach
-			const attemptXHRUpload = async (): Promise<Response | null> => {
-				return new Promise((resolve) => {
-					try {
-						console.log('=== STRATEGY 3: XMLHttpRequest UPLOAD ===');
-						
-						const xhr = new XMLHttpRequest();
-						xhr.open('POST', uploadUrl, true);
-						xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
-						
-						xhr.onload = function() {
-							console.log('XHR upload response status:', xhr.status);
-							resolve(new Response(xhr.responseText, { 
-								status: xhr.status,
-								statusText: xhr.statusText 
-							}));
-						};
-						
-						xhr.onerror = function() {
-							console.error('XHR upload error');
-							resolve(null);
-						};
-						
-						const formData = new FormData();
-						formData.append('file', {
+			// If temp approach failed, try direct upload with better error handling
+			if (!uploadSuccessful) {
+				console.log('Trying direct upload with detailed diagnostics...');
+				try {
+					// Check if URI is accessible
+					const uriInfo = await FileSystem.getInfoAsync(videoUri);
+					if (!uriInfo.exists) {
+						throw new Error('Source video file does not exist');
+					}
+					
+					console.log('Attempting direct Supabase upload...');
+					const { data: directUpload, error: directError } = await supabase.storage
+						.from('videos')
+						.upload(videoFileName, {
 							uri: videoUri,
 							type: 'video/mp4',
 							name: videoFileName,
 						} as any);
-						
-						xhr.send(formData);
-					} catch (error) {
-						console.error('XHR upload setup failed:', error);
-						resolve(null);
+					
+					if (directError) {
+						console.log('❌ Direct upload failed:', {
+							message: directError.message,
+							statusCode: directError.statusCode,
+							error: directError.error,
+						});
+						throw new Error(`Direct upload failed: ${directError.message}`);
 					}
-				});
-			};
-			
-			// Try all upload strategies in order
-			let response: Response | null = null;
-			let lastError: string = '';
-			
-			try {
-				// Strategy 1: Binary upload (best for iOS)
-				response = await attemptBinaryUpload();
-				if (response && response.ok) {
-					console.log('✅ Binary upload successful!');
-				} else if (response) {
-					const errorText = await response.text();
-					lastError = `Binary upload failed: HTTP ${response.status} - ${errorText}`;
-					console.log('❌ Binary upload failed, trying FormData...');
-					response = null;
-				}
-			} catch (error) {
-				console.log('❌ Binary upload threw error, trying FormData...');
-				lastError = `Binary upload error: ${error.message}`;
-				response = null;
-			}
-			
-			// Strategy 2: FormData upload (standard approach with retries)
-			if (!response) {
-				try {
-					response = await attemptFormDataUpload();
-					if (response && response.ok) {
-						console.log('✅ FormData upload successful!');
-					} else if (response) {
-						const errorText = await response.text();
-						lastError = `FormData upload failed: HTTP ${response.status} - ${errorText}`;
-						console.log('❌ FormData upload failed, trying XHR...');
-						response = null;
-					}
-				} catch (error) {
-					console.log('❌ FormData upload threw error, trying XHR...');
-					lastError = `FormData upload error: ${error.message}`;
-					response = null;
+					
+					console.log('✅ Direct upload successful!');
+					uploadSuccessful = true;
+					
+				} catch (directUploadError) {
+					console.log('❌ Direct upload error:', directUploadError.message);
 				}
 			}
 			
-			// Strategy 3: XMLHttpRequest (last resort)
-			if (!response) {
-				try {
-					response = await attemptXHRUpload();
-					if (response && response.ok) {
-						console.log('✅ XHR upload successful!');
-					} else if (response) {
-						const errorText = await response.text();
-						lastError = `XHR upload failed: HTTP ${response.status} - ${errorText}`;
-						console.log('❌ XHR upload failed');
-						response = null;
-					}
-				} catch (error) {
-					console.log('❌ XHR upload threw error');
-					lastError = `XHR upload error: ${error.message}`;
-					response = null;
-				}
-			}
-			
-			// If all strategies failed
-			if (!response || !response.ok) {
-				console.error('All upload strategies failed. Last error:', lastError);
+			// If both methods failed
+			if (!uploadSuccessful) {
+				console.error('❌ All upload methods failed');
 				// Clean up thumbnail if it was uploaded
 				if (thumbnailUrl) {
 					await supabase.storage.from('thumbnails').remove([thumbnailFileName]);
 				}
 				
-				// Provide detailed error message based on file size
 				const fileSizeMB = videoFileInfo.size ? Math.round(videoFileInfo.size / 1024 / 1024 * 100) / 100 : 0;
 				
+				// Provide specific error messages based on common scenarios
 				if (fileSizeMB > 50) {
-					throw new Error(`Upload failed for large video (${fileSizeMB}MB). Try with a smaller file or compress the video first. Error: ${lastError}`);
-				} else if (lastError.includes('Network request failed')) {
-					throw new Error(`Network error uploading video. This is common on iOS. Try: 1) Switch between WiFi/cellular, 2) Restart the app, 3) Try a shorter video. Technical error: ${lastError}`);
+					return {
+						success: false,
+						error: `Video file is large (${fileSizeMB}MB). Large files may fail on iOS Simulator. Try testing on a physical device or use a smaller video file.`,
+					};
 				} else {
-					throw new Error(`Video upload failed after trying all methods. Error: ${lastError}`);
+					return {
+						success: false,
+						error: `Video upload failed. This often happens on iOS Simulator with video files. Please try:\n\n1. Test on a physical device\n2. Use a smaller video file\n3. Record a new video directly in the app`,
+					};
 				}
 			}
-			
-			console.log('🎉 Video upload completed successfully!');
-		} catch (error) {
-			console.error('Video upload process error:', error);
-			// Clean up thumbnail if it was uploaded
-			if (thumbnailUrl) {
-				await supabase.storage.from('thumbnails').remove([thumbnailFileName]);
+
+			console.log('✅ Video uploaded successfully');
+
+			// Get video public URL
+			const { data: videoUrlData } = supabase.storage
+				.from('videos')
+				.getPublicUrl(videoFileName);
+
+			// Insert video record in database
+			const { data: videoData, error: dbError } = await supabase
+				.from('videos')
+				.insert({
+					user_id: userId,
+					title,
+					description: description || '',
+					hashtags: hashtags || [],
+					video_url: videoUrlData.publicUrl,
+					thumbnail_url: thumbnailUrl,
+					is_premium: isPremium,
+					duration: 0,
+				})
+				.select('id')
+				.single();
+
+			if (dbError) {
+				console.error('❌ Database insert failed:', dbError);
+				// Clean up uploaded files
+				await Promise.all([
+					supabase.storage.from('videos').remove([videoFileName]),
+					thumbnailUrl ? supabase.storage.from('thumbnails').remove([thumbnailFileName]) : Promise.resolve()
+				]);
+				return {
+					success: false,
+					error: `Failed to save video record: ${dbError.message}`,
+				};
 			}
-			throw error;
-		}
 
-		// Get video public URL
-		const { data: videoUrlData } = supabase.storage
-			.from('videos')
-			.getPublicUrl(videoFileName);
+			console.log('🎉 Video upload completed successfully!');
+			return {
+				success: true,
+				data: { videoId: videoData.id },
+			};
 
-		// Insert video record in database
-		const { data: videoData, error: dbError } = await supabase
-			.from('videos')
-			.insert({
-				user_id: userId,
-				title,
-				description: description || '',
-				hashtags: hashtags || [],
-				video_url: videoUrlData.publicUrl,
-				thumbnail_url: thumbnailUrl, // Will be null if thumbnail generation failed
-				is_premium: isPremium,
-				duration: 0, // Will be updated when we can calculate duration
-			})
-			.select('id')
-			.single();
-
-		if (dbError) {
-			// If database insert fails, clean up uploaded files
-			await Promise.all([
-				supabase.storage.from('videos').remove([videoFileName]),
-				thumbnailUrl ? supabase.storage.from('thumbnails').remove([thumbnailFileName]) : Promise.resolve()
-			]);
+		} catch (error) {
+			console.error('💥 Video upload process error:', error);
+			// Clean up thumbnail if it was uploaded
+			try {
+				if (thumbnailUrl) {
+					await supabase.storage.from('thumbnails').remove([thumbnailFileName]);
+				}
+			} catch (cleanupError) {
+				console.warn('Failed to cleanup thumbnail:', cleanupError);
+			}
+			
 			return {
 				success: false,
-				error: `Failed to save video record: ${dbError.message}`,
+				error: error instanceof Error ? error.message : 'Failed to upload video',
 			};
 		}
-
-		return {
-			success: true,
-			data: { videoId: videoData.id },
-		};
-	} catch (error) {
-		return {
-			success: false,
-			error: error instanceof Error ? error.message : 'Failed to upload video',
-		};
 	}
 
 	/**
