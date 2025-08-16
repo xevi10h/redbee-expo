@@ -221,6 +221,13 @@ export default function ProfileScreen() {
 	const handleVideoLongPress = (video: Video) => {
 		const options = [];
 
+		// Analytics option for all videos
+		options.push({
+			text: '📊 Ver analíticas',
+			style: 'default',
+			onPress: () => handleShowAnalytics(video.id, video.title),
+		});
+
 		if (currentTab === 'videos') {
 			// For visible videos
 			options.push(
@@ -309,6 +316,10 @@ export default function ProfileScreen() {
 
 	const handleSettings = () => {
 		router.push('/(tabs)/profile/settings');
+	};
+
+	const handleShowAnalytics = (videoId: string, videoTitle?: string) => {
+		router.push(`/video/${videoId}/analytics`);
 	};
 
 	// Get current videos based on selected tab
@@ -851,6 +862,7 @@ export default function ProfileScreen() {
 					/>
 				</View>
 			</ScrollView>
+
 		</SafeAreaView>
 	);
 }

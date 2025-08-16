@@ -110,19 +110,7 @@ export type CommentLike = {
 	created_at: string;
 };
 
-export type Report = {
-	id: string;
-	video_id?: string;
-	comment_id?: string;
-	reporter_id: string;
-	reported_user_id: string;
-	reason: string;
-	description?: string;
-	status: 'pending' | 'resolved' | 'dismissed';
-	created_at: string;
-	resolved_at?: string;
-	resolved_by?: string;
-};
+// Report type moved to analytics section with enhanced fields
 
 export type Notification = {
 	id: string;
@@ -193,6 +181,138 @@ export interface VideoUploadProgress {
 	isUploading: boolean;
 	isCompleted: boolean;
 	error?: string;
+}
+
+// VIDEO ANALYTICS TYPES
+export interface VideoView {
+	id: string;
+	video_id: string;
+	viewer_id?: string; // null para vistas anónimas
+	viewer_country?: string;
+	viewer_city?: string;
+	viewer_ip_hash?: string;
+	device_type?: 'mobile' | 'tablet' | 'desktop' | 'tv';
+	browser?: string;
+	platform?: 'ios' | 'android' | 'web';
+	referrer_source?: string;
+	watch_duration_seconds: number;
+	video_duration_at_view?: number;
+	completion_percentage: number;
+	is_premium_viewer: boolean;
+	is_follower: boolean;
+	session_id?: string;
+	created_at: string;
+	viewed_at: string;
+}
+
+export interface VideoShare {
+	id: string;
+	video_id: string;
+	sharer_id?: string;
+	platform: string; // 'whatsapp', 'telegram', 'twitter', 'copy_link', etc.
+	sharer_country?: string;
+	created_at: string;
+}
+
+export interface VideoDailyMetrics {
+	id: string;
+	video_id: string;
+	date: string;
+	views_count: number;
+	unique_views_count: number;
+	likes_count: number;
+	comments_count: number;
+	shares_count: number;
+	reports_count: number;
+	avg_watch_duration: number;
+	avg_completion_percentage: number;
+	premium_views_count: number;
+	follower_views_count: number;
+	top_countries: CountryMetric[];
+	created_at: string;
+	updated_at: string;
+}
+
+export interface VideoHourlyMetrics {
+	id: string;
+	video_id: string;
+	date: string;
+	hour: number;
+	views_count: number;
+	unique_views_count: number;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface CountryMetric {
+	country: string;
+	count: number;
+}
+
+export interface VideoAnalyticsSummary {
+	total_views: number;
+	unique_views: number;
+	total_likes: number;
+	total_comments: number;
+	total_shares: number;
+	total_reports: number;
+	avg_watch_duration: number;
+	avg_completion_rate: number;
+	premium_viewer_percentage: number;
+	follower_percentage: number;
+	top_countries: CountryMetric[];
+}
+
+export interface VideoHourlyData {
+	hour: number;
+	views: number;
+	unique_views: number;
+}
+
+export interface VideoAnalyticsData {
+	summary: VideoAnalyticsSummary;
+	hourly_views: VideoHourlyData[];
+	daily_metrics: VideoDailyMetrics[];
+	recent_likes: VideoAnalyticsInteraction[];
+	recent_comments: VideoAnalyticsInteraction[];
+	recent_shares: VideoShare[];
+	reports_by_reason: ReportsByReason[];
+}
+
+export interface VideoAnalyticsInteraction {
+	id: string;
+	user: {
+		id: string;
+		username: string;
+		display_name?: string;
+		avatar_url?: string;
+	};
+	created_at: string;
+	text?: string; // Para comentarios
+	country?: string;
+}
+
+export interface ReportsByReason {
+	reason: string;
+	count: number;
+	percentage: number;
+}
+
+// UPDATED Report type con campos adicionales para analíticas
+export interface Report {
+	id: string;
+	video_id?: string;
+	comment_id?: string;
+	reporter_id?: string;
+	reported_user_id: string;
+	reason: 'inappropriate' | 'spam' | 'harassment' | 'copyright' | 'violence' | 'adult_content' | 'hate_speech' | 'misinformation' | 'other';
+	description?: string;
+	reporter_country?: string;
+	status: 'pending' | 'resolved' | 'dismissed';
+	automated_action?: string;
+	created_at: string;
+	resolved_at?: string;
+	resolved_by?: string;
 }
 
 // App configuration

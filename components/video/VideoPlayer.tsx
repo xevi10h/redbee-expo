@@ -18,6 +18,7 @@ import {
 
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
+import { AnalyticsService } from '@/services/analyticsService';
 import { Comment, User, Video as VideoType } from '@/shared/types';
 import { CommentsModal } from '../comments/CommentsModal';
 import { VideoControls } from '../video/VideoControls';
@@ -43,6 +44,7 @@ interface VideoPlayerProps {
 	onDeleteVideo?: () => void;
 	onUserPress: () => void;
 	onCommentAdded: (comment: Comment) => void;
+	onShowAnalytics?: () => void;
 	isFullscreen?: boolean; // Para indicar si estamos en pantalla completa
 }
 
@@ -59,6 +61,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	onDeleteVideo,
 	onUserPress,
 	onCommentAdded,
+	onShowAnalytics,
 	isFullscreen = false,
 }) => {
 	const [hasError, setHasError] = useState(false);
@@ -85,6 +88,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const [duration, setDuration] = useState(0);
 	const [isLoaded, setIsLoaded] = useState(false);
 	const [isSeeking, setIsSeeking] = useState(false);
+	const [hasTrackedView, setHasTrackedView] = useState(false);
+	const [startTime, setStartTime] = useState<number | null>(null);
 
 	useEventListener(player, 'timeUpdate', ({ currentTime: time }) => {
 		// Only update currentTime if we're not currently seeking to avoid conflicts
@@ -157,10 +162,54 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	useEffect(() => {
 		if (isActive && isLoaded) {
 			player.play();
+			
+			// Track view when video starts playing
+			if (!hasTrackedView && !startTime) {
+				setStartTime(Date.now());
+			}
 		} else if (!isActive) {
 			player.pause();
 		}
-	}, [isActive, isLoaded, player]);
+	}, [isActive, isLoaded, player, hasTrackedView, startTime]);
+
+	// Track video view and watch duration
+	useEffect(() => {
+		if (isActive && isPlaying && !hasTrackedView && startTime && duration > 0) {
+			// Track view after 3 seconds of actual playback
+			const trackingTimer = setTimeout(async () => {
+				try {
+					const watchDuration = Math.round((Date.now() - startTime) / 1000);
+					const completionPercentage = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+
+					// Track view in background without awaiting to avoid blocking
+					AnalyticsService.trackVideoView(video.id, {
+						viewer_id: currentUser.id,
+						watch_duration_seconds: watchDuration,
+						video_duration_at_view: Math.round(duration),
+						completion_percentage: completionPercentage,
+						is_premium_viewer: currentUser.subscription_status === 'active',
+						is_follower: video.is_following || false,
+						device_type: Platform.OS === 'ios' ? 'mobile' : Platform.OS === 'android' ? 'mobile' : 'web',
+						platform: Platform.OS as 'ios' | 'android' | 'web',
+					}).catch(error => {
+						console.error('Error tracking video view:', error);
+					});
+
+					setHasTrackedView(true);
+				} catch (error) {
+					console.error('Error in view tracking setup:', error);
+				}
+			}, 3000); // Track after 3 seconds
+
+			return () => clearTimeout(trackingTimer);
+		}
+	}, [isActive, isPlaying, hasTrackedView, startTime, duration, video.id, video.is_following, currentUser]);
+
+	// Reset tracking when video changes
+	useEffect(() => {
+		setHasTrackedView(false);
+		setStartTime(null);
+	}, [video.id]);
 
 	// Polling más agresivo para asegurar que obtenemos la duración
 	useEffect(() => {
@@ -381,6 +430,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						onDeleteVideo={onDeleteVideo}
 						onUserPress={onUserPress}
 						onCommentAdded={handleCommentAdded}
+						onShowAnalytics={onShowAnalytics}
 					/>
 				</Animated.View>
 			)}

@@ -170,6 +170,7 @@ export default function VideoScreen() {
 						comments_count: item.comments_count + 1,
 					});
 				}}
+				onShowAnalytics={() => router.push(`/video/${item.id}/analytics`)}
 				isFullscreen={true}
 			/>
 		);

@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
 	Alert,
@@ -11,7 +12,6 @@ import {
 	View,
 	ViewToken,
 } from 'react-native';
-
 import { VideoFeedLoader } from '@/components/ui/VideoFeedLoader';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { Colors } from '@/constants/Colors';
@@ -35,6 +35,7 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 	user,
 	isActive = true,
 }) => {
+	const router = useRouter();
 	const { t } = useTranslation();
 
 	// State management
@@ -118,6 +119,11 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 		[handleCommentAdded],
 	);
 
+	// Handle analytics
+	const handleShowAnalytics = useCallback((videoId: string, videoTitle?: string) => {
+		router.push(`/video/${videoId}/analytics`);
+	}, [router]);
+
 	// Render individual video item
 	const renderVideoItem = useCallback(
 		({ item, index }: { item: any; index: number }) => {
@@ -140,6 +146,7 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 						onCommentAdded={(comment: Comment) =>
 							handleVideoCommentAdded(item.id, comment)
 						}
+						onShowAnalytics={() => handleShowAnalytics(item.id, item.title)}
 					/>
 				</View>
 			);
@@ -155,6 +162,7 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 			handleVideoReport,
 			handleUserPress,
 			handleVideoCommentAdded,
+			handleShowAnalytics,
 		],
 	);
 
@@ -244,6 +252,7 @@ export const FollowingScreen: React.FC<FollowingScreenProps> = ({
 			{showMainLoader && (
 				<VideoFeedLoader message={t('common.loading')} showIcon={true} />
 			)}
+
 		</View>
 	);
 };

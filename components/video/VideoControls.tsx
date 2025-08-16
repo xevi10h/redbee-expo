@@ -43,6 +43,7 @@ interface VideoControlsProps {
 	onDeleteVideo?: () => void;
 	onUserPress: () => void;
 	onCommentAdded: (comment: Comment) => void;
+	onShowAnalytics?: () => void;
 }
 
 export const VideoControls: React.FC<VideoControlsProps> = ({
@@ -57,6 +58,7 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 	onDeleteVideo,
 	onUserPress,
 	onCommentAdded,
+	onShowAnalytics,
 }) => {
 	const { t } = useTranslation();
 	const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -133,9 +135,18 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 
 	return (
 		<>
-			{/* Top right controls - Hide/Delete buttons for own videos */}
+			{/* Top right controls - Hide/Delete/Analytics buttons for own videos */}
 			{video.user?.id === currentUser.id && (
 				<View style={styles.topRightControls}>
+					{onShowAnalytics && (
+						<TouchableOpacity
+							style={styles.topActionButton}
+							onPress={onShowAnalytics}
+							activeOpacity={0.7}
+						>
+							<Feather name="bar-chart-2" size={20} color={Colors.primary} />
+						</TouchableOpacity>
+					)}
 					<TouchableOpacity
 						style={styles.topActionButton}
 						onPress={handleHideVideo}
