@@ -331,16 +331,29 @@ export class SupabaseAuthService {
 				data: user,
 			};
 		} catch (error: any) {
-			let errorMessage = 'Google sign in failed';
+			let errorMessage = 'auth.errors.googleSignInFailed';
 
 			console.error('Google sign in error:', error);
 
 			if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-				errorMessage = 'Google sign in was cancelled';
+				errorMessage = 'auth.errors.googleSignInCancelled';
 			} else if (error.code === statusCodes.IN_PROGRESS) {
 				errorMessage = 'Google sign in is already in progress';
 			} else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
 				errorMessage = 'Google Play Services not available';
+			} else if (error.message && (
+				error.message.includes('invalid_audience') || 
+				error.message.includes('client ID') ||
+				error.message.includes('invalid_client') ||
+				error.message.includes('unauthorized_client')
+			)) {
+				console.error('Google Sign-In Configuration Error Details:', {
+					errorMessage: error.message,
+					webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+					iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+					androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
+				});
+				errorMessage = 'auth.errors.googleSignInConfigError';
 			}
 
 			return {
@@ -394,9 +407,12 @@ export class SupabaseAuthService {
 			);
 
 			if (result.type !== 'success') {
+				const errorMessage = result.type === 'cancel' 
+					? 'auth.errors.googleSignInCancelled'
+					: 'auth.errors.googleSignInFailed';
 				return {
 					success: false,
-					error: 'Authentication was cancelled or failed',
+					error: errorMessage,
 				};
 			}
 
@@ -594,13 +610,13 @@ export class SupabaseAuthService {
 			if (error.code === 'ERR_REQUEST_CANCELED') {
 				return {
 					success: false,
-					error: 'Apple sign in was cancelled',
+					error: 'auth.errors.appleSignInCancelled',
 				};
 			}
 
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Apple sign in failed',
+				error: error instanceof Error ? error.message : 'auth.errors.appleSignInFailed',
 			};
 		}
 	}

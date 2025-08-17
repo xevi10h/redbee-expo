@@ -654,7 +654,7 @@ export class VideoService {
 
 
 	/**
-	 * Upload a new video with thumbnail generation
+	 * Upload a new video with thumbnail generation and progress tracking
 	 */
 	static async uploadVideo(data: {
 		videoUri: string;
@@ -666,8 +666,9 @@ export class VideoService {
 		startTime?: number;
 		endTime?: number;
 		thumbnailTime?: number;
+		onProgress?: (progress: number) => void;
 	}): Promise<AuthResponse<{ videoId: string }>> {
-		const { videoUri, title, description, hashtags, isPremium, userId, thumbnailTime } = data;
+		const { videoUri, title, description, hashtags, isPremium, userId, thumbnailTime, onProgress } = data;
 		const timestamp = Date.now();
 		const videoFileName = `video_${userId}_${timestamp}.mp4`;
 		const thumbnailFileName = `thumbnail_${userId}_${timestamp}.jpg`;
@@ -675,6 +676,7 @@ export class VideoService {
 
 		try {
 			console.log('📱 Starting video upload process...');
+			onProgress?.(5); // Starting
 			
 			// Generate thumbnail first
 			const thumbTime = thumbnailTime !== undefined && thumbnailTime >= 0 ? thumbnailTime : 1;
@@ -700,6 +702,7 @@ export class VideoService {
 							.getPublicUrl(thumbnailFileName);
 						thumbnailUrl = thumbUrlData.publicUrl;
 						console.log('✅ Thumbnail uploaded successfully');
+						onProgress?.(15); // Thumbnail complete
 					}
 				}
 			} catch (thumbnailError) {
@@ -708,6 +711,7 @@ export class VideoService {
 			
 			// Upload video with comprehensive diagnostics and fallback strategies
 			console.log('📹 Uploading video file...');
+			onProgress?.(20); // Starting video upload
 			
 			// Get file info for debugging
 			const videoFileInfo = await FileSystem.getInfoAsync(videoUri);
@@ -737,6 +741,7 @@ export class VideoService {
 			let uploadSuccessful = false;
 			
 			console.log('Testing Supabase connection first...');
+			onProgress?.(30); // Testing connection
 			try {
 				// Test basic Supabase connection
 				const { data: testData, error: testError } = await supabase.storage
@@ -748,6 +753,7 @@ export class VideoService {
 					throw new Error(`Supabase connection issue: ${testError.message}`);
 				}
 				console.log('✅ Supabase connection OK');
+				onProgress?.(40); // Connection OK
 			} catch (connectionError) {
 				console.log('❌ Connection test failed:', connectionError);
 				throw new Error('Cannot connect to Supabase');
@@ -770,6 +776,7 @@ export class VideoService {
 				});
 				
 				console.log('File copied to temp location:', tempFilePath);
+				onProgress?.(60); // File copied
 				
 				// Verify the copied file
 				const tempFileInfo = await FileSystem.getInfoAsync(tempFilePath);
@@ -805,6 +812,7 @@ export class VideoService {
 				}
 				
 				console.log('✅ Upload successful!', uploadData);
+				onProgress?.(80); // Upload complete
 				uploadSuccessful = true;
 				
 			} catch (tempUploadError) {
@@ -872,6 +880,7 @@ export class VideoService {
 			}
 
 			console.log('✅ Video uploaded successfully');
+			onProgress?.(85); // Creating database record
 
 			// Get video public URL
 			const { data: videoUrlData } = supabase.storage
@@ -908,6 +917,7 @@ export class VideoService {
 			}
 
 			console.log('🎉 Video upload completed successfully!');
+			onProgress?.(100); // Complete
 			return {
 				success: true,
 				data: { videoId: videoData.id },

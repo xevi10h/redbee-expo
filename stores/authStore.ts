@@ -22,8 +22,11 @@ interface AuthState {
 	signInLocal: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
 	signUp: (credentials: RegisterCredentials) => Promise<boolean>;
 	signInWithGoogle: () => Promise<boolean>;
+	signInWithGoogleLocal: () => Promise<{ success: boolean; error?: string }>;
 	signInWithGoogleOAuth: () => Promise<boolean>;
+	signInWithGoogleOAuthLocal: () => Promise<{ success: boolean; error?: string }>;
 	signInWithApple: () => Promise<boolean>;
+	signInWithAppleLocal: () => Promise<{ success: boolean; error?: string }>;
 	signOut: () => Promise<void>;
 	updateProfile: (updates: Partial<User>) => Promise<boolean>;
 	setLanguage: (language: Language) => void;
@@ -156,6 +159,90 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 			return { 
 				success: false, 
 				error: error instanceof Error ? error.message : 'auth.errors.unknownError' 
+			};
+		}
+	},
+
+	// Sign in with Google (local error handling)
+	signInWithGoogleLocal: async () => {
+		set({ isLoading: true, error: null });
+
+		try {
+			const result = await SupabaseAuthService.signInWithGoogle();
+
+			if (result.success && result.data) {
+				set({
+					user: result.data,
+					isAuthenticated: true,
+					isLoading: false,
+					error: null,
+				});
+				return { success: true };
+			} else {
+				set({ isLoading: false });
+				return { success: false, error: result.error || 'auth.errors.googleSignInFailed' };
+			}
+		} catch (error) {
+			set({ isLoading: false });
+			return { 
+				success: false, 
+				error: error instanceof Error ? error.message : 'auth.errors.googleSignInFailed' 
+			};
+		}
+	},
+
+	// Sign in with Google OAuth (local error handling)
+	signInWithGoogleOAuthLocal: async () => {
+		set({ isLoading: true, error: null });
+
+		try {
+			const result = await SupabaseAuthService.signInWithGoogleOAuth();
+
+			if (result.success && result.data) {
+				set({
+					user: result.data,
+					isAuthenticated: true,
+					isLoading: false,
+					error: null,
+				});
+				return { success: true };
+			} else {
+				set({ isLoading: false });
+				return { success: false, error: result.error || 'auth.errors.googleSignInFailed' };
+			}
+		} catch (error) {
+			set({ isLoading: false });
+			return { 
+				success: false, 
+				error: error instanceof Error ? error.message : 'auth.errors.googleSignInFailed' 
+			};
+		}
+	},
+
+	// Sign in with Apple (local error handling)
+	signInWithAppleLocal: async () => {
+		set({ isLoading: true, error: null });
+
+		try {
+			const result = await SupabaseAuthService.signInWithApple();
+
+			if (result.success && result.data) {
+				set({
+					user: result.data,
+					isAuthenticated: true,
+					isLoading: false,
+					error: null,
+				});
+				return { success: true };
+			} else {
+				set({ isLoading: false });
+				return { success: false, error: result.error || 'auth.errors.appleSignInFailed' };
+			}
+		} catch (error) {
+			set({ isLoading: false });
+			return { 
+				success: false, 
+				error: error instanceof Error ? error.message : 'auth.errors.appleSignInFailed' 
 			};
 		}
 	},

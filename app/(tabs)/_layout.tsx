@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
 import { useCallback } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, View, Image } from 'react-native';
 
 import { NotificationBadge } from '@/components/ui/NotificationBadge';
 import { Colors } from '@/constants/Colors';
@@ -113,7 +113,15 @@ export default function TabLayout() {
 				options={{
 					title: 'RedBee AI',
 					tabBarIcon: ({ color, size }) => (
-						<Feather name="zap" size={size} color={color} />
+						<Image
+							source={require('../../assets/images/adaptative-icon.png')}
+							style={{
+								width: size,
+								height: size,
+								borderRadius: size / 8,
+								tintColor: color,
+							}}
+						/>
 					),
 				}}
 				listeners={{

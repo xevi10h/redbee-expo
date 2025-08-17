@@ -12,9 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
+import { CircularProgress } from '@/components/ui/CircularProgress';
 import { HashtagInput } from '@/components/ui/HashtagInput';
 import { Input } from '@/components/ui/Input';
-import { Spinner } from '@/components/ui/Spinner';
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ThumbnailSelector } from './ThumbnailSelector';
@@ -32,6 +32,9 @@ interface VideoMetadataProps {
 	}) => void;
 	onBack: () => void;
 	isUploading?: boolean;
+	uploadProgress?: number;
+	compressionProgress?: number;
+	uploadStage?: 'compression' | 'uploading' | 'idle';
 }
 
 export function VideoMetadata({
@@ -41,6 +44,9 @@ export function VideoMetadata({
 	onSave,
 	onBack,
 	isUploading = false,
+	uploadProgress = 0,
+	compressionProgress = 0,
+	uploadStage = 'idle',
 }: VideoMetadataProps) {
 	const { t } = useTranslation();
 
@@ -221,8 +227,20 @@ export function VideoMetadata({
 			{isUploading && (
 				<View style={styles.uploadOverlay}>
 					<View style={styles.uploadContainer}>
-						<Spinner size={32} color={Colors.primary} />
-						<Text style={styles.uploadText}>{t('upload.uploadingVideo')}</Text>
+						<CircularProgress 
+							progress={uploadProgress} 
+							size={80}
+							strokeWidth={8}
+							color={Colors.primary}
+							backgroundColor={Colors.textTertiary}
+							showPercentage={true}
+						/>
+						<Text style={styles.uploadText}>Subiendo video...</Text>
+						<Text style={styles.uploadSubtext}>
+							{uploadProgress < 50 
+								? 'Procesando y comprimiendo...' 
+								: 'Enviando al servidor...'}
+						</Text>
 					</View>
 				</View>
 			)}
@@ -421,5 +439,13 @@ const styles = StyleSheet.create({
 		fontWeight: '500',
 		color: Colors.text,
 		marginTop: 12,
+		textAlign: 'center',
+	},
+	uploadSubtext: {
+		fontSize: 12,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textSecondary,
+		marginTop: 4,
+		textAlign: 'center',
 	},
 });

@@ -64,7 +64,12 @@
 			"invalidCredentialsInline": "Estos datos no corresponden a ningún usuario registrado",
 			"accountNotFound": "No existe una cuenta con este correo electrónico",
 			"wrongPassword": "La contraseña es incorrecta",
-			"tooManyAttempts": "Demasiados intentos fallidos. Inténtalo más tarde"
+			"tooManyAttempts": "Demasiados intentos fallidos. Inténtalo más tarde",
+			"googleSignInFailed": "Error al iniciar sesión con Google",
+			"googleSignInCancelled": "Inicio de sesión con Google cancelado",
+			"googleSignInConfigError": "Error de configuración de Google Sign-In. Contacta con soporte técnico",
+			"appleSignInFailed": "Error al iniciar sesión con Apple",
+			"appleSignInCancelled": "Inicio de sesión con Apple cancelado"
 		},
 		"validation": {
 			"emailAvailable": "Correo disponible",

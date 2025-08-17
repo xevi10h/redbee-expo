@@ -18,6 +18,9 @@ interface VideoEditorProps {
 	}) => void;
 	onCancel: () => void;
 	isUploading?: boolean;
+	uploadProgress?: number;
+	compressionProgress?: number;
+	uploadStage?: 'compression' | 'uploading' | 'idle';
 }
 
 export function VideoEditor({
@@ -26,6 +29,9 @@ export function VideoEditor({
 	onSave,
 	onCancel,
 	isUploading = false,
+	uploadProgress = 0,
+	compressionProgress = 0,
+	uploadStage = 'idle',
 }: VideoEditorProps) {
 	const { t } = useTranslation();
 	
@@ -86,6 +92,9 @@ export function VideoEditor({
 			onSave={handleMetadataSave}
 			onBack={handleMetadataBack}
 			isUploading={isUploading}
+			uploadProgress={uploadProgress}
+			compressionProgress={compressionProgress}
+			uploadStage={uploadStage}
 		/>
 	);
 }

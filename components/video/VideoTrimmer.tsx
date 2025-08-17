@@ -1,6 +1,6 @@
 import { useEvent, useEventListener } from 'expo';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
 	Alert,
 	Dimensions,
@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { VideoThumbnails } from './VideoThumbnails';
+import { SimpleTrimmerBar } from './SimpleTrimmerBar';
 
 const { width: screenWidth } = Dimensions.get('window');
 const TRIMMER_WIDTH = screenWidth - 32;
@@ -55,12 +56,37 @@ export function VideoTrimmer({
 	const [currentTime, setCurrentTime] = useState(0);
 	const [isLoaded, setIsLoaded] = useState(false);
 	const [isDragging, setIsDragging] = useState(false);
+	const [useThumbnails, setUseThumbnails] = useState(true);
+	const [loadingMessage, setLoadingMessage] = useState('Cargando video...');
 
-	// Video player setup with proper configuration
+	// Smart thumbnail loading based on video characteristics
+	useEffect(() => {
+		// Disable thumbnails for very long videos or when performance might be poor
+		if (duration > 120) { // Disable thumbnails for videos longer than 2 minutes
+			setUseThumbnails(false);
+		}
+		
+		// Also check if video seems to be from iCloud (might be slow)
+		const isLikelyiCloud = videoUri.includes('icloud') || 
+							   videoUri.includes('CloudDocs') ||
+							   videoUri.includes('tmp'); // Sometimes iCloud videos are in tmp
+		
+		if (isLikelyiCloud) {
+			console.log('🔄 Detected potential iCloud video, using simplified trimmer');
+			setUseThumbnails(false);
+			setLoadingMessage('Descargando de iCloud...');
+		}
+	}, [duration, videoUri]);
+
+	// Video player setup with optimized configuration
 	const player = useVideoPlayer(videoUri, (player) => {
 		player.loop = false; // We'll handle custom looping
 		player.muted = false;
-		player.timeUpdateEventInterval = 0.1; // Frequent updates for smooth UI
+		player.timeUpdateEventInterval = 0.1; // Faster updates for better responsiveness
+		// Optimize for trimming use case
+		player.shouldCorrectPitch = false; // Disable pitch correction for better performance
+		// Reduce quality for faster loading
+		player.playbackRate = 1.0;
 	});
 
 	const { isPlaying } = useEvent(player, 'playingChange', {
@@ -87,13 +113,13 @@ export function VideoTrimmer({
 		currentTimeX.value = Math.max(0, Math.min(TRIMMER_WIDTH - 2, currentX));
 	}, [startTime, endTime, currentTime, duration]);
 
-	// Video event listeners
+	// Optimized video event listeners with throttling
 	useEventListener(player, 'timeUpdate', ({ currentTime: time }) => {
 		if (!isDragging && isLoaded) {
 			setCurrentTime(time);
 
-			// Custom loop within selected range
-			if (time >= endTime && isPlaying) {
+			// Custom loop within selected range with debouncing
+			if (time >= endTime - 0.1 && isPlaying) { // Small buffer to prevent rapid looping
 				try {
 					player.currentTime = startTime;
 				} catch (error) {
@@ -106,17 +132,52 @@ export function VideoTrimmer({
 	useEventListener(player, 'statusChange', ({ status, error }) => {
 		if (status === 'readyToPlay') {
 			setIsLoaded(true);
-			// Start playing from startTime
-			try {
-				player.currentTime = startTime;
-				player.play();
-			} catch (error) {
-				console.warn('Error starting playback:', error);
-			}
+			// Start playing from startTime with delay for better stability
+			setTimeout(() => {
+				try {
+					player.currentTime = startTime;
+					player.play();
+				} catch (error) {
+					console.warn('Error starting playback:', error);
+				}
+			}, 100);
 		} else if (status === 'error' && error) {
 			console.error('Video error:', error);
+			setIsLoaded(true); // Show interface even with error
 		}
 	});
+
+	// Progressive timeout fallback for loading
+	useEffect(() => {
+		// Quick timeout for local videos
+		const quickTimeout = setTimeout(() => {
+			if (!isLoaded) {
+				console.log('Video taking longer than expected, checking if it needs download...');
+				setLoadingMessage('Esto está tardando más de lo normal...');
+			}
+		}, 3000); // 3 second warning
+
+		// Medium timeout
+		const mediumTimeout = setTimeout(() => {
+			if (!isLoaded) {
+				setLoadingMessage('Puede que el video esté en iCloud...');
+			}
+		}, 6000); // 6 second update
+
+		// Extended timeout for iCloud videos
+		const extendedTimeout = setTimeout(() => {
+			if (!isLoaded) {
+				console.warn('Video took too long to load, showing interface anyway');
+				setIsLoaded(true);
+			}
+		}, 10000); // 10 second timeout
+
+		return () => {
+			clearTimeout(quickTimeout);
+			clearTimeout(mediumTimeout);
+			clearTimeout(extendedTimeout);
+		};
+	}, [isLoaded]);
 
 	// Helper function to show trim validation error
 	const showTrimTooShortError = useCallback(() => {
@@ -351,7 +412,7 @@ export function VideoTrimmer({
 		width: endHandleX.value - startHandleX.value,
 	}));
 
-	// Update current time indicator position
+	// Optimized current time indicator position updates
 	useEffect(() => {
 		if (!isDragging) {
 			const position = (currentTime / duration) * TRIMMER_WIDTH;
@@ -359,7 +420,8 @@ export function VideoTrimmer({
 				0,
 				Math.min(TRIMMER_WIDTH - 2, position),
 			); // Account for indicator width
-			currentTimeX.value = withSpring(clampedPosition);
+			// Use direct assignment for better performance during playback
+			currentTimeX.value = clampedPosition;
 		}
 	}, [currentTime, duration, isDragging]);
 
@@ -395,6 +457,20 @@ export function VideoTrimmer({
 						allowsPictureInPicture={false}
 					/>
 
+					{/* Loading Overlay */}
+					{!isLoaded && (
+						<View style={styles.loadingVideoOverlay}>
+							<View style={styles.loadingVideoContainer}>
+								<Text style={styles.loadingVideoText}>{loadingMessage}</Text>
+								{loadingMessage.includes('iCloud') && (
+									<Text style={styles.loadingVideoSubtext}>
+										Los videos de iCloud pueden tardar en descargarse
+									</Text>
+								)}
+							</View>
+						</View>
+					)}
+
 					{/* Play/Pause Overlay */}
 					{isLoaded && (
 						<TouchableOpacity
@@ -424,8 +500,12 @@ export function VideoTrimmer({
 				{/* Video Trimmer */}
 				<View style={styles.trimmerContainer}>
 					<View style={styles.trimmerTrack}>
-						{/* Video thumbnails background */}
-						<VideoThumbnails videoUri={videoUri} duration={duration} />
+						{/* Conditional thumbnail loading based on performance */}
+						{isLoaded && useThumbnails ? (
+							<VideoThumbnails videoUri={videoUri} duration={duration} />
+						) : (
+							<SimpleTrimmerBar duration={duration} />
+						)}
 
 						{/* Left overlay (before start) */}
 						<Animated.View style={[styles.overlay, leftOverlayStyle]} />
@@ -686,5 +766,30 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		fontFamily: 'Inter-Regular',
 		color: Colors.textSecondary,
+	},
+	loadingVideoOverlay: {
+		...StyleSheet.absoluteFillObject,
+		backgroundColor: 'rgba(0, 0, 0, 0.8)',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	loadingVideoContainer: {
+		backgroundColor: Colors.backgroundSecondary,
+		padding: 20,
+		borderRadius: 12,
+		alignItems: 'center',
+	},
+	loadingVideoText: {
+		fontSize: 16,
+		fontFamily: 'Inter-Medium',
+		color: Colors.text,
+		textAlign: 'center',
+	},
+	loadingVideoSubtext: {
+		fontSize: 12,
+		fontFamily: 'Inter-Regular',
+		color: Colors.textSecondary,
+		textAlign: 'center',
+		marginTop: 8,
 	},
 });

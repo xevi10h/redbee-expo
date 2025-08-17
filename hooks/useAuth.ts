@@ -14,10 +14,13 @@ export const useAuth = () => {
 	const signInLocal = useAuthStore((state) => state.signInLocal);
 	const signUp = useAuthStore((state) => state.signUp);
 	const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
+	const signInWithGoogleLocal = useAuthStore((state) => state.signInWithGoogleLocal);
 	const signInWithGoogleOAuth = useAuthStore(
 		(state) => state.signInWithGoogleOAuth,
 	);
+	const signInWithGoogleOAuthLocal = useAuthStore((state) => state.signInWithGoogleOAuthLocal);
 	const signInWithApple = useAuthStore((state) => state.signInWithApple);
+	const signInWithAppleLocal = useAuthStore((state) => state.signInWithAppleLocal);
 	const signOut = useAuthStore((state) => state.signOut);
 	const updateProfile = useAuthStore((state) => state.updateProfile);
 	const clearError = useAuthStore((state) => state.clearError);
@@ -32,8 +35,11 @@ export const useAuth = () => {
 		signInLocal,
 		signUp,
 		signInWithGoogle,
+		signInWithGoogleLocal,
 		signInWithGoogleOAuth,
+		signInWithGoogleOAuthLocal,
 		signInWithApple,
+		signInWithAppleLocal,
 		signOut,
 		updateProfile,
 		clearError,

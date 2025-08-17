@@ -64,7 +64,12 @@
 			"invalidCredentialsInline": "These credentials do not match any registered user",
 			"accountNotFound": "No account found with this email",
 			"wrongPassword": "Incorrect password",
-			"tooManyAttempts": "Too many failed attempts. Please try again later"
+			"tooManyAttempts": "Too many failed attempts. Please try again later",
+			"googleSignInFailed": "Google Sign-In failed",
+			"googleSignInCancelled": "Google Sign-In cancelled",
+			"googleSignInConfigError": "Google Sign-In configuration error. Please contact technical support",
+			"appleSignInFailed": "Apple Sign-In failed",
+			"appleSignInCancelled": "Apple Sign-In cancelled"
 		},
 		"validation": {
 			"emailAvailable": "Email available",

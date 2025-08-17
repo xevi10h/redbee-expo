@@ -8,12 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		3555635EA98FEC066845947B /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CDD805AC5D7E7422BD89EF9 /* ExpoModulesProvider.swift */; };
-		3C3F1817FD3495B5591590D8 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D770A75491BB3B6E5A9B51B4 /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		4BBA90A5B7F4471795895D9B /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6196350FC1F34B75BD7C02BC /* noop-file.swift */; };
-		B6DA2F3CE4CD68F9C35322C0 /* libPods-redbeeexpo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 29D47EB910A969DABD730382 /* libPods-redbeeexpo.a */; };
+		8678AF59CD3C4E2F3545034F /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4488A9A2F5EF362CB4DA6D /* ExpoModulesProvider.swift */; };
+		A70566DF5F0FF6696D7A1130 /* libPods-redbeeexpo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4A5512B9BF6536913D01917E /* libPods-redbeeexpo.a */; };
+		B3BEDC14240E4E34903758D0 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99F1D4598795415CB0E19547 /* noop-file.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		E8F64EB8C15DEFF817A28383 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3597C42AAF2086A1A5C23E38 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -21,14 +21,14 @@
 		13B07F961A680F5B00A75B9A /* redbeeexpo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = redbeeexpo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = redbeeexpo/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = redbeeexpo/Info.plist; sourceTree = "<group>"; };
-		29D47EB910A969DABD730382 /* libPods-redbeeexpo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-redbeeexpo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		4905781061993048CB12FCF8 /* Pods-redbeeexpo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-redbeeexpo.release.xcconfig"; path = "Target Support Files/Pods-redbeeexpo/Pods-redbeeexpo.release.xcconfig"; sourceTree = "<group>"; };
-		6196350FC1F34B75BD7C02BC /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "redbeeexpo/noop-file.swift"; sourceTree = "<group>"; };
-		8CDD805AC5D7E7422BD89EF9 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-redbeeexpo/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		A8F998A72A4CDD5380B72A50 /* Pods-redbeeexpo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-redbeeexpo.debug.xcconfig"; path = "Target Support Files/Pods-redbeeexpo/Pods-redbeeexpo.debug.xcconfig"; sourceTree = "<group>"; };
+		1C4488A9A2F5EF362CB4DA6D /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-redbeeexpo/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		214EA7F326EC3ACAE242C3CE /* Pods-redbeeexpo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-redbeeexpo.debug.xcconfig"; path = "Target Support Files/Pods-redbeeexpo/Pods-redbeeexpo.debug.xcconfig"; sourceTree = "<group>"; };
+		3597C42AAF2086A1A5C23E38 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = redbeeexpo/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		4A5512B9BF6536913D01917E /* libPods-redbeeexpo.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-redbeeexpo.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		4F1FCC06A2F680E29FF0E771 /* Pods-redbeeexpo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-redbeeexpo.release.xcconfig"; path = "Target Support Files/Pods-redbeeexpo/Pods-redbeeexpo.release.xcconfig"; sourceTree = "<group>"; };
+		99F1D4598795415CB0E19547 /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "redbeeexpo/noop-file.swift"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = redbeeexpo/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		D770A75491BB3B6E5A9B51B4 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = redbeeexpo/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = redbeeexpo/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* redbeeexpo-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "redbeeexpo-Bridging-Header.h"; path = "redbeeexpo/redbeeexpo-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -39,7 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B6DA2F3CE4CD68F9C35322C0 /* libPods-redbeeexpo.a in Frameworks */,
+				A70566DF5F0FF6696D7A1130 /* libPods-redbeeexpo.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,8 +55,8 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				6196350FC1F34B75BD7C02BC /* noop-file.swift */,
-				D770A75491BB3B6E5A9B51B4 /* PrivacyInfo.xcprivacy */,
+				99F1D4598795415CB0E19547 /* noop-file.swift */,
+				3597C42AAF2086A1A5C23E38 /* PrivacyInfo.xcprivacy */,
 			);
 			name = redbeeexpo;
 			sourceTree = "<group>";
@@ -65,16 +65,24 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				29D47EB910A969DABD730382 /* libPods-redbeeexpo.a */,
+				4A5512B9BF6536913D01917E /* libPods-redbeeexpo.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		677AC930D483338A3258A1E0 /* Pods */ = {
+		3899E4C8DE1A57AAD23D425A /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				A8F998A72A4CDD5380B72A50 /* Pods-redbeeexpo.debug.xcconfig */,
-				4905781061993048CB12FCF8 /* Pods-redbeeexpo.release.xcconfig */,
+				A50022053CC67F013448C8FB /* redbeeexpo */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		597834D42147AE9EFBF79393 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				214EA7F326EC3ACAE242C3CE /* Pods-redbeeexpo.debug.xcconfig */,
+				4F1FCC06A2F680E29FF0E771 /* Pods-redbeeexpo.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
@@ -94,8 +102,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				677AC930D483338A3258A1E0 /* Pods */,
-				D40E80F6BECFAADCE8A5C368 /* ExpoModulesProviders */,
+				597834D42147AE9EFBF79393 /* Pods */,
+				3899E4C8DE1A57AAD23D425A /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -110,6 +118,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		A50022053CC67F013448C8FB /* redbeeexpo */ = {
+			isa = PBXGroup;
+			children = (
+				1C4488A9A2F5EF362CB4DA6D /* ExpoModulesProvider.swift */,
+			);
+			name = redbeeexpo;
+			sourceTree = "<group>";
+		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -117,22 +133,6 @@
 			);
 			name = Supporting;
 			path = redbeeexpo/Supporting;
-			sourceTree = "<group>";
-		};
-		D40E80F6BECFAADCE8A5C368 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				F12BE91949928280A397A564 /* redbeeexpo */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		F12BE91949928280A397A564 /* redbeeexpo */ = {
-			isa = PBXGroup;
-			children = (
-				8CDD805AC5D7E7422BD89EF9 /* ExpoModulesProvider.swift */,
-			);
-			name = redbeeexpo;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -143,13 +143,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "redbeeexpo" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				8E6E2D948F9F57711314AC11 /* [Expo] Configure project */,
+				53FBEA6A1C93BD44D13ADEEC /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				B2E57C185AA7A922DC4F98AA /* [CP] Embed Pods Frameworks */,
+				DEEE8BDDAD797AA0EBCB8A94 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -201,7 +201,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				3C3F1817FD3495B5591590D8 /* PrivacyInfo.xcprivacy in Resources */,
+				E8F64EB8C15DEFF817A28383 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,6 +244,25 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		53FBEA6A1C93BD44D13ADEEC /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-redbeeexpo/expo-configure-project.sh\"\n";
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -325,26 +344,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-redbeeexpo/Pods-redbeeexpo-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8E6E2D948F9F57711314AC11 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-redbeeexpo/expo-configure-project.sh\"\n";
-		};
-		B2E57C185AA7A922DC4F98AA /* [CP] Embed Pods Frameworks */ = {
+		DEEE8BDDAD797AA0EBCB8A94 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -370,8 +370,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				4BBA90A5B7F4471795895D9B /* noop-file.swift in Sources */,
-				3555635EA98FEC066845947B /* ExpoModulesProvider.swift in Sources */,
+				B3BEDC14240E4E34903758D0 /* noop-file.swift in Sources */,
+				8678AF59CD3C4E2F3545034F /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -380,7 +380,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A8F998A72A4CDD5380B72A50 /* Pods-redbeeexpo.debug.xcconfig */;
+			baseConfigurationReference = 214EA7F326EC3ACAE242C3CE /* Pods-redbeeexpo.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -419,7 +419,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4905781061993048CB12FCF8 /* Pods-redbeeexpo.release.xcconfig */;
+			baseConfigurationReference = 4F1FCC06A2F680E29FF0E771 /* Pods-redbeeexpo.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

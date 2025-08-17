@@ -29,8 +29,11 @@ export default function SignInScreen() {
 		signIn,
 		signInLocal,
 		signInWithGoogle,
+		signInWithGoogleLocal,
 		signInWithGoogleOAuth,
+		signInWithGoogleOAuthLocal,
 		signInWithApple,
+		signInWithAppleLocal,
 		error,
 		clearError,
 	} = useAuth();
@@ -129,23 +132,104 @@ export default function SignInScreen() {
 
 		try {
 			// Try native Google Sign-In first
-			const success = await signInWithGoogle();
-			console.log('Google sign in success:', success);
-			if (success) {
+			const result = await signInWithGoogleLocal();
+			if (result.success) {
 				router.replace('/' as RelativePathString);
+				return;
+			}
+
+			// Don't show alert if user cancelled
+			const errorMessage = result.error || 'auth.errors.googleSignInFailed';
+			if (errorMessage === 'auth.errors.googleSignInCancelled') {
+				// User cancelled, just return without showing error
+				return;
+			}
+
+			// Show alert for actual errors
+			const alertMessage = errorMessage.startsWith('auth.') ? t(errorMessage) : errorMessage;
+			
+			Alert.alert(
+				t('common.error'),
+				alertMessage,
+				[
+					{
+						text: t('common.ok'),
+						onPress: () => {
+							setAuthError(errorMessage);
+						}
+					}
+				]
+			);
+
+			// If native method fails, try OAuth method as fallback (but skip if it's a config error)
+			if (!errorMessage.includes('invalid_audience') && 
+			    !errorMessage.includes('client ID') && 
+			    !errorMessage.includes('unauthorized_client') &&
+			    errorMessage !== 'auth.errors.googleSignInConfigError') {
+				try {
+					const oauthResult = await signInWithGoogleOAuthLocal();
+					if (oauthResult.success) {
+						// Clear any previous errors and redirect
+						setAuthError(null);
+						router.replace('/' as RelativePathString);
+						return;
+					} else {
+						// OAuth also failed
+						const oauthErrorMessage = oauthResult.error || 'auth.errors.googleSignInFailed';
+						
+						// Don't show alert if user cancelled OAuth
+						if (oauthErrorMessage === 'auth.errors.googleSignInCancelled') {
+							return;
+						}
+						
+						// Show error for actual failures
+						const oauthAlertMessage = oauthErrorMessage.startsWith('auth.') ? t(oauthErrorMessage) : oauthErrorMessage;
+						
+						Alert.alert(
+							t('common.error'),
+							oauthAlertMessage,
+							[
+								{
+									text: t('common.ok'),
+									onPress: () => {
+										setAuthError(oauthErrorMessage);
+									}
+								}
+							]
+						);
+					}
+				} catch (oauthErr) {
+					console.error('Google OAuth sign in error:', oauthErr);
+					const fallbackErrorMessage = 'auth.errors.googleSignInFailed';
+					Alert.alert(
+						t('common.error'),
+						t(fallbackErrorMessage),
+						[
+							{
+								text: t('common.ok'),
+								onPress: () => {
+									setAuthError(fallbackErrorMessage);
+								}
+							}
+						]
+					);
+				}
 			}
 		} catch (err) {
 			console.error('Google sign in error:', err);
-
-			// If native method fails, try OAuth method as fallback
-			try {
-				const oauthSuccess = await signInWithGoogleOAuth();
-				if (oauthSuccess) {
-					router.replace('/' as RelativePathString);
-				}
-			} catch (oauthErr) {
-				console.error('Google OAuth sign in error:', oauthErr);
-			}
+			const errorMessage = 'auth.errors.googleSignInFailed';
+			Alert.alert(
+				t('common.error'),
+				t(errorMessage),
+				[
+					{
+						text: t('common.ok'),
+						onPress: () => {
+							setAuthError(errorMessage);
+						}
+					}
+				]
+			);
 		} finally {
 			setIsLoading(false);
 		}
@@ -154,7 +238,19 @@ export default function SignInScreen() {
 	const handleAppleSignIn = async () => {
 		// Check if we're on iOS
 		if (Platform.OS !== 'ios') {
-			setAuthError('Apple Sign-In is only available on iOS devices');
+			const errorMessage = 'Apple Sign-In is only available on iOS devices';
+			Alert.alert(
+				t('common.error'),
+				errorMessage,
+				[
+					{
+						text: t('common.ok'),
+						onPress: () => {
+							setAuthError(errorMessage);
+						}
+					}
+				]
+			);
 			return;
 		}
 
@@ -163,12 +259,48 @@ export default function SignInScreen() {
 		setAuthError(null);
 
 		try {
-			const success = await signInWithApple();
-			if (success) {
+			const result = await signInWithAppleLocal();
+			if (result.success) {
 				router.replace('/' as RelativePathString);
+			} else {
+				// Check if user cancelled
+				const errorMessage = result.error || 'auth.errors.appleSignInFailed';
+				if (errorMessage === 'auth.errors.appleSignInCancelled') {
+					// User cancelled, just return without showing error
+					return;
+				}
+				
+				// Show alert for actual Apple Sign-In failure
+				const alertMessage = errorMessage.startsWith('auth.') ? t(errorMessage) : errorMessage;
+				
+				Alert.alert(
+					t('common.error'),
+					alertMessage,
+					[
+						{
+							text: t('common.ok'),
+							onPress: () => {
+								setAuthError(errorMessage);
+							}
+						}
+					]
+				);
 			}
 		} catch (err) {
 			console.error('Apple sign in error:', err);
+			const errorMessage = 'auth.errors.appleSignInFailed';
+			Alert.alert(
+				t('common.error'),
+				t(errorMessage),
+				[
+					{
+						text: t('common.ok'),
+						onPress: () => {
+							setAuthError(errorMessage);
+						}
+					}
+				]
+			);
 		} finally {
 			setIsLoading(false);
 		}
