@@ -6,6 +6,44 @@ import {
 	RegisterCredentials,
 	User,
 } from '@/shared/types';
+
+// Map Supabase auth errors to user-friendly messages
+const mapAuthError = (error: string): string => {
+	const lowerError = error.toLowerCase();
+	
+	// Invalid credentials (most common)
+	if (lowerError.includes('invalid login credentials') || 
+	    lowerError.includes('invalid credentials') ||
+	    lowerError.includes('wrong password') ||
+	    lowerError.includes('incorrect password')) {
+		return 'auth.errors.invalidCredentials';
+	}
+	
+	// User not found
+	if (lowerError.includes('user not found') ||
+	    lowerError.includes('no user found') ||
+	    lowerError.includes('email not confirmed')) {
+		return 'auth.errors.accountNotFound';
+	}
+	
+	// Rate limiting
+	if (lowerError.includes('too many requests') || 
+	    lowerError.includes('rate limit') ||
+	    lowerError.includes('rate exceeded')) {
+		return 'auth.errors.tooManyAttempts';
+	}
+	
+	// Network issues
+	if (lowerError.includes('network') || 
+	    lowerError.includes('fetch') ||
+	    lowerError.includes('connection') ||
+	    lowerError.includes('timeout')) {
+		return 'auth.errors.networkError';
+	}
+	
+	// Default fallback
+	return 'auth.errors.signInFailed';
+};
 import {
 	GoogleSignin,
 	statusCodes,
@@ -52,7 +90,7 @@ export class SupabaseAuthService {
 			if (authError) {
 				return {
 					success: false,
-					error: authError.message,
+					error: mapAuthError(authError.message),
 				};
 			}
 

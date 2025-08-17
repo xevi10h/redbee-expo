@@ -59,7 +59,12 @@
 			"networkError": "Error de conexión",
 			"unknownError": "Error desconocido",
 			"emailNotAvailable": "Este correo electrónico ya está en uso",
-			"resetFailed": "Error al enviar el correo de restablecimiento"
+			"resetFailed": "Error al enviar el correo de restablecimiento",
+			"invalidCredentials": "Correo electrónico o contraseña incorrectos",
+			"invalidCredentialsInline": "Estos datos no corresponden a ningún usuario registrado",
+			"accountNotFound": "No existe una cuenta con este correo electrónico",
+			"wrongPassword": "La contraseña es incorrecta",
+			"tooManyAttempts": "Demasiados intentos fallidos. Inténtalo más tarde"
 		},
 		"validation": {
 			"emailAvailable": "Correo disponible",
@@ -97,7 +102,7 @@
 		"home": "Inicio",
 		"search": "Buscar",
 		"upload": "Subir",
-		"notifications": "Notificaciones",
+		"assistant": "RedBee AI",
 		"profile": "Perfil",
 		"settings": "Configuración"
 	},
@@ -531,5 +536,24 @@
 			"title": "12. Contacto",
 			"content": "Si tienes preguntas sobre esta política de privacidad o el tratamiento de tus datos, contacta con nosotros en privacy@redbeeapp.com"
 		}
+	},
+	"assistant": {
+		"title": "RedBee AI",
+		"subtitle": "Tu asistente de contenido",
+		"welcomeMessage": "¡Hola! Soy RedBee AI, tu asistente de contenido. Estoy aquí para ayudarte con consejos generales sobre creación de contenido, estrategias para hacer crecer tu audiencia y tendencias actuales en redes sociales. ¿En qué puedo ayudarte hoy?",
+		"suggestedQuestionsTitle": "Preguntas sugeridas:",
+		"questions": {
+			"increaseViews": "¿Cómo puedo aumentar mis vistas?",
+			"bestTime": "¿Cuál es el mejor momento para publicar?",
+			"viralContent": "Dame ideas de contenido viral",
+			"improveEngagement": "¿Cómo mejorar mi engagement?"
+		},
+		"typing": "RedBee AI está pensando...",
+		"placeholder": "Pregúntame sobre contenido, hashtags, algoritmo...",
+		"clearConversation": "Limpiar conversación",
+		"clearConfirmTitle": "Limpiar conversación",
+		"clearConfirmMessage": "¿Quieres empezar una nueva conversación?",
+		"clearConfirmButton": "Limpiar",
+		"restartMessage": "¡Conversación reiniciada! ¿En qué puedo ayudarte ahora?"
 	}
 }

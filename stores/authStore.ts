@@ -19,6 +19,7 @@ interface AuthState {
 	// Actions
 	initialize: () => Promise<void>;
 	signIn: (credentials: LoginCredentials) => Promise<boolean>;
+	signInLocal: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
 	signUp: (credentials: RegisterCredentials) => Promise<boolean>;
 	signInWithGoogle: () => Promise<boolean>;
 	signInWithGoogleOAuth: () => Promise<boolean>;
@@ -128,6 +129,34 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 				error: error instanceof Error ? error.message : 'Sign in failed',
 			});
 			return false;
+		}
+	},
+
+	// Sign in with email and password (local error handling)
+	signInLocal: async (credentials: LoginCredentials) => {
+		set({ isLoading: true, error: null });
+
+		try {
+			const result = await SupabaseAuthService.signInWithEmail(credentials);
+
+			if (result.success && result.data) {
+				set({
+					user: result.data,
+					isAuthenticated: true,
+					isLoading: false,
+					error: null,
+				});
+				return { success: true };
+			} else {
+				set({ isLoading: false });
+				return { success: false, error: result.error || 'auth.errors.signInFailed' };
+			}
+		} catch (error) {
+			set({ isLoading: false });
+			return { 
+				success: false, 
+				error: error instanceof Error ? error.message : 'auth.errors.unknownError' 
+			};
 		}
 	},
 

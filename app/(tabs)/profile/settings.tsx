@@ -18,12 +18,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { useAuth, useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
-import { getTermsUrl, getPrivacyUrl, areWebPagesAvailable, getWebPagesUnavailableMessage } from '@/shared/utils/webUrls';
 import {
 	NotificationPreferences,
 	NotificationService,
 } from '@/services/notificationService';
 import { Language } from '@/shared/types';
+import {
+	areWebPagesAvailable,
+	getPrivacyUrl,
+	getTermsUrl,
+	getWebPagesUnavailableMessage,
+} from '@/shared/utils/webUrls';
 import { useAuthStore } from '@/stores/authStore';
 import * as Haptics from 'expo-haptics';
 
@@ -200,7 +205,7 @@ export default function SettingsScreen() {
 	const handleTermsOfService = async () => {
 		if (!areWebPagesAvailable()) {
 			Alert.alert(t('common.info'), getWebPagesUnavailableMessage(), [
-				{ text: t('common.ok') }
+				{ text: t('common.ok') },
 			]);
 			return;
 		}
@@ -213,13 +218,13 @@ export default function SettingsScreen() {
 			} else {
 				console.error('Cannot open URL:', url);
 				Alert.alert(t('common.error'), 'No se pudo abrir la página web', [
-					{ text: t('common.ok') }
+					{ text: t('common.ok') },
 				]);
 			}
 		} catch (error) {
 			console.error('Error opening terms URL:', error);
 			Alert.alert(t('common.error'), 'Error al abrir la página web', [
-				{ text: t('common.ok') }
+				{ text: t('common.ok') },
 			]);
 		}
 	};
@@ -227,7 +232,7 @@ export default function SettingsScreen() {
 	const handlePrivacyPolicy = async () => {
 		if (!areWebPagesAvailable()) {
 			Alert.alert(t('common.info'), getWebPagesUnavailableMessage(), [
-				{ text: t('common.ok') }
+				{ text: t('common.ok') },
 			]);
 			return;
 		}
@@ -240,13 +245,13 @@ export default function SettingsScreen() {
 			} else {
 				console.error('Cannot open URL:', url);
 				Alert.alert(t('common.error'), 'No se pudo abrir la página web', [
-					{ text: t('common.ok') }
+					{ text: t('common.ok') },
 				]);
 			}
 		} catch (error) {
 			console.error('Error opening privacy URL:', error);
 			Alert.alert(t('common.error'), 'Error al abrir la página web', [
-				{ text: t('common.ok') }
+				{ text: t('common.ok') },
 			]);
 		}
 	};
@@ -495,6 +500,7 @@ const styles = StyleSheet.create({
 		borderRadius: 20,
 		alignItems: 'center',
 		justifyContent: 'center',
+		backgroundColor: Colors.backgroundSecondary,
 	},
 	headerSpacer: {
 		width: 40,

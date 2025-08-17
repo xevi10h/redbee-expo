@@ -27,6 +27,7 @@ export default function SignInScreen() {
 	const { t } = useTranslation();
 	const {
 		signIn,
+		signInLocal,
 		signInWithGoogle,
 		signInWithGoogleOAuth,
 		signInWithApple,
@@ -43,10 +44,12 @@ export default function SignInScreen() {
 	});
 	const [isLoading, setIsLoading] = useState(false);
 	const [formErrors, setFormErrors] = useState<Partial<LoginCredentials>>({});
+	const [authError, setAuthError] = useState<string | null>(null);
 
 	// Clear auth errors when component mounts
 	useEffect(() => {
 		clearError();
+		setAuthError(null);
 	}, [clearError]);
 
 	const validateForm = (): boolean => {
@@ -71,14 +74,49 @@ export default function SignInScreen() {
 
 		setIsLoading(true);
 		clearError();
+		setAuthError(null);
 
 		try {
-			const success = await signIn(credentials);
-			if (success) {
+			const result = await signInLocal(credentials);
+			if (result.success) {
 				router.replace('/' as RelativePathString);
+			} else {
+				// First show an alert
+				const errorMessage = result.error || 'auth.errors.signInFailed';
+				const alertMessage = errorMessage.startsWith('auth.') ? t(errorMessage) : errorMessage;
+				
+				Alert.alert(
+					t('common.error'),
+					alertMessage,
+					[
+						{
+							text: t('common.ok'),
+							onPress: () => {
+								// After closing alert, set a different error message for inline display
+								const inlineErrorMessage = errorMessage === 'auth.errors.invalidCredentials' 
+									? 'auth.errors.invalidCredentialsInline'
+									: errorMessage;
+								setAuthError(inlineErrorMessage);
+							}
+						}
+					]
+				);
 			}
 		} catch (err) {
 			console.error('Sign in error:', err);
+			const errorMessage = 'auth.errors.unknownError';
+			Alert.alert(
+				t('common.error'),
+				t(errorMessage),
+				[
+					{
+						text: t('common.ok'),
+						onPress: () => {
+							setAuthError(errorMessage);
+						}
+					}
+				]
+			);
 		} finally {
 			setIsLoading(false);
 		}
@@ -87,6 +125,7 @@ export default function SignInScreen() {
 	const handleGoogleSignIn = async () => {
 		setIsLoading(true);
 		clearError();
+		setAuthError(null);
 
 		try {
 			// Try native Google Sign-In first
@@ -115,16 +154,13 @@ export default function SignInScreen() {
 	const handleAppleSignIn = async () => {
 		// Check if we're on iOS
 		if (Platform.OS !== 'ios') {
-			Alert.alert(
-				t('common.info'),
-				'Apple Sign-In is only available on iOS devices',
-				[{ text: t('common.ok') }],
-			);
+			setAuthError('Apple Sign-In is only available on iOS devices');
 			return;
 		}
 
 		setIsLoading(true);
 		clearError();
+		setAuthError(null);
 
 		try {
 			const success = await signInWithApple();
@@ -138,20 +174,6 @@ export default function SignInScreen() {
 		}
 	};
 
-	const showError = () => {
-		if (error) {
-			Alert.alert(t('common.error'), error, [
-				{ text: t('common.ok'), onPress: clearError },
-			]);
-		}
-	};
-
-	// Show error alert when error state changes
-	useEffect(() => {
-		if (error) {
-			showError();
-		}
-	}, [error]);
 
 	return (
 		<LinearGradient colors={Colors.gradientSecondary} style={styles.container}>
@@ -189,6 +211,9 @@ export default function SignInScreen() {
 								if (formErrors.email) {
 									setFormErrors((prev) => ({ ...prev, email: undefined }));
 								}
+								if (authError) {
+									setAuthError(null);
+								}
 							}}
 							placeholder="correo@ejemplo.com"
 							keyboardType="email-address"
@@ -206,6 +231,9 @@ export default function SignInScreen() {
 								if (formErrors.password) {
 									setFormErrors((prev) => ({ ...prev, password: undefined }));
 								}
+								if (authError) {
+									setAuthError(null);
+								}
 							}}
 							placeholder="••••••••"
 							isPassword
@@ -213,6 +241,15 @@ export default function SignInScreen() {
 							leftIcon="lock"
 							error={formErrors.password}
 						/>
+
+						{/* Auth Error Display - styled like form field error */}
+						{authError && (
+							<View style={styles.authErrorContainer}>
+								<Text style={styles.authErrorText}>
+									{authError.startsWith('auth.') ? t(authError) : authError}
+								</Text>
+							</View>
+						)}
 
 						<TouchableOpacity
 							onPress={() => router.push('/auth/reset-password')}
@@ -330,6 +367,16 @@ const styles = StyleSheet.create({
 	},
 	form: {
 		marginBottom: 32,
+	},
+	authErrorContainer: {
+		marginTop: -8, // Negative margin to bring it closer to the password field
+		marginBottom: 8,
+	},
+	authErrorText: {
+		fontSize: 12,
+		fontFamily: 'Inter-Regular',
+		color: Colors.error,
+		marginTop: 4,
 	},
 	forgotPassword: {
 		alignSelf: 'flex-end',

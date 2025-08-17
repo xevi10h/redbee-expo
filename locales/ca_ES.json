@@ -97,7 +97,7 @@
 		"home": "Inici",
 		"search": "Cercar",
 		"upload": "Pujar",
-		"notifications": "Notificacions",
+		"assistant": "RedBee AI",
 		"profile": "Perfil",
 		"settings": "Configuració"
 	},
@@ -458,5 +458,24 @@
 		"tooManyRequests": "Masses sol·licituds",
 		"maintenance": "Manteniment programat",
 		"updateRequired": "Actualització requerida"
+	},
+	"assistant": {
+		"title": "RedBee AI",
+		"subtitle": "El teu assistent de contingut",
+		"welcomeMessage": "Hola! Sóc RedBee AI, el teu assistent de contingut. Estic aquí per ajudar-te amb consells generals sobre creació de contingut, estratègies per fer créixer la teva audiència i tendències actuals en xarxes socials. En què et puc ajudar avui?",
+		"suggestedQuestionsTitle": "Preguntes suggerides:",
+		"questions": {
+			"increaseViews": "Com puc augmentar les meves visualitzacions?",
+			"bestTime": "Quin és el millor moment per publicar?",
+			"viralContent": "Dóna'm idees de contingut viral",
+			"improveEngagement": "Com millorar el meu engagement?"
+		},
+		"typing": "RedBee AI està pensant...",
+		"placeholder": "Pregunta'm sobre contingut, hashtags, algorisme...",
+		"clearConversation": "Netejar conversa",
+		"clearConfirmTitle": "Netejar conversa",
+		"clearConfirmMessage": "Vols començar una nova conversa?",
+		"clearConfirmButton": "Netejar",
+		"restartMessage": "Conversa reiniciada! En què et puc ajudar ara?"
 	}
 }

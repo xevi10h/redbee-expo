@@ -1,39 +1,47 @@
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Tabs } from 'expo-router';
-import { Platform } from 'react-native';
 import { useCallback } from 'react';
+import { Platform, View } from 'react-native';
 
+import { NotificationBadge } from '@/components/ui/NotificationBadge';
 import { Colors } from '@/constants/Colors';
+import { useNotificationsList } from '@/hooks/useNotificationsList';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useUploadState } from '@/hooks/useUploadState';
 
 export default function TabLayout() {
 	const { t } = useTranslation();
 	const { isAnyProcessActive } = useUploadState();
+	const { unreadCount } = useNotificationsList();
 
 	// Prevent navigation when upload processes are active
-	const handleTabPress = useCallback((e: any) => {
-		if (isAnyProcessActive()) {
-			e.preventDefault();
-		}
-	}, [isAnyProcessActive]);
+	const handleTabPress = useCallback(
+		(e: any) => {
+			if (isAnyProcessActive()) {
+				e.preventDefault();
+			}
+		},
+		[isAnyProcessActive],
+	);
 
 	return (
 		<Tabs
 			screenOptions={{
 				tabBarActiveTintColor: Colors.tabBarActive,
 				tabBarInactiveTintColor: Colors.tabBarInactive,
-				tabBarStyle: isAnyProcessActive() ? {
-					display: 'none',
-				} : {
-					backgroundColor: Colors.tabBarBackground,
-					borderTopWidth: 1,
-					borderTopColor: Colors.tabBarBorder,
-					height: Platform.OS === 'ios' ? 90 : 70,
-					paddingBottom: Platform.OS === 'ios' ? 30 : 10,
-					paddingTop: 10,
-				},
+				tabBarStyle: isAnyProcessActive()
+					? {
+							display: 'none',
+					  }
+					: {
+							backgroundColor: Colors.tabBarBackground,
+							borderTopWidth: 1,
+							borderTopColor: Colors.tabBarBorder,
+							height: Platform.OS === 'ios' ? 90 : 70,
+							paddingBottom: Platform.OS === 'ios' ? 30 : 10,
+							paddingTop: 10,
+					  },
 				tabBarLabelStyle: {
 					fontSize: 11,
 					fontFamily: 'Inter-Medium',
@@ -101,11 +109,11 @@ export default function TabLayout() {
 				}}
 			/>
 			<Tabs.Screen
-				name="notifications"
+				name="assistant"
 				options={{
-					title: t('navigation.notifications'),
+					title: 'RedBee AI',
 					tabBarIcon: ({ color, size }) => (
-						<Feather name="bell" size={size} color={color} />
+						<Feather name="zap" size={size} color={color} />
 					),
 				}}
 				listeners={{
@@ -117,7 +125,10 @@ export default function TabLayout() {
 				options={{
 					title: t('navigation.profile'),
 					tabBarIcon: ({ color, size }) => (
-						<Feather name="user" size={size} color={color} />
+						<View style={{ position: 'relative' }}>
+							<Feather name="user" size={size} color={color} />
+							<NotificationBadge count={unreadCount} size="small" />
+						</View>
 					),
 				}}
 				listeners={{

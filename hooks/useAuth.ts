@@ -11,6 +11,7 @@ export const useAuth = () => {
 	const error = useAuthStore((state) => state.error);
 
 	const signIn = useAuthStore((state) => state.signIn);
+	const signInLocal = useAuthStore((state) => state.signInLocal);
 	const signUp = useAuthStore((state) => state.signUp);
 	const signInWithGoogle = useAuthStore((state) => state.signInWithGoogle);
 	const signInWithGoogleOAuth = useAuthStore(
@@ -28,6 +29,7 @@ export const useAuth = () => {
 		isInitialized,
 		error,
 		signIn,
+		signInLocal,
 		signUp,
 		signInWithGoogle,
 		signInWithGoogleOAuth,

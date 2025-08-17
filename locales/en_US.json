@@ -59,7 +59,12 @@
 			"networkError": "Network error",
 			"unknownError": "Unknown error",
 			"emailNotAvailable": "This email is already in use",
-			"resetFailed": "Failed to send reset email"
+			"resetFailed": "Failed to send reset email",
+			"invalidCredentials": "Incorrect email or password",
+			"invalidCredentialsInline": "These credentials do not match any registered user",
+			"accountNotFound": "No account found with this email",
+			"wrongPassword": "Incorrect password",
+			"tooManyAttempts": "Too many failed attempts. Please try again later"
 		},
 		"validation": {
 			"emailAvailable": "Email available",

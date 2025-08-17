@@ -16,6 +16,16 @@ export interface Notification {
 	entity_title?: string;
 }
 
+export interface GroupedNotification {
+	id: string;
+	type: 'single' | 'group';
+	notification: Notification; // Primary notification (most recent)
+	notifications: Notification[]; // All notifications in the group
+	count: number;
+	created_at: string;
+	is_read: boolean;
+}
+
 export interface NotificationPreferences {
 	id: string;
 	user_id: string;
@@ -400,7 +410,8 @@ export class NotificationService {
 	 * Get formatted notification message
 	 */
 	static getNotificationMessage(notification: Notification, t: (key: string) => string): string {
-		const actorName = notification.actor_display_name || notification.actor_username;
+		// Fallback for username - prioritize display_name, then username, then default
+		const actorName = notification.actor_display_name || notification.actor_username || 'Usuario';
 		
 		switch (notification.type) {
 			case 'video_like':
@@ -415,6 +426,112 @@ export class NotificationService {
 				return `${actorName} ${t('notifications.commentReply')}`;
 			default:
 				return `${actorName} ${t('notifications.interactedWithContent')}`;
+		}
+	}
+
+	/**
+	 * Group notifications by type and entity
+	 */
+	static groupNotifications(notifications: Notification[]): GroupedNotification[] {
+		const groups: { [key: string]: Notification[] } = {};
+		
+		notifications.forEach(notification => {
+			let groupKey: string;
+			
+			// Group by type and entity_id for video/comment interactions
+			if (notification.entity_id && ['video_like', 'video_comment', 'comment_like'].includes(notification.type)) {
+				groupKey = `${notification.type}_${notification.entity_id}`;
+			} else {
+				// Individual notifications for follows and other types
+				groupKey = `individual_${notification.id}`;
+			}
+			
+			if (!groups[groupKey]) {
+				groups[groupKey] = [];
+			}
+			groups[groupKey].push(notification);
+		});
+
+		return Object.values(groups).map(group => {
+			if (group.length === 1) {
+				// Single notification
+				return {
+					id: group[0].id,
+					type: 'single',
+					notification: group[0],
+					notifications: group,
+					count: 1,
+					created_at: group[0].created_at,
+					is_read: group[0].is_read,
+				};
+			} else {
+				// Grouped notifications
+				const firstNotification = group[0];
+				const allRead = group.every(n => n.is_read);
+				
+				return {
+					id: `group_${firstNotification.type}_${firstNotification.entity_id}`,
+					type: 'group',
+					notification: firstNotification,
+					notifications: group,
+					count: group.length,
+					created_at: group[0].created_at, // Most recent
+					is_read: allRead,
+				};
+			}
+		}).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+	}
+
+	/**
+	 * Get formatted message for grouped notifications
+	 */
+	static getGroupedNotificationMessage(groupedNotification: GroupedNotification, t: (key: string) => string): string {
+		if (groupedNotification.type === 'single') {
+			return this.getNotificationMessage(groupedNotification.notification, t);
+		}
+
+		const { notifications, count } = groupedNotification;
+		const firstNotification = notifications[0];
+		const type = firstNotification.type;
+
+		// Get first few actor names
+		const uniqueActors = [...new Set(notifications.map(n => 
+			n.actor_display_name || n.actor_username || 'Usuario'
+		))];
+		
+		const firstActor = uniqueActors[0];
+		const remainingCount = count - 1;
+
+		switch (type) {
+			case 'video_like':
+				if (count === 1) {
+					return `${firstActor} ${t('notifications.videoLike')}${firstNotification.entity_title ? ` "${firstNotification.entity_title}"` : ''}`;
+				} else if (count === 2) {
+					return `${firstActor} y ${uniqueActors[1] || 'otra persona'} dieron like a tu vídeo${firstNotification.entity_title ? ` "${firstNotification.entity_title}"` : ''}`;
+				} else {
+					return `${firstActor} y ${remainingCount} personas más dieron like a tu vídeo${firstNotification.entity_title ? ` "${firstNotification.entity_title}"` : ''}`;
+				}
+			
+			case 'video_comment':
+				if (count === 1) {
+					return `${firstActor} ${t('notifications.videoComment')}${firstNotification.entity_title ? ` "${firstNotification.entity_title}"` : ''}`;
+				} else if (count === 2) {
+					return `${firstActor} y ${uniqueActors[1] || 'otra persona'} comentaron tu vídeo${firstNotification.entity_title ? ` "${firstNotification.entity_title}"` : ''}`;
+				} else {
+					return `${firstActor} y ${remainingCount} personas más comentaron tu vídeo${firstNotification.entity_title ? ` "${firstNotification.entity_title}"` : ''}`;
+				}
+			
+			case 'comment_like':
+				if (count === 1) {
+					return `${firstActor} ${t('notifications.commentLike')}`;
+				} else if (count === 2) {
+					return `${firstActor} y ${uniqueActors[1] || 'otra persona'} dieron like a tu comentario`;
+				} else {
+					return `${firstActor} y ${remainingCount} personas más dieron like a tu comentario`;
+				}
+			
+			default:
+				return this.getNotificationMessage(firstNotification, t);
 		}
 	}
 

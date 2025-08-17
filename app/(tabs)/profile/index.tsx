@@ -23,6 +23,8 @@ import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useProfileVideos, VideoSortOption } from '@/hooks/useProfileVideos';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useNotificationsList } from '@/hooks/useNotificationsList';
+import { NotificationBadge } from '@/components/ui/NotificationBadge';
 import { formatNumber } from '@/shared/functions/utils';
 import { Video } from '@/shared/types';
 
@@ -155,6 +157,7 @@ const VideoThumbnail: React.FC<{
 export default function ProfileScreen() {
 	const { t } = useTranslation();
 	const { user } = useRequireAuth();
+	const { unreadCount } = useNotificationsList();
 
 	type ProfileTab = 'public' | 'premium' | 'videos' | 'liked' | 'hidden';
 
@@ -316,6 +319,10 @@ export default function ProfileScreen() {
 
 	const handleSettings = () => {
 		router.push('/(tabs)/profile/settings');
+	};
+
+	const handleNotifications = () => {
+		router.push('/(tabs)/profile/notifications-list');
 	};
 
 	const handleShowAnalytics = (videoId: string, videoTitle?: string) => {
@@ -505,15 +512,26 @@ export default function ProfileScreen() {
 		<SafeAreaView style={styles.container} edges={['top']}>
 			<StatusBar style="light" />
 
-			{/* Header with Settings Button */}
+			{/* Header with Notifications and Settings Buttons */}
 			<View style={styles.headerContainer}>
 				<View style={styles.headerSpacer} />
-				<TouchableOpacity
-					style={styles.headerSettingsButton}
-					onPress={handleSettings}
-				>
-					<Feather name="settings" size={24} color={Colors.text} />
-				</TouchableOpacity>
+				<View style={styles.headerButtons}>
+					<TouchableOpacity
+						style={styles.headerButton}
+						onPress={handleNotifications}
+					>
+						<View style={{ position: 'relative' }}>
+							<Feather name="bell" size={22} color={Colors.text} />
+							<NotificationBadge count={unreadCount} size="small" />
+						</View>
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={styles.headerButton}
+						onPress={handleSettings}
+					>
+						<Feather name="settings" size={22} color={Colors.text} />
+					</TouchableOpacity>
+				</View>
 			</View>
 
 			<ScrollView
@@ -881,12 +899,16 @@ const styles = StyleSheet.create({
 		backgroundColor: Colors.background,
 	},
 	headerSpacer: {
-		width: 44, // Same width as settings button for centering
+		width: 44, // Same width as buttons section for centering
 	},
-	headerSettingsButton: {
-		width: 44,
-		height: 44,
-		borderRadius: 22,
+	headerButtons: {
+		flexDirection: 'row',
+		gap: 8,
+	},
+	headerButton: {
+		width: 40,
+		height: 40,
+		borderRadius: 20,
 		backgroundColor: Colors.backgroundSecondary,
 		alignItems: 'center',
 		justifyContent: 'center',
