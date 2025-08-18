@@ -791,18 +791,16 @@ export class VideoService {
 				`📦 Uploading compressed video: ${compressedSizeMB.toFixed(2)}MB`,
 			);
 
-			const videoUploadResult = await this.uploadFileWithRetry(
+			const videoUploadResult = await this.uploadFileWithTUS(
 				'videos',
 				videoFileName,
 				compressedVideoUri,
-				'video/mp4',
 				{
 					onProgress: (progress) => {
 						// Map upload progress to 60-90% of total
 						const totalProgress = 60 + progress * 0.3;
 						onProgress?.(totalProgress);
 					},
-					maxRetries: 5, // Más reintentos para archivos grandes
 				},
 			);
 
@@ -1007,7 +1005,106 @@ export class VideoService {
 	}
 
 	/**
-	 * Upload file with retry logic and better error handling
+	 * Upload file with TUS protocol for resumable uploads (videos)
+	 */
+	private static async uploadFileWithTUS(
+		bucket: string,
+		fileName: string,
+		fileUri: string,
+		options: {
+			onProgress?: (progress: number) => void;
+			maxRetries?: number;
+		} = {},
+	): Promise<{ success: boolean; error?: string }> {
+		const { onProgress } = options;
+
+		try {
+			const fileInfo = await FileSystem.getInfoAsync(fileUri);
+			if (!fileInfo.exists) {
+				return { success: false, error: `File not found: ${fileUri}` };
+			}
+
+			const fileSizeMB = 'size' in fileInfo ? fileInfo.size / (1024 * 1024) : 0;
+			console.log(`📤 Preparing TUS upload ${fileName}: ${fileSizeMB.toFixed(2)}MB`);
+
+			// Get authentication session
+			const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+			if (sessionError || !session?.access_token) {
+				throw new Error('Authentication required for TUS upload');
+			}
+
+			// Read file as blob for TUS
+			const response = await fetch(`file://${fileUri}`);
+			const fileBlob = await response.blob();
+
+			// Get project ID from Supabase URL
+			const projectId = process.env.EXPO_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0];
+			if (!projectId) {
+				throw new Error('Could not extract project ID from Supabase URL');
+			}
+
+			// Import TUS client
+			const tus = require('tus-js-client');
+
+			return new Promise((resolve, reject) => {
+				const upload = new tus.Upload(fileBlob, {
+					// Use direct storage hostname for better performance
+					endpoint: `https://${projectId}.storage.supabase.co/storage/v1/upload/resumable`,
+					retryDelays: [0, 3000, 5000, 10000, 20000],
+					headers: {
+						authorization: `Bearer ${session.access_token}`,
+						'x-upsert': 'true', // Allow overwriting existing files
+					},
+					uploadDataDuringCreation: true,
+					removeFingerprintOnSuccess: true,
+					metadata: {
+						bucketName: bucket,
+						objectName: fileName,
+						contentType: 'video/mp4',
+						cacheControl: '3600',
+					},
+					chunkSize: 6 * 1024 * 1024, // 6MB chunks as required by Supabase
+					onError: function (error: any) {
+						console.error('❌ TUS upload failed:', error);
+						reject(new Error(`TUS upload failed: ${error.message || error}`));
+					},
+					onProgress: function (bytesUploaded: number, bytesTotal: number) {
+						const percentage = (bytesUploaded / bytesTotal) * 100;
+						console.log(`📊 TUS Progress: ${percentage.toFixed(1)}%`);
+						onProgress?.(percentage);
+					},
+					onSuccess: function () {
+						console.log('✅ TUS upload completed successfully');
+						resolve({ success: true });
+					},
+				});
+
+				// Check for previous uploads and resume if possible
+				upload.findPreviousUploads().then((previousUploads: any[]) => {
+					if (previousUploads.length) {
+						console.log('🔄 Resuming previous TUS upload');
+						upload.resumeFromPreviousUpload(previousUploads[0]);
+					}
+					// Start the upload
+					upload.start();
+				}).catch((error: any) => {
+					console.error('❌ Failed to check previous uploads:', error);
+					// Start fresh upload anyway
+					upload.start();
+				});
+			});
+
+		} catch (error) {
+			console.error('💥 TUS upload setup error:', error);
+			return {
+				success: false,
+				error: this.getErrorMessage(error),
+			};
+		}
+	}
+
+	/**
+	 * Upload file with retry logic (fallback for thumbnails)
 	 */
 	private static async uploadFileWithRetry(
 		bucket: string,
