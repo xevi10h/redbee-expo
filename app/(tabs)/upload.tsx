@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
 	Alert,
 	Platform,
@@ -43,6 +43,7 @@ export default function UploadScreen() {
 	const [isLoadingVideo, setIsLoadingVideo] = useState(false);
 	const [loadingProgress, setLoadingProgress] = useState(0);
 	const [uploadProgress, setUploadProgress] = useState(0);
+	const isCancelingRef = useRef(false); // Ref persistente para verificación inmediata
 	const [loadingInterval, setLoadingInterval] = useState<
 		number | NodeJS.Timeout | null
 	>(null);
@@ -297,9 +298,10 @@ export default function UploadScreen() {
 		try {
 			// Activar background task para compresión (útil para videos largos)
 			try {
-				const { VideoCompression } = await import(
+				const videoCompressionModule = await import(
 					'@/services/videoCompression'
 				);
+				const VideoCompression = videoCompressionModule.VideoCompression;
 				await VideoCompression.activateBackgroundTask();
 				console.log('✅ Background compression task activated');
 			} catch (bgError) {
@@ -328,9 +330,10 @@ export default function UploadScreen() {
 			if (uploadResult.success) {
 				// Desactivar background task
 				try {
-					const { VideoCompression } = await import(
+					const videoCompressionModule = await import(
 						'@/services/videoCompression'
 					);
+					const VideoCompression = videoCompressionModule.VideoCompression;
 					await VideoCompression.deactivateBackgroundTask();
 					await VideoCompression.cleanupTempFiles();
 				} catch (cleanupError) {
@@ -353,9 +356,20 @@ export default function UploadScreen() {
 						{
 							text: t('common.ok'),
 							onPress: () => {
-								// Limpiar estado y navegar
+								// Limpiar TODOS los estados para que las tabs vuelvan a aparecer
 								setSelectedVideo(null);
 								setShowEditor(false);
+								setEditing(false);
+								setUploading(false);
+								setIsUploading(false);
+								setUploadProgress(0);
+								setIsLoadingVideo(false);
+								setLoadingProgress(0);
+								setIsSelectingVideo(false);
+								setSelecting(false);
+								isCancelingRef.current = false;
+								
+								// Navegar al perfil
 								router.push('/(tabs)/profile');
 							},
 						},
@@ -365,8 +379,12 @@ export default function UploadScreen() {
 				const errorMsg = uploadResult.error || 'Failed to upload video';
 				console.error('❌ Upload failed:', errorMsg);
 
-				// Mostrar error específico
-				Alert.alert(t('common.error'), errorMsg, [{ text: t('common.ok') }]);
+				// Solo mostrar error si no estamos cancelando Y no es un mensaje de cancelación
+				if (!isCancelingRef.current && !errorMsg.includes('cancelled')) {
+					Alert.alert(t('common.error'), errorMsg, [{ text: t('common.ok') }]);
+				} else {
+					console.log('🛑 Upload failed but canceling - suppressing error alert:', errorMsg);
+				}
 			}
 		} catch (error) {
 			console.error('💥 Unexpected upload error:', error);
@@ -380,20 +398,27 @@ export default function UploadScreen() {
 
 			const errorMessage =
 				error instanceof Error ? error.message : 'Upload failed unexpectedly';
-			Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
+			
+			// Solo mostrar error si no estamos cancelando Y no es un mensaje de cancelación
+			if (!isCancelingRef.current && !errorMessage.includes('cancelled')) {
+				Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
+			} else {
+				console.log('🛑 Unexpected error but canceling - suppressing error alert:', errorMessage);
+			}
 		} finally {
 			// Desactivar background task y limpiar archivos temporales
 			try {
-				const { VideoCompression } = await import(
+				const videoCompressionModule = await import(
 					'@/services/videoCompression'
 				);
+				const VideoCompression = videoCompressionModule.VideoCompression;
 				await VideoCompression.deactivateBackgroundTask();
 				await VideoCompression.cleanupTempFiles();
 			} catch (finalCleanupError) {
 				console.warn('Final cleanup warning:', finalCleanupError);
 			}
 
-			// Resetear todos los estados
+			// Resetear todos los estados para que las tabs vuelvan a aparecer
 			setIsUploading(false);
 			setUploading(false);
 			setUploadProgress(0);
@@ -401,37 +426,51 @@ export default function UploadScreen() {
 			setLoadingProgress(0);
 			setIsSelectingVideo(false);
 			setSelecting(false);
+			setEditing(false); // Importante: resetear editing para mostrar tabs
+			isCancelingRef.current = false;
 		}
 	};
 
-	// Función adicional para cancelar upload
+	// Función para cancelar upload (sin mostrar alert)
 	const handleCancelUpload = async () => {
-		Alert.alert(
-			'Cancelar subida',
-			'¿Estás seguro de que quieres cancelar la subida?',
-			[
-				{ text: 'Continuar subida', style: 'cancel' },
-				{
-					text: 'Sí, cancelar',
-					style: 'destructive',
-					onPress: async () => {
-						try {
-							// Cancelar upload y compresión
-							await VideoService.cancelUpload();
+		try {
+			console.log('🛑 Canceling upload and compression...');
+			
+			// Marcar que estamos cancelando para evitar mostrar errores
+			isCancelingRef.current = true;
+			
+			// Cancelar upload y compresión
+			await VideoService.cancelUpload();
 
-							// Resetear estados
-							setIsUploading(false);
-							setUploading(false);
-							setUploadProgress(0);
+			// Desactivar background task y limpiar archivos temporales
+			try {
+				const videoCompressionModule = await import(
+					'@/services/videoCompression'
+				);
+				const VideoCompression = videoCompressionModule.VideoCompression;
+				await VideoCompression.deactivateBackgroundTask();
+				await VideoCompression.cleanupTempFiles();
+			} catch (cleanupError) {
+				console.warn('Cleanup warning during cancel:', cleanupError);
+			}
 
-							console.log('🛑 Upload cancelled by user');
-						} catch (error) {
-							console.warn('Failed to cancel upload:', error);
-						}
-					},
-				},
-			],
-		);
+			// Resetear estados
+			setIsUploading(false);
+			setUploading(false);
+			setUploadProgress(0);
+			setEditing(false); // Resetear editing para mostrar tabs
+			isCancelingRef.current = false;
+
+			console.log('✅ Upload cancelled successfully');
+		} catch (error) {
+			console.warn('Failed to cancel upload:', error);
+			// Forzar reset de estados aunque haya error
+			setIsUploading(false);
+			setUploading(false);
+			setUploadProgress(0);
+			setEditing(false); // Resetear editing para mostrar tabs
+			isCancelingRef.current = false;
+		}
 	};
 
 	// UseEffect para cleanup al desmontar componente
@@ -456,6 +495,7 @@ export default function UploadScreen() {
 		setSelecting(false);
 		setIsUploading(false);
 		setUploading(false);
+		isCancelingRef.current = false;
 	};
 
 	if (!user) {
@@ -470,6 +510,7 @@ export default function UploadScreen() {
 				duration={selectedVideo.duration / 1000} // Convert to seconds
 				onSave={handleVideoEditorSave}
 				onCancel={handleVideoEditorCancel}
+				onCancelUpload={handleCancelUpload}
 				isUploading={isUploading}
 				uploadProgress={uploadProgress}
 			/>

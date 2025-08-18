@@ -14,6 +14,9 @@ export interface VideoFilters {
 }
 
 export class VideoService {
+	// Track cancellation state globally
+	private static isCancelling = false;
+
 	/**
 	 * Get videos feed with proper permission filtering
 	 * Solo devuelve videos que el usuario puede ver
@@ -698,9 +701,10 @@ export class VideoService {
 
 			// Step 2: ✅ ACTIVAR BACKGROUND TASK (opcional)
 			try {
-				const { VideoCompression } = await import(
+				const videoCompressionModule = await import(
 					'@/services/videoCompression'
 				);
+				const VideoCompression = videoCompressionModule.VideoCompression;
 				await VideoCompression.activateBackgroundTask();
 			} catch (bgError) {
 				console.warn('⚠️ Background task not activated (optional):', bgError);
@@ -858,9 +862,10 @@ export class VideoService {
 			// Cancel compression if active
 			if (compressionCancellationId) {
 				try {
-					const { VideoCompression } = await import(
+					const videoCompressionModule = await import(
 						'@/services/videoCompression'
 					);
+					const VideoCompression = videoCompressionModule.VideoCompression;
 					VideoCompression.cancelCompression(compressionCancellationId);
 				} catch (cancelError) {
 					console.warn('Failed to cancel compression:', cancelError);
@@ -878,16 +883,29 @@ export class VideoService {
 					: Promise.resolve(),
 			]);
 
+			// Check if we're cancelling to suppress the error
+			if (this.isCancelling) {
+				console.log('🛑 Upload error occurred during cancellation - suppressing error');
+				return {
+					success: false,
+					error: 'Upload cancelled by user',
+				};
+			}
+
 			return {
 				success: false,
 				error: this.getErrorMessage(error),
 			};
 		} finally {
+			// Reset cancellation state
+			this.isCancelling = false;
+			
 			// ✅ DESACTIVAR BACKGROUND TASK (opcional)
 			try {
-				const { VideoCompression } = await import(
+				const videoCompressionModule = await import(
 					'@/services/videoCompression'
 				);
+				const VideoCompression = videoCompressionModule.VideoCompression;
 				await VideoCompression.deactivateBackgroundTask();
 				await VideoCompression.cleanupTempFiles();
 			} catch (cleanupError) {
@@ -916,7 +934,8 @@ export class VideoService {
 			);
 
 			// Import VideoCompression service
-			const { VideoCompression } = await import('@/services/videoCompression');
+			const videoCompressionModule = await import('@/services/videoCompression');
+			const VideoCompression = videoCompressionModule.VideoCompression;
 
 			// Get original file size for logging
 			const originalInfo = await FileSystem.getInfoAsync(videoUri);
@@ -985,6 +1004,16 @@ export class VideoService {
 			};
 		} catch (error) {
 			console.error('❌ REAL compression error:', error);
+			
+			// Check if we're cancelling to suppress the error
+			if (this.isCancelling) {
+				console.log('🛑 Compression error occurred during cancellation - suppressing error');
+				return {
+					success: false,
+					error: 'Compression cancelled by user',
+				};
+			}
+			
 			return {
 				success: false,
 				error:
@@ -1423,7 +1452,12 @@ export class VideoService {
 	 */
 	static async cancelUpload(): Promise<void> {
 		try {
-			const { VideoCompression } = await import('@/services/videoCompression');
+			// Set cancellation flag first
+			this.isCancelling = true;
+			console.log('🛑 Setting cancellation flag and cancelling upload process...');
+			
+			const videoCompressionModule = await import('@/services/videoCompression');
+			const VideoCompression = videoCompressionModule.VideoCompression;
 
 			// Cancel all active compressions
 			VideoCompression.cancelAllCompressions();
@@ -1445,7 +1479,8 @@ export class VideoService {
 		activeCompressionIds: string[];
 	}> {
 		try {
-			const { VideoCompression } = await import('@/services/videoCompression');
+			const videoCompressionModule = await import('@/services/videoCompression');
+			const VideoCompression = videoCompressionModule.VideoCompression;
 
 			return {
 				hasActiveCompressions: VideoCompression.hasActiveCompressions(),

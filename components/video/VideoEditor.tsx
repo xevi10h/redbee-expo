@@ -16,6 +16,7 @@ interface VideoEditorProps {
 		isPremium: boolean;
 	}) => void;
 	onCancel: () => void;
+	onCancelUpload?: () => Promise<void>;
 	isUploading?: boolean;
 	uploadProgress?: number;
 }
@@ -25,6 +26,7 @@ export function VideoEditor({
 	duration,
 	onSave,
 	onCancel,
+	onCancelUpload,
 	isUploading = false,
 	uploadProgress = 0,
 }: VideoEditorProps) {
@@ -83,6 +85,7 @@ export function VideoEditor({
 			endTime={endTime}
 			onSave={handleMetadataSave}
 			onBack={handleMetadataBack}
+			onCancelUpload={onCancelUpload}
 			isUploading={isUploading}
 			uploadProgress={uploadProgress}
 		/>

@@ -31,6 +31,7 @@ interface VideoMetadataProps {
 		thumbnailTime: number;
 	}) => void;
 	onBack: () => void;
+	onCancelUpload?: () => Promise<void>;
 	isUploading?: boolean;
 	uploadProgress?: number;
 }
@@ -41,6 +42,7 @@ export function VideoMetadata({
 	endTime,
 	onSave,
 	onBack,
+	onCancelUpload,
 	isUploading = false,
 	uploadProgress = 0,
 }: VideoMetadataProps) {
@@ -253,7 +255,17 @@ export function VideoMetadata({
 											{
 												text: 'Cancelar',
 												style: 'destructive',
-												onPress: onBack,
+												onPress: async () => {
+													try {
+														if (onCancelUpload) {
+															await onCancelUpload();
+														}
+														onBack();
+													} catch (error) {
+														console.warn('Error canceling upload:', error);
+														onBack();
+													}
+												},
 											},
 										],
 									);

@@ -1,5 +1,3 @@
-// services/videoCompression.ts - Versión corregida con react-native-compressor REAL
-
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'react-native-compressor';
 
@@ -29,8 +27,8 @@ export class VideoCompression {
 		Omit<CompressionSettings, 'onProgress'>
 	> = {
 		quality: 'medium',
-		maxFileSize: 25, // 25MB máximo después de compresión
-		resolution: '720p', // Resolución estándar HD
+		maxFileSize: 100, // 100MB máximo después de compresión
+		resolution: '1080p', // Resolución estándar Full HD
 		fps: 30, // FPS estándar
 		bitrate: 1500, // 1.5 Mbps - balance entre calidad y tamaño
 		format: 'mp4', // Formato estándar
