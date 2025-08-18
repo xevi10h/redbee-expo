@@ -18,8 +18,6 @@ interface VideoEditorProps {
 	onCancel: () => void;
 	isUploading?: boolean;
 	uploadProgress?: number;
-	compressionProgress?: number;
-	uploadStage?: 'compression' | 'uploading' | 'idle';
 }
 
 export function VideoEditor({
@@ -29,8 +27,6 @@ export function VideoEditor({
 	onCancel,
 	isUploading = false,
 	uploadProgress = 0,
-	compressionProgress = 0,
-	uploadStage = 'idle',
 }: VideoEditorProps) {
 	// State for the two-step process
 	const [step, setStep] = useState<'trim' | 'metadata'>('trim');
@@ -89,8 +85,6 @@ export function VideoEditor({
 			onBack={handleMetadataBack}
 			isUploading={isUploading}
 			uploadProgress={uploadProgress}
-			compressionProgress={compressionProgress}
-			uploadStage={uploadStage}
 		/>
 	);
 }

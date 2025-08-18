@@ -12,7 +12,7 @@ import { useUploadState } from '@/hooks/useUploadState';
 
 export default function TabLayout() {
 	const { t } = useTranslation();
-	const { isAnyProcessActive } = useUploadState();
+	const { isAnyProcessActive, isEditing, isUploading } = useUploadState();
 	const { unreadCount } = useNotificationsList();
 
 	// Prevent navigation when upload processes are active
@@ -30,18 +30,16 @@ export default function TabLayout() {
 			screenOptions={{
 				tabBarActiveTintColor: Colors.tabBarActive,
 				tabBarInactiveTintColor: Colors.tabBarInactive,
-				tabBarStyle: isAnyProcessActive()
-					? {
-							display: 'none',
-					  }
-					: {
-							backgroundColor: Colors.tabBarBackground,
-							borderTopWidth: 1,
-							borderTopColor: Colors.tabBarBorder,
-							height: Platform.OS === 'ios' ? 90 : 70,
-							paddingBottom: Platform.OS === 'ios' ? 30 : 10,
-							paddingTop: 10,
-					  },
+				tabBarStyle: {
+					backgroundColor: Colors.tabBarBackground,
+					borderTopWidth: 1,
+					borderTopColor: Colors.tabBarBorder,
+					height: Platform.OS === 'ios' ? 90 : 70,
+					paddingBottom: Platform.OS === 'ios' ? 30 : 10,
+					paddingTop: 10,
+					opacity: isAnyProcessActive() ? 0.5 : 1,
+					display: (isEditing || isUploading) ? 'none' : 'flex',
+				},
 				tabBarLabelStyle: {
 					fontSize: 11,
 					fontFamily: 'Inter-Medium',

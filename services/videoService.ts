@@ -929,9 +929,9 @@ export class VideoService {
 			const compressionSettings: Parameters<
 				typeof VideoCompression.compressVideo
 			>[1] = {
-				quality: 'medium' as const,
-				maxFileSize: 25,
-				resolution: '720p' as const,
+				quality: 'high' as const,
+				maxFileSize: 100,
+				resolution: '1080p' as const,
 				fps: 30,
 				bitrate: 1500, // 1.5 Mbps
 				format: 'mp4' as const,
@@ -1025,10 +1025,15 @@ export class VideoService {
 			}
 
 			const fileSizeMB = 'size' in fileInfo ? fileInfo.size / (1024 * 1024) : 0;
-			console.log(`📤 Preparing TUS upload ${fileName}: ${fileSizeMB.toFixed(2)}MB`);
+			console.log(
+				`📤 Preparing TUS upload ${fileName}: ${fileSizeMB.toFixed(2)}MB`,
+			);
 
 			// Get authentication session
-			const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+			const {
+				data: { session },
+				error: sessionError,
+			} = await supabase.auth.getSession();
 			if (sessionError || !session?.access_token) {
 				throw new Error('Authentication required for TUS upload');
 			}
@@ -1038,7 +1043,8 @@ export class VideoService {
 			const fileBlob = await response.blob();
 
 			// Get project ID from Supabase URL
-			const projectId = process.env.EXPO_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0];
+			const projectId =
+				process.env.EXPO_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0];
 			if (!projectId) {
 				throw new Error('Could not extract project ID from Supabase URL');
 			}
@@ -1080,20 +1086,22 @@ export class VideoService {
 				});
 
 				// Check for previous uploads and resume if possible
-				upload.findPreviousUploads().then((previousUploads: any[]) => {
-					if (previousUploads.length) {
-						console.log('🔄 Resuming previous TUS upload');
-						upload.resumeFromPreviousUpload(previousUploads[0]);
-					}
-					// Start the upload
-					upload.start();
-				}).catch((error: any) => {
-					console.error('❌ Failed to check previous uploads:', error);
-					// Start fresh upload anyway
-					upload.start();
-				});
+				upload
+					.findPreviousUploads()
+					.then((previousUploads: any[]) => {
+						if (previousUploads.length) {
+							console.log('🔄 Resuming previous TUS upload');
+							upload.resumeFromPreviousUpload(previousUploads[0]);
+						}
+						// Start the upload
+						upload.start();
+					})
+					.catch((error: any) => {
+						console.error('❌ Failed to check previous uploads:', error);
+						// Start fresh upload anyway
+						upload.start();
+					});
 			});
-
 		} catch (error) {
 			console.error('💥 TUS upload setup error:', error);
 			return {
@@ -1145,7 +1153,7 @@ export class VideoService {
 
 				// ✅ Para archivos más grandes (videos), usar FileSystem.uploadAsync con fetch
 				// Este método funciona mejor con archivos binarios grandes en React Native
-				
+
 				// 1. Usar la sesión ya obtenida anteriormente
 				if (!session?.access_token) {
 					throw new Error('No valid authentication token found');
@@ -1160,19 +1168,21 @@ export class VideoService {
 						httpMethod: 'POST',
 						uploadType: FileSystem.FileSystemUploadType.MULTIPART,
 						headers: {
-							'Authorization': `Bearer ${session.access_token}`,
+							Authorization: `Bearer ${session.access_token}`,
 							'x-upsert': 'false',
 						},
 						parameters: {
 							// Parámetros adicionales si son necesarios
 						},
-					}
+					},
 				);
 
 				// 3. Verificar la respuesta
 				if (uploadResponse.status !== 200) {
 					const responseBody = uploadResponse.body;
-					throw new Error(`Upload failed with status ${uploadResponse.status}: ${responseBody}`);
+					throw new Error(
+						`Upload failed with status ${uploadResponse.status}: ${responseBody}`,
+					);
 				}
 
 				console.log(`✅ Upload successful on attempt ${attempt}`);

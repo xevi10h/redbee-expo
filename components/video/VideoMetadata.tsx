@@ -33,8 +33,6 @@ interface VideoMetadataProps {
 	onBack: () => void;
 	isUploading?: boolean;
 	uploadProgress?: number;
-	compressionProgress?: number;
-	uploadStage?: 'compression' | 'uploading' | 'idle';
 }
 
 export function VideoMetadata({
@@ -45,8 +43,6 @@ export function VideoMetadata({
 	onBack,
 	isUploading = false,
 	uploadProgress = 0,
-	compressionProgress = 0,
-	uploadStage = 'idle',
 }: VideoMetadataProps) {
 	const { t } = useTranslation();
 
@@ -227,87 +223,31 @@ export function VideoMetadata({
 			{isUploading && (
 				<View style={styles.uploadOverlay}>
 					<View style={styles.uploadContainer}>
-						{/* Progreso principal */}
 						<CircularProgress
 							progress={uploadProgress}
 							size={80}
 							strokeWidth={8}
-							color={
-								uploadStage === 'compression' ? Colors.warning : Colors.primary
-							}
+							color={Colors.primary}
 							backgroundColor={Colors.textTertiary}
 							showPercentage={true}
 						/>
 
-						{/* Título del estado */}
-						<Text style={styles.uploadText}>
-							{uploadStage === 'compression'
-								? 'Comprimiendo video...'
-								: 'Subiendo video...'}
-						</Text>
+						<Text style={styles.uploadText}>Subiendo video...</Text>
 
-						{/* Descripción detallada del proceso */}
 						<Text style={styles.uploadSubtext}>
-							{uploadStage === 'compression'
-								? 'Aplicando compresión HD estándar (720p, 1.5Mbps)'
-								: uploadProgress < 90
-								? 'Enviando al servidor con formato optimizado...'
+							{uploadProgress < 90
+								? 'Procesando y enviando al servidor...'
 								: 'Finalizando y creando registro...'}
 						</Text>
 
-						{/* Barra de progreso adicional para compresión */}
-						{uploadStage === 'compression' && (
-							<View style={styles.compressionProgressContainer}>
-								<View style={styles.compressionProgressBar}>
-									<View
-										style={[
-											styles.compressionProgressFill,
-											{ width: `${compressionProgress}%` },
-										]}
-									/>
-								</View>
-								<Text style={styles.compressionProgressText}>
-									{Math.round(compressionProgress)}% comprimido
-								</Text>
-							</View>
-						)}
-
-						{/* Información adicional durante compresión */}
-						{uploadStage === 'compression' && (
-							<View style={styles.compressionInfo}>
-								<View style={styles.compressionStat}>
-									<Feather
-										name="video"
-										size={14}
-										color={Colors.textSecondary}
-									/>
-									<Text style={styles.compressionStatText}>720p HD</Text>
-								</View>
-								<View style={styles.compressionStat}>
-									<Feather name="zap" size={14} color={Colors.textSecondary} />
-									<Text style={styles.compressionStatText}>1.5 Mbps</Text>
-								</View>
-								<View style={styles.compressionStat}>
-									<Feather
-										name="minimize-2"
-										size={14}
-										color={Colors.textSecondary}
-									/>
-									<Text style={styles.compressionStatText}>Max 25MB</Text>
-								</View>
-							</View>
-						)}
-
-						{/* Botón de cancelar mejorado */}
+						{/* Botón de cancelar */}
 						{uploadProgress < 90 && (
 							<TouchableOpacity
 								style={styles.cancelUploadButton}
 								onPress={() => {
 									Alert.alert(
 										'Cancelar subida',
-										uploadStage === 'compression'
-											? '¿Cancelar la compresión del video?'
-											: '¿Cancelar la subida del video?',
+										'¿Cancelar la subida del video?',
 										[
 											{ text: 'Continuar', style: 'cancel' },
 											{
@@ -319,11 +259,7 @@ export function VideoMetadata({
 									);
 								}}
 							>
-								<Text style={styles.cancelUploadText}>
-									{uploadStage === 'compression'
-										? 'Cancelar compresión'
-										: 'Cancelar subida'}
-								</Text>
+								<Text style={styles.cancelUploadText}>Cancelar subida</Text>
 							</TouchableOpacity>
 						)}
 

@@ -43,10 +43,6 @@ export default function UploadScreen() {
 	const [isLoadingVideo, setIsLoadingVideo] = useState(false);
 	const [loadingProgress, setLoadingProgress] = useState(0);
 	const [uploadProgress, setUploadProgress] = useState(0);
-	const [compressionProgress, setCompressionProgress] = useState(0);
-	const [uploadStage, setUploadStage] = useState<
-		'compression' | 'uploading' | 'idle'
-	>('idle');
 	const [loadingInterval, setLoadingInterval] = useState<
 		number | NodeJS.Timeout | null
 	>(null);
@@ -80,7 +76,7 @@ export default function UploadScreen() {
 				'🔄 FASE 1: User clicked gallery, showing "Seleccionando..."',
 			);
 			setIsSelectingVideo(true);
-			setSelecting(true);
+			setSelecting(true); // Deshabilitar tabs durante la selección (visible pero deshabilitado)
 			setIsLoadingVideo(false); // Asegurar que no está en loading
 			setLoadingProgress(0);
 
@@ -297,8 +293,6 @@ export default function UploadScreen() {
 		setIsUploading(true);
 		setUploading(true);
 		setUploadProgress(0);
-		setUploadStage('compression'); // Empezar con compresión
-		setCompressionProgress(0);
 
 		try {
 			// Activar background task para compresión (útil para videos largos)
@@ -326,17 +320,6 @@ export default function UploadScreen() {
 				onProgress: (progress) => {
 					setUploadProgress(progress);
 					console.log(`📊 Upload progress: ${progress.toFixed(1)}%`);
-
-					// Actualizar estado basado en progreso
-					if (progress < 50) {
-						setUploadStage('compression');
-						// Mapear progreso de compresión (0-50% del total)
-						const compressionProgress = (progress / 50) * 100;
-						setCompressionProgress(compressionProgress);
-					} else {
-						setUploadStage('uploading');
-						setCompressionProgress(100); // Compresión completada
-					}
 				},
 			});
 
@@ -362,10 +345,10 @@ export default function UploadScreen() {
 					console.warn('⚠️ Failed to refresh user session:', error);
 				}
 
-				// Mostrar mensaje de éxito con información de compresión
+				// Mostrar mensaje de éxito
 				Alert.alert(
 					t('upload.uploadSuccess'),
-					'¡Tu video ha sido subido exitosamente!\n\n✅ Compresión con calidad HD estándar aplicada\n🎯 Formato optimizado para todas las plataformas',
+					'¡Tu video ha sido subido exitosamente!',
 					[
 						{
 							text: t('common.ok'),
@@ -373,7 +356,6 @@ export default function UploadScreen() {
 								// Limpiar estado y navegar
 								setSelectedVideo(null);
 								setShowEditor(false);
-								setUploadStage('idle');
 								router.push('/(tabs)/profile');
 							},
 						},
@@ -414,9 +396,7 @@ export default function UploadScreen() {
 			// Resetear todos los estados
 			setIsUploading(false);
 			setUploading(false);
-			setUploadStage('idle');
 			setUploadProgress(0);
-			setCompressionProgress(0);
 			setIsLoadingVideo(false);
 			setLoadingProgress(0);
 			setIsSelectingVideo(false);
@@ -428,7 +408,7 @@ export default function UploadScreen() {
 	const handleCancelUpload = async () => {
 		Alert.alert(
 			'Cancelar subida',
-			'¿Estás seguro de que quieres cancelar la subida? La compresión en curso se detendrá.',
+			'¿Estás seguro de que quieres cancelar la subida?',
 			[
 				{ text: 'Continuar subida', style: 'cancel' },
 				{
@@ -442,9 +422,7 @@ export default function UploadScreen() {
 							// Resetear estados
 							setIsUploading(false);
 							setUploading(false);
-							setUploadStage('idle');
 							setUploadProgress(0);
-							setCompressionProgress(0);
 
 							console.log('🛑 Upload cancelled by user');
 						} catch (error) {
@@ -494,8 +472,6 @@ export default function UploadScreen() {
 				onCancel={handleVideoEditorCancel}
 				isUploading={isUploading}
 				uploadProgress={uploadProgress}
-				compressionProgress={compressionProgress}
-				uploadStage={uploadStage}
 			/>
 		);
 	}
@@ -534,7 +510,7 @@ export default function UploadScreen() {
 										showPercentage={false}
 									/>
 								) : isSelectingVideo ? (
-									<Feather name="clock" size={32} color={Colors.text} />
+									<Spinner size={32} color={Colors.text} />
 								) : (
 									<Feather name="image" size={32} color={Colors.text} />
 								)}
@@ -584,40 +560,16 @@ export default function UploadScreen() {
 			{isUploading && (
 				<View style={styles.loadingOverlay}>
 					<View style={styles.loadingContainer}>
-						{uploadStage === 'compression' ? (
-							<>
-								<CircularProgress
-									progress={compressionProgress}
-									size={80}
-									strokeWidth={8}
-									color={Colors.warning}
-									backgroundColor={Colors.textTertiary}
-									showPercentage={true}
-								/>
-								<Text style={styles.loadingText}>Comprimiendo video...</Text>
-								<Text style={styles.loadingSubtext}>
-									Reduciendo tamaño para subida más rápida
-								</Text>
-							</>
-						) : uploadStage === 'uploading' ? (
-							<>
-								<CircularProgress
-									progress={uploadProgress}
-									size={80}
-									strokeWidth={8}
-									color={Colors.primary}
-									backgroundColor={Colors.textTertiary}
-									showPercentage={true}
-								/>
-								<Text style={styles.loadingText}>Subiendo video...</Text>
-								<Text style={styles.loadingSubtext}>Enviando al servidor</Text>
-							</>
-						) : (
-							<>
-								<Spinner size={32} color={Colors.primary} />
-								<Text style={styles.loadingText}>Procesando...</Text>
-							</>
-						)}
+						<CircularProgress
+							progress={uploadProgress}
+							size={80}
+							strokeWidth={8}
+							color={Colors.primary}
+							backgroundColor={Colors.textTertiary}
+							showPercentage={true}
+						/>
+						<Text style={styles.loadingText}>Subiendo video...</Text>
+						<Text style={styles.loadingSubtext}>Procesando y enviando al servidor</Text>
 					</View>
 				</View>
 			)}
