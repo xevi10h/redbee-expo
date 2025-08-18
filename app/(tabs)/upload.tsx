@@ -15,15 +15,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Spinner } from '@/components/ui/Spinner';
 import { CircularProgress } from '@/components/ui/CircularProgress';
+import { Spinner } from '@/components/ui/Spinner';
 import { VideoEditor } from '@/components/video';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useUploadState } from '@/hooks/useUploadState';
-import { VideoService } from '@/services/videoService';
 import { VideoCompression } from '@/services/videoCompression';
+import { VideoService } from '@/services/videoService';
 import { useAuthStore } from '@/stores/authStore';
 import { router } from 'expo-router';
 
@@ -46,22 +46,49 @@ export default function UploadScreen() {
 	const [loadingProgress, setLoadingProgress] = useState(0);
 	const [uploadProgress, setUploadProgress] = useState(0);
 	const [compressionProgress, setCompressionProgress] = useState(0);
-	const [uploadStage, setUploadStage] = useState<'compression' | 'uploading' | 'idle'>('idle');
-	const [loadingInterval, setLoadingInterval] = useState<NodeJS.Timeout | null>(null);
+	const [uploadStage, setUploadStage] = useState<
+		'compression' | 'uploading' | 'idle'
+	>('idle');
+	const [loadingInterval, setLoadingInterval] = useState<
+		number | NodeJS.Timeout | null
+	>(null);
+
+	const cleanupInterval = () => {
+		if (loadingInterval) {
+			if (typeof loadingInterval === 'number') {
+				clearInterval(loadingInterval);
+			} else {
+				clearInterval(loadingInterval);
+			}
+			setLoadingInterval(null);
+		}
+	};
+
+	const isErrorWithMessage = (error: unknown): error is { message: string } => {
+		return (
+			typeof error === 'object' &&
+			error !== null &&
+			'message' in error &&
+			typeof (error as { message: unknown }).message === 'string'
+		);
+	};
 
 	const handleSelectFromGallery = async () => {
 		if (isSelectingVideo || isUploading || isLoadingVideo) return;
 
 		try {
 			// FASE 1: SELECCIONANDO - Solo mostrar "Seleccionando..." sin progreso
-			console.log('🔄 FASE 1: User clicked gallery, showing "Seleccionando..."');
+			console.log(
+				'🔄 FASE 1: User clicked gallery, showing "Seleccionando..."',
+			);
 			setIsSelectingVideo(true);
 			setSelecting(true);
 			setIsLoadingVideo(false); // Asegurar que no está en loading
 			setLoadingProgress(0);
 
 			// Request permissions first
-			const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+			const permissionResult =
+				await ImagePicker.requestMediaLibraryPermissionsAsync();
 
 			if (permissionResult.granted === false) {
 				Alert.alert(t('common.error'), t('upload.galleryPermissionRequired'), [
@@ -88,11 +115,16 @@ export default function UploadScreen() {
 				const fileSizeInMB = (asset.fileSize || 0) / (1024 * 1024);
 
 				// Check if video is from iCloud (common indicators)
-				const isFromiCloud = asset.uri.includes('icloud') || 
-									 asset.uri.includes('CloudDocs') ||
-									 fileSizeInMB === 0; // iCloud videos often show 0 size initially
+				const isFromiCloud =
+					asset.uri.includes('icloud') ||
+					asset.uri.includes('CloudDocs') ||
+					fileSizeInMB === 0; // iCloud videos often show 0 size initially
 
-				console.log(`📱 Video selected - Duration: ${durationInSeconds}s, Size: ${fileSizeInMB.toFixed(2)}MB, iCloud: ${isFromiCloud}`);
+				console.log(
+					`📱 Video selected - Duration: ${durationInSeconds}s, Size: ${fileSizeInMB.toFixed(
+						2,
+					)}MB, iCloud: ${isFromiCloud}`,
+				);
 
 				if (isFromiCloud) {
 					console.log('⚠️ Video is from iCloud, may need time to download');
@@ -123,48 +155,52 @@ export default function UploadScreen() {
 					setIsSelectingVideo(false);
 					setSelecting(false);
 					Alert.alert(
-						t('common.error'), 
+						t('common.error'),
 						'El video es demasiado grande. Máximo 100MB.',
-						[{ text: t('common.ok') }]
+						[{ text: t('common.ok') }],
 					);
 					return;
 				}
 
 				// Video seleccionado correctamente, ahora mostrar carga
 				console.log('✅ Video selected by user, starting loading phase...');
-				
+
 				// FASE 2: CARGANDO - Terminar selección y empezar carga
 				setIsSelectingVideo(false);
 				setSelecting(false);
 				setIsLoadingVideo(true);
 				setLoadingProgress(0);
-				
-				console.log('🔄 FASE 2: Transitioned to loading state, UI should update now');
-				
+
+				console.log(
+					'🔄 FASE 2: Transitioned to loading state, UI should update now',
+				);
+
 				// Guardar el video seleccionado
 				const videoData = {
 					uri: asset.uri,
 					duration: asset.duration || 0,
 				};
 				setSelectedVideo(videoData);
-				
+
 				// Usar setTimeout para hacer la simulación asíncrona y no bloquear la UI
 				setTimeout(() => {
 					console.log('📱 Starting video loading simulation...');
-					
+
 					// Simular progreso de carga del video
 					let progress = 0;
 					const interval = setInterval(() => {
 						progress += Math.random() * 8 + 3; // 3-11% incrementos más pequeños
-						
+
 						// Actualizar progreso en la UI
 						setLoadingProgress(Math.min(progress, 100));
-						console.log(`📊 Video loading: ${Math.round(Math.min(progress, 100))}%`);
-						
+						console.log(
+							`📊 Video loading: ${Math.round(Math.min(progress, 100))}%`,
+						);
+
 						if (progress >= 100) {
 							clearInterval(interval);
 							setLoadingInterval(null);
-							
+
 							// Una vez completada la carga, abrir el editor después de un breve delay
 							setTimeout(() => {
 								console.log('✅ Video loading completed, opening editor...');
@@ -175,7 +211,7 @@ export default function UploadScreen() {
 							}, 200);
 						}
 					}, 200); // Cada 200ms para más fluidez
-					
+
 					// Guardar referencia del intervalo para poder limpiarlo si es necesario
 					setLoadingInterval(interval);
 				}, 50); // Delay mínimo para permitir que la UI se actualice primero
@@ -187,43 +223,46 @@ export default function UploadScreen() {
 			}
 		} catch (error) {
 			console.error('Error selecting video:', error);
-			
+
 			// Limpiar interval si existe
-			if (loadingInterval) {
-				clearInterval(loadingInterval);
-				setLoadingInterval(null);
-			}
-			
+			cleanupInterval();
+
 			// Reset loading state on error
 			setIsLoadingVideo(false);
 			setLoadingProgress(0);
 			setIsSelectingVideo(false);
 			setSelecting(false);
-			
-			if (error.message === 'Selection timeout') {
-				Alert.alert(
-					'Timeout de selección', 
-					'La selección de video tardó demasiado. Si el video está en iCloud, intenta descargarlo primero desde la app Fotos.',
-					[
-						{ text: 'Entendido' },
-						{ 
-							text: 'Consejos', 
-							onPress: () => {
-								Alert.alert(
-									'Consejos para videos más rápidos',
-									'• Usa videos guardados localmente en tu dispositivo\n• Si es de iCloud, abre Fotos y descárgalo primero\n• Videos más cortos cargan más rápido\n• Evita videos muy pesados (>50MB)',
-									[{ text: 'Entendido' }]
-								);
-							}
-						}
-					]
-				);
-			} else if (error.message.includes('FileProvider')) {
-				Alert.alert(
-					'Error de iCloud',
-					'Parece que el video está en iCloud y no se puede acceder. Intenta descargarlo primero desde la app Fotos.',
-					[{ text: t('common.ok') }]
-				);
+
+			if (isErrorWithMessage(error)) {
+				if (error.message === 'Selection timeout') {
+					Alert.alert(
+						'Timeout de selección',
+						'La selección de video tardó demasiado. Si el video está en iCloud, intenta descargarlo primero desde la app Fotos.',
+						[
+							{ text: 'Entendido' },
+							{
+								text: 'Consejos',
+								onPress: () => {
+									Alert.alert(
+										'Consejos para videos más rápidos',
+										'• Usa videos guardados localmente en tu dispositivo\n• Si es de iCloud, abre Fotos y descárgalo primero\n• Videos más cortos cargan más rápido\n• Evita videos muy pesados (>50MB)',
+										[{ text: 'Entendido' }],
+									);
+								},
+							},
+						],
+					);
+				} else if (error.message.includes('FileProvider')) {
+					Alert.alert(
+						'Error de iCloud',
+						'Parece que el video está en iCloud y no se puede acceder. Intenta descargarlo primero desde la app Fotos.',
+						[{ text: t('common.ok') }],
+					);
+				} else {
+					Alert.alert(t('common.error'), t('errors.somethingWentWrong'), [
+						{ text: t('common.ok') },
+					]);
+				}
 			} else {
 				Alert.alert(t('common.error'), t('errors.somethingWentWrong'), [
 					{ text: t('common.ok') },
@@ -249,7 +288,7 @@ export default function UploadScreen() {
 
 		// AQUÍ ES DONDE DEBE EMPEZAR "Cargando... X%"
 		console.log('🚀 User clicked "Siguiente", starting upload process...');
-		
+
 		// MANTENER EL EDITOR ABIERTO y mostrar overlay de carga
 		// NO cerrar el editor, solo activar estado de upload
 		setIsUploading(true);
@@ -257,22 +296,34 @@ export default function UploadScreen() {
 		setUploadProgress(0);
 		setCompressionProgress(0);
 		setUploadStage('uploading'); // Mostrar directamente "Subiendo video..."
-		
+
 		try {
 			// Step 1: Compress video before upload
 			console.log('🔄 Starting video compression...');
 
+			const hasSize = (
+				fileInfo: FileSystem.FileInfo,
+			): fileInfo is FileSystem.FileInfo & { size: number } => {
+				return 'size' in fileInfo && typeof fileInfo.size === 'number';
+			};
+
 			// Obtener información real del archivo de vídeo
 			const videoFileInfo = await FileSystem.getInfoAsync(selectedVideo.uri);
-			const actualSizeMB = videoFileInfo.size ? videoFileInfo.size / (1024 * 1024) : 100;
-			
+			const actualSizeMB = hasSize(videoFileInfo)
+				? videoFileInfo.size / (1024 * 1024)
+				: 100;
+
 			const videoDurationSeconds = selectedVideo.duration / 1000;
 			const recommendedSettings = VideoCompression.getRecommendedSettings(
 				videoDurationSeconds,
-				actualSizeMB // Usar el tamaño real del archivo
+				actualSizeMB, // Usar el tamaño real del archivo
 			);
 
-			console.log(`📱 Video info: ${actualSizeMB.toFixed(2)}MB, ${videoDurationSeconds.toFixed(1)}s`);
+			console.log(
+				`📱 Video info: ${actualSizeMB.toFixed(
+					2,
+				)}MB, ${videoDurationSeconds.toFixed(1)}s`,
+			);
 			console.log('📋 Compression settings:', recommendedSettings);
 
 			const compressionResult = await VideoCompression.compressVideo(
@@ -283,9 +334,13 @@ export default function UploadScreen() {
 						// Mapear progreso de compresión (0-50% del total)
 						const totalProgress = progress * 0.5;
 						setUploadProgress(totalProgress);
-						console.log(`📊 Compression progress: ${progress}%, Total: ${totalProgress.toFixed(1)}%`);
+						console.log(
+							`📊 Compression progress: ${progress}%, Total: ${totalProgress.toFixed(
+								1,
+							)}%`,
+						);
 					},
-				}
+				},
 			);
 
 			if (!compressionResult.success) {
@@ -293,7 +348,7 @@ export default function UploadScreen() {
 			}
 
 			console.log('✅ Video compressed successfully');
-			
+
 			// Step 2: Upload compressed video (continuar desde 50%)
 			console.log('📤 Starting video upload phase...');
 
@@ -304,7 +359,9 @@ export default function UploadScreen() {
 			console.log(`📤 Uploading file:`, {
 				uri: videoToUpload,
 				exists: finalFileInfo.exists,
-				size: finalFileInfo.size ? `${(finalFileInfo.size / 1024 / 1024).toFixed(2)}MB` : 'Unknown'
+				size: hasSize(finalFileInfo)
+					? `${(finalFileInfo.size / 1024 / 1024).toFixed(2)}MB`
+					: 'Unknown',
 			});
 
 			const uploadResult = await VideoService.uploadVideo({
@@ -319,9 +376,13 @@ export default function UploadScreen() {
 				thumbnailTime: data.thumbnailTime,
 				onProgress: (progress) => {
 					// Mapear progreso de upload (50-100% del total)
-					const totalProgress = 50 + (progress * 0.5);
+					const totalProgress = 50 + progress * 0.5;
 					setUploadProgress(totalProgress);
-					console.log(`📊 Upload progress: ${progress}%, Total: ${totalProgress.toFixed(1)}%`);
+					console.log(
+						`📊 Upload progress: ${progress}%, Total: ${totalProgress.toFixed(
+							1,
+						)}%`,
+					);
 				},
 			});
 
@@ -343,8 +404,10 @@ export default function UploadScreen() {
 				// Clean up temporary compression files
 				await VideoCompression.cleanupTempFiles();
 
-				const compressionInfo = compressionResult.compressionRatio 
-					? `\n\nCompresión: ${compressionResult.compressionRatio.toFixed(1)}x reducción de tamaño`
+				const compressionInfo = compressionResult.compressionRatio
+					? `\n\nCompresión: ${compressionResult.compressionRatio.toFixed(
+							1,
+					  )}x reducción de tamaño`
 					: '';
 
 				Alert.alert(
@@ -366,52 +429,46 @@ export default function UploadScreen() {
 			} else {
 				const errorMsg = uploadResult.error || 'Failed to upload video';
 				console.error('❌ Upload failed:', errorMsg);
-				
+
 				// Dar información más específica sobre el error
 				let userMessage = errorMsg;
 				if (errorMsg.includes('Network request failed')) {
-					userMessage = 'Error de conexión. Verifica tu conexión a internet e intenta de nuevo.';
+					userMessage =
+						'Error de conexión. Verifica tu conexión a internet e intenta de nuevo.';
 				} else if (errorMsg.includes('file too large')) {
-					userMessage = 'El archivo es demasiado grande. Intenta con un vídeo más pequeño.';
+					userMessage =
+						'El archivo es demasiado grande. Intenta con un vídeo más pequeño.';
 				}
-				
-				Alert.alert(
-					t('common.error'),
-					userMessage,
-					[{ text: t('common.ok') }],
-				);
+
+				Alert.alert(t('common.error'), userMessage, [{ text: t('common.ok') }]);
 			}
 		} catch (error) {
 			console.error('Upload error:', error);
-			
+
 			// Clean up any temporary files on error
 			await VideoCompression.cleanupTempFiles();
-			
-			const errorMessage = error instanceof Error ? error.message : 'Upload failed';
-			Alert.alert(t('common.error'), errorMessage, [
-				{ text: t('common.ok') },
-			]);
-			} finally {
-				// Resetear todos los estados
-				setIsUploading(false);
-				setUploading(false);
-				setUploadStage('idle');
-				setUploadProgress(0);
-				setCompressionProgress(0);
-				setIsLoadingVideo(false);
-				setLoadingProgress(0);
-				setIsSelectingVideo(false);
-				setSelecting(false);
-			}
+
+			const errorMessage =
+				error instanceof Error ? error.message : 'Upload failed';
+			Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
+		} finally {
+			// Resetear todos los estados
+			setIsUploading(false);
+			setUploading(false);
+			setUploadStage('idle');
+			setUploadProgress(0);
+			setCompressionProgress(0);
+			setIsLoadingVideo(false);
+			setLoadingProgress(0);
+			setIsSelectingVideo(false);
+			setSelecting(false);
+		}
 	};
 
 	const handleVideoEditorCancel = () => {
 		// Limpiar interval si existe
-		if (loadingInterval) {
-			clearInterval(loadingInterval);
-			setLoadingInterval(null);
-		}
-		
+		cleanupInterval();
+
 		// Resetear todos los estados al cancelar
 		setSelectedVideo(null);
 		setShowEditor(false);
@@ -469,8 +526,8 @@ export default function UploadScreen() {
 								end={{ x: 1, y: 0 }}
 							>
 								{isLoadingVideo ? (
-									<CircularProgress 
-										progress={loadingProgress} 
+									<CircularProgress
+										progress={loadingProgress}
 										size={40}
 										strokeWidth={4}
 										color={Colors.text}
@@ -486,8 +543,8 @@ export default function UploadScreen() {
 									{isLoadingVideo
 										? `Cargando... ${Math.round(loadingProgress)}%`
 										: isSelectingVideo
-											? 'Seleccionando...'
-											: t('upload.fromGallery')}
+										? 'Seleccionando...'
+										: t('upload.fromGallery')}
 								</Text>
 							</LinearGradient>
 						</TouchableOpacity>
@@ -530,8 +587,8 @@ export default function UploadScreen() {
 					<View style={styles.loadingContainer}>
 						{uploadStage === 'compression' ? (
 							<>
-								<CircularProgress 
-									progress={compressionProgress} 
+								<CircularProgress
+									progress={compressionProgress}
 									size={80}
 									strokeWidth={8}
 									color={Colors.warning}
@@ -545,8 +602,8 @@ export default function UploadScreen() {
 							</>
 						) : uploadStage === 'uploading' ? (
 							<>
-								<CircularProgress 
-									progress={uploadProgress} 
+								<CircularProgress
+									progress={uploadProgress}
 									size={80}
 									strokeWidth={8}
 									color={Colors.primary}
@@ -554,9 +611,7 @@ export default function UploadScreen() {
 									showPercentage={true}
 								/>
 								<Text style={styles.loadingText}>Subiendo video...</Text>
-								<Text style={styles.loadingSubtext}>
-									Enviando al servidor
-								</Text>
+								<Text style={styles.loadingSubtext}>Enviando al servidor</Text>
 							</>
 						) : (
 							<>

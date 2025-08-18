@@ -26,8 +26,6 @@ import {
 	useUsernameAvailability,
 } from '@/hooks/useAvailabilityCheck';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useAuthStore } from '@/stores/authStore';
-import { getTermsUrl, getPrivacyUrl, areWebPagesAvailable, getWebPagesUnavailableMessage } from '@/shared/utils/webUrls';
 import {
 	sanitizeUsername,
 	validateEmail,
@@ -35,10 +33,17 @@ import {
 	validateUsername,
 } from '@/shared/functions/utils';
 import { RegisterCredentials } from '@/shared/types';
+import {
+	areWebPagesAvailable,
+	getPrivacyUrl,
+	getTermsUrl,
+	getWebPagesUnavailableMessage,
+} from '@/shared/utils/webUrls';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function SignUpScreen() {
 	const { t } = useTranslation();
-	const language = useAuthStore((state) => state.language);
+	const language = useAuthStore((state) => state.user?.language || 'es_ES');
 	const {
 		signUp,
 		signInWithGoogle,
@@ -246,7 +251,7 @@ export default function SignUpScreen() {
 	const handleTermsPress = async () => {
 		if (!areWebPagesAvailable()) {
 			Alert.alert(t('common.info'), getWebPagesUnavailableMessage(), [
-				{ text: t('common.ok') }
+				{ text: t('common.ok') },
 			]);
 			return;
 		}
@@ -259,13 +264,13 @@ export default function SignUpScreen() {
 			} else {
 				console.error('Cannot open URL:', url);
 				Alert.alert(t('common.error'), 'No se pudo abrir la página web', [
-					{ text: t('common.ok') }
+					{ text: t('common.ok') },
 				]);
 			}
 		} catch (error) {
 			console.error('Error opening terms URL:', error);
 			Alert.alert(t('common.error'), 'Error al abrir la página web', [
-				{ text: t('common.ok') }
+				{ text: t('common.ok') },
 			]);
 		}
 	};
@@ -273,7 +278,7 @@ export default function SignUpScreen() {
 	const handlePrivacyPress = async () => {
 		if (!areWebPagesAvailable()) {
 			Alert.alert(t('common.info'), getWebPagesUnavailableMessage(), [
-				{ text: t('common.ok') }
+				{ text: t('common.ok') },
 			]);
 			return;
 		}
@@ -286,13 +291,13 @@ export default function SignUpScreen() {
 			} else {
 				console.error('Cannot open URL:', url);
 				Alert.alert(t('common.error'), 'No se pudo abrir la página web', [
-					{ text: t('common.ok') }
+					{ text: t('common.ok') },
 				]);
 			}
 		} catch (error) {
 			console.error('Error opening privacy URL:', error);
 			Alert.alert(t('common.error'), 'Error al abrir la página web', [
-				{ text: t('common.ok') }
+				{ text: t('common.ok') },
 			]);
 		}
 	};
@@ -482,17 +487,11 @@ export default function SignUpScreen() {
 							<View style={styles.termsTextContainer}>
 								<Text style={styles.termsText}>
 									{t('auth.agreeToTerms')}{' '}
-									<Text 
-										style={styles.termsLink}
-										onPress={handleTermsPress}
-									>
+									<Text style={styles.termsLink} onPress={handleTermsPress}>
 										{t('auth.termsOfService')}
-									</Text>
-									{' '}{t('auth.and')}{' '}
-									<Text 
-										style={styles.termsLink}
-										onPress={handlePrivacyPress}
-									>
+									</Text>{' '}
+									{t('auth.and')}{' '}
+									<Text style={styles.termsLink} onPress={handlePrivacyPress}>
 										{t('auth.privacyPolicy')}
 									</Text>
 								</Text>

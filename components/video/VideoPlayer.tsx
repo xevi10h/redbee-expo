@@ -36,7 +36,6 @@ interface VideoPlayerProps {
 	isActive: boolean;
 	currentUser: User;
 	onLike: () => void;
-	onComment: () => void;
 	onFollow: () => void;
 	onSubscribe: () => void;
 	onReport: () => void;
@@ -53,7 +52,6 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	isActive,
 	currentUser,
 	onLike,
-	onComment,
 	onFollow,
 	onSubscribe,
 	onReport,
@@ -162,7 +160,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	useEffect(() => {
 		if (isActive && isLoaded) {
 			player.play();
-			
+
 			// Track view when video starts playing
 			if (!hasTrackedView && !startTime) {
 				setStartTime(Date.now());
@@ -179,7 +177,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 			const trackingTimer = setTimeout(async () => {
 				try {
 					const watchDuration = Math.round((Date.now() - startTime) / 1000);
-					const completionPercentage = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+					const completionPercentage =
+						duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
 
 					// Track view in background without awaiting to avoid blocking
 					AnalyticsService.trackVideoView(video.id, {
@@ -187,11 +186,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						watch_duration_seconds: watchDuration,
 						video_duration_at_view: Math.round(duration),
 						completion_percentage: completionPercentage,
-						is_premium_viewer: currentUser.subscription_status === 'active',
+						is_premium_viewer: video.is_subscribed || false,
 						is_follower: video.is_following || false,
-						device_type: Platform.OS === 'ios' ? 'mobile' : Platform.OS === 'android' ? 'mobile' : 'web',
+						device_type:
+							Platform.OS === 'ios'
+								? 'mobile'
+								: Platform.OS === 'android'
+								? 'mobile'
+								: 'web',
 						platform: Platform.OS as 'ios' | 'android' | 'web',
-					}).catch(error => {
+					}).catch((error) => {
 						console.error('Error tracking video view:', error);
 					});
 
@@ -203,7 +207,16 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 
 			return () => clearTimeout(trackingTimer);
 		}
-	}, [isActive, isPlaying, hasTrackedView, startTime, duration, video.id, video.is_following, currentUser]);
+	}, [
+		isActive,
+		isPlaying,
+		hasTrackedView,
+		startTime,
+		duration,
+		video.id,
+		video.is_following,
+		currentUser,
+	]);
 
 	// Reset tracking when video changes
 	useEffect(() => {
@@ -306,8 +319,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 	const handleCommentPress = useCallback(() => {
 		setShowCommentsModal(true);
 		setShowControls(true);
-		onComment();
-	}, [onComment]);
+	}, []);
 
 	const handleCommentsModalClose = useCallback(() => {
 		setShowCommentsModal(false);
@@ -358,8 +370,8 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 							colors={Colors.gradientSecondary}
 							style={styles.loadingGradient}
 						>
-							<ActivityIndicator 
-								size="large" 
+							<ActivityIndicator
+								size="large"
 								color={Colors.primary}
 								style={styles.loadingSpinner}
 							/>
@@ -422,14 +434,13 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({
 						video={video}
 						currentUser={currentUser}
 						onLike={onLike}
-						onComment={handleCommentPress} // ✅ Usar la nueva función
+						onComment={handleCommentPress}
 						onFollow={onFollow}
 						onSubscribe={onSubscribe}
 						onReport={onReport}
 						onHideVideo={onHideVideo}
 						onDeleteVideo={onDeleteVideo}
 						onUserPress={onUserPress}
-						onCommentAdded={handleCommentAdded}
 						onShowAnalytics={onShowAnalytics}
 					/>
 				</Animated.View>

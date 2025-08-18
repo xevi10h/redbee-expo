@@ -1,18 +1,13 @@
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import {
-	StyleSheet,
-	Text,
-	TouchableOpacity,
-	View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
-import { 
-	GroupedNotification, 
-	NotificationService 
+import {
+	GroupedNotification,
+	NotificationService,
 } from '@/services/notificationService';
 
 interface GroupedNotificationItemProps {
@@ -21,29 +16,35 @@ interface GroupedNotificationItemProps {
 	onMarkAsRead?: (notificationId: string) => void;
 }
 
-export const GroupedNotificationItem: React.FC<GroupedNotificationItemProps> = ({
-	groupedNotification,
-	onPress,
-	onMarkAsRead,
-}) => {
+export const GroupedNotificationItem: React.FC<
+	GroupedNotificationItemProps
+> = ({ groupedNotification, onPress, onMarkAsRead }) => {
 	const { t } = useTranslation();
-	const message = NotificationService.getGroupedNotificationMessage(groupedNotification, t);
-	const iconName = NotificationService.getNotificationIcon(groupedNotification.notification.type);
-	
+	const message = NotificationService.getGroupedNotificationMessage(
+		groupedNotification,
+		t,
+	);
+	const iconName = NotificationService.getNotificationIcon(
+		groupedNotification.notification.type,
+	);
+
 	const getTimeAgo = (dateString: string): string => {
 		const now = new Date();
 		const notificationDate = new Date(dateString);
-		const diffInMinutes = Math.floor((now.getTime() - notificationDate.getTime()) / (1000 * 60));
+		const diffInMinutes = Math.floor(
+			(now.getTime() - notificationDate.getTime()) / (1000 * 60),
+		);
 
 		if (diffInMinutes < 1) return t('notifications.justNow');
-		if (diffInMinutes < 60) return `${diffInMinutes}${t('notifications.minutesAgo')}`;
-		
+		if (diffInMinutes < 60)
+			return `${diffInMinutes}${t('notifications.minutesAgo')}`;
+
 		const diffInHours = Math.floor(diffInMinutes / 60);
 		if (diffInHours < 24) return `${diffInHours}${t('notifications.hoursAgo')}`;
-		
+
 		const diffInDays = Math.floor(diffInHours / 24);
 		if (diffInDays < 7) return `${diffInDays}${t('notifications.daysAgo')}`;
-		
+
 		const diffInWeeks = Math.floor(diffInDays / 7);
 		return `${diffInWeeks}${t('notifications.weeksAgo')}`;
 	};
@@ -51,7 +52,7 @@ export const GroupedNotificationItem: React.FC<GroupedNotificationItemProps> = (
 	const handlePress = () => {
 		if (!groupedNotification.is_read && onMarkAsRead) {
 			// Mark all notifications in the group as read
-			groupedNotification.notifications.forEach(notification => {
+			groupedNotification.notifications.forEach((notification) => {
 				if (!notification.is_read) {
 					onMarkAsRead(notification.id);
 				}
@@ -80,13 +81,16 @@ export const GroupedNotificationItem: React.FC<GroupedNotificationItemProps> = (
 					<Feather name={iconName as any} size={20} color={Colors.text} />
 				</LinearGradient>
 				{/* Group count badge */}
-				{groupedNotification.type === 'group' && groupedNotification.count > 1 && (
-					<View style={styles.countBadge}>
-						<Text style={styles.countText}>
-							{groupedNotification.count > 9 ? '9+' : groupedNotification.count}
-						</Text>
-					</View>
-				)}
+				{groupedNotification.type === 'group' &&
+					groupedNotification.count > 1 && (
+						<View style={styles.countBadge}>
+							<Text style={styles.countText}>
+								{groupedNotification.count > 9
+									? '9+'
+									: groupedNotification.count}
+							</Text>
+						</View>
+					)}
 			</View>
 
 			{/* Content */}
@@ -106,14 +110,12 @@ export const GroupedNotificationItem: React.FC<GroupedNotificationItemProps> = (
 			</View>
 
 			{/* Unread Indicator */}
-			{!groupedNotification.is_read && (
-				<View style={styles.unreadDot} />
-			)}
+			{!groupedNotification.is_read && <View style={styles.unreadDot} />}
 		</TouchableOpacity>
 	);
 };
 
-const getIconColors = (type: string): string[] => {
+const getIconColors = (type: string): readonly [string, string] => {
 	switch (type) {
 		case 'video_like':
 			return ['#ff6b6b', '#ee5a52'];

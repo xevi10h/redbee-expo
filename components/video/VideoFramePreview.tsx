@@ -1,3 +1,4 @@
+import { getThumbnailAsync } from 'expo-video-thumbnails';
 import React, { useEffect, useState } from 'react';
 import {
 	ActivityIndicator,
@@ -6,7 +7,6 @@ import {
 	StyleSheet,
 	View,
 } from 'react-native';
-import { getThumbnailAsync } from 'expo-video-thumbnails';
 
 import { Colors } from '@/constants/Colors';
 
@@ -17,7 +17,7 @@ interface VideoFramePreviewProps {
 	thumbPosition: number; // Posición X del thumb del slider
 }
 
-const PREVIEW_WIDTH = 60;   // Más estrecho
+const PREVIEW_WIDTH = 60; // Más estrecho
 const PREVIEW_HEIGHT = 100; // Más alto para formato vertical (9:16 aproximado)
 
 export const VideoFramePreview: React.FC<VideoFramePreviewProps> = ({
@@ -53,16 +53,17 @@ export const VideoFramePreview: React.FC<VideoFramePreviewProps> = ({
 		const generateThumbnail = async () => {
 			try {
 				setIsGenerating(true);
-				
+
 				// Convertir tiempo a milisegundos para expo-video-thumbnails
 				const timeInMs = Math.max(0, Math.round(timeInSeconds * 1000));
-				
-				console.log(`🖼️ Generating thumbnail at ${timeInSeconds}s (${timeInMs}ms)`);
-				
+
+				console.log(
+					`🖼️ Generating thumbnail at ${timeInSeconds}s (${timeInMs}ms)`,
+				);
+
 				const { uri } = await getThumbnailAsync(videoUri, {
 					time: timeInMs,
 					quality: 0.5, // Calidad más baja para mejor rendimiento
-					size: { width: PREVIEW_WIDTH, height: PREVIEW_HEIGHT },
 				});
 
 				// Verificar si el componente aún está visible antes de setear el resultado
@@ -85,11 +86,18 @@ export const VideoFramePreview: React.FC<VideoFramePreviewProps> = ({
 
 		// Debounce más agresivo para evitar demasiadas llamadas
 		const debounceTimer = setTimeout(generateThumbnail, 200);
-		
+
 		return () => {
 			clearTimeout(debounceTimer);
 		};
-	}, [videoUri, timeInSeconds, isVisible, lastGeneratedTime, thumbnailUri, isGenerating]);
+	}, [
+		videoUri,
+		timeInSeconds,
+		isVisible,
+		lastGeneratedTime,
+		thumbnailUri,
+		isGenerating,
+	]);
 
 	if (!isVisible) {
 		return null;
@@ -100,9 +108,9 @@ export const VideoFramePreview: React.FC<VideoFramePreviewProps> = ({
 	const previewLeft = Math.max(
 		10, // Margen mínimo del borde izquierdo
 		Math.min(
-			thumbPosition - PREVIEW_WIDTH / 2, 
-			screenWidth - PREVIEW_WIDTH - 10 // Margen del borde derecho
-		)
+			thumbPosition - PREVIEW_WIDTH / 2,
+			screenWidth - PREVIEW_WIDTH - 10, // Margen del borde derecho
+		),
 	);
 
 	return (
@@ -118,10 +126,7 @@ export const VideoFramePreview: React.FC<VideoFramePreviewProps> = ({
 			<View style={styles.imageContainer}>
 				{isGenerating ? (
 					<View style={styles.loadingContainer}>
-						<ActivityIndicator 
-							size="small" 
-							color={Colors.primary} 
-						/>
+						<ActivityIndicator size="small" color={Colors.primary} />
 					</View>
 				) : thumbnailUri ? (
 					<Image
@@ -135,7 +140,7 @@ export const VideoFramePreview: React.FC<VideoFramePreviewProps> = ({
 					</View>
 				)}
 			</View>
-			
+
 			{/* Flecha que apunta hacia abajo al thumb */}
 			<View style={styles.arrow} />
 		</View>

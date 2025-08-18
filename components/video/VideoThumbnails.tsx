@@ -1,6 +1,6 @@
 import { VideoView, useVideoPlayer } from 'expo-video';
-import React, { memo, useEffect, useState, useCallback } from 'react';
-import { Dimensions, StyleSheet, View, Text } from 'react-native';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
 const TRIMMER_WIDTH = screenWidth - 32;
@@ -15,12 +15,15 @@ export const VideoThumbnails = memo(function VideoThumbnails({
 	duration,
 }: VideoThumbnailsProps) {
 	// Smart thumbnail count based on video characteristics
-	const isLikelyLocal = !videoUri.includes('icloud') && !videoUri.includes('CloudDocs') && !videoUri.includes('tmp');
-	const thumbnailCount = isLikelyLocal 
+	const isLikelyLocal =
+		!videoUri.includes('icloud') &&
+		!videoUri.includes('CloudDocs') &&
+		!videoUri.includes('tmp');
+	const thumbnailCount = isLikelyLocal
 		? Math.min(5, Math.max(3, Math.ceil(duration / 20))) // More thumbnails for local videos
 		: Math.min(3, Math.max(2, Math.ceil(duration / 60))); // Fewer for potentially slow videos
 	const thumbnailWidth = TRIMMER_WIDTH / thumbnailCount;
-	
+
 	// Generate thumbnail times with better distribution
 	const thumbnailTimes: number[] = [];
 	for (let i = 0; i < thumbnailCount; i++) {
@@ -61,7 +64,7 @@ const VideoThumbnail = memo(function VideoThumbnail({
 }: VideoThumbnailProps) {
 	const [isReady, setIsReady] = useState(false);
 	const [hasError, setHasError] = useState(false);
-	
+
 	// Optimized player creation with better resource management
 	const player = useVideoPlayer(videoUri, (player) => {
 		player.loop = false;
@@ -85,18 +88,19 @@ const VideoThumbnail = memo(function VideoThumbnail({
 
 	useEffect(() => {
 		let mounted = true;
-		let timeoutId: NodeJS.Timeout;
-		let retryTimeoutId: NodeJS.Timeout;
+		let timeoutId: ReturnType<typeof setTimeout>;
+		let retryTimeoutId: ReturnType<typeof setTimeout>;
 
 		const handleStatusChange = (status: any) => {
 			if (!mounted || hasError) return;
-			
+
 			if (status.status === 'readyToPlay' && !isReady) {
 				// Smart staggering based on video source
-				const isLikelyLocal = !videoUri.includes('icloud') && !videoUri.includes('CloudDocs');
+				const isLikelyLocal =
+					!videoUri.includes('icloud') && !videoUri.includes('CloudDocs');
 				const baseDelay = isLikelyLocal ? 100 : 300; // Faster for local videos
 				const staggerDelay = isLikelyLocal ? 150 : 400; // Less stagger for local
-				
+
 				timeoutId = setTimeout(() => {
 					if (mounted && !hasError) {
 						handleSeekToTime();

@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
 	ActivityIndicator,
 	Alert,
+	AlertButton,
 	Dimensions,
 	FlatList,
 	Image,
@@ -19,12 +20,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
+import { NotificationBadge } from '@/components/ui/NotificationBadge';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
+import { useNotificationsList } from '@/hooks/useNotificationsList';
 import { useProfileVideos, VideoSortOption } from '@/hooks/useProfileVideos';
 import { useTranslation } from '@/hooks/useTranslation';
-import { useNotificationsList } from '@/hooks/useNotificationsList';
-import { NotificationBadge } from '@/components/ui/NotificationBadge';
 import { formatNumber } from '@/shared/functions/utils';
 import { Video } from '@/shared/types';
 
@@ -222,12 +223,12 @@ export default function ProfileScreen() {
 	};
 
 	const handleVideoLongPress = (video: Video) => {
-		const options = [];
+		const options: AlertButton[] = [];
 
 		// Analytics option for all videos
 		options.push({
 			text: '📊 Ver analíticas',
-			style: 'default',
+			style: 'default' as const,
 			onPress: () => handleShowAnalytics(video.id, video.title),
 		});
 
@@ -236,12 +237,12 @@ export default function ProfileScreen() {
 			options.push(
 				{
 					text: 'Ocultar video',
-					style: 'default',
+					style: 'default' as const,
 					onPress: () => handleHideVideo(video.id),
 				},
 				{
 					text: 'Eliminar video',
-					style: 'destructive',
+					style: 'destructive' as const,
 					onPress: () => handleDeleteVideo(video.id),
 				},
 			);
@@ -250,18 +251,21 @@ export default function ProfileScreen() {
 			options.push(
 				{
 					text: 'Mostrar video',
-					style: 'default',
+					style: 'default' as const,
 					onPress: () => handleShowVideo(video.id),
 				},
 				{
 					text: 'Eliminar video',
-					style: 'destructive',
+					style: 'destructive' as const,
 					onPress: () => handleDeleteVideo(video.id),
 				},
 			);
 		}
 
-		options.push({ text: t('common.cancel'), style: 'cancel' });
+		options.push({
+			text: t('common.cancel'),
+			style: 'cancel' as const,
+		});
 
 		Alert.alert(
 			'Opciones del video',
@@ -652,16 +656,14 @@ export default function ProfileScreen() {
 								{t('profile.editProfile')}
 							</Text>
 						</TouchableOpacity>
-						
+
 						<TouchableOpacity
 							style={styles.analyticsButton}
 							onPress={handleAudienceCenter}
 							activeOpacity={0.8}
 						>
 							<Feather name="bar-chart-2" size={16} color={Colors.primary} />
-							<Text style={styles.analyticsButtonText}>
-								Analíticas
-							</Text>
+							<Text style={styles.analyticsButtonText}>Analíticas</Text>
 						</TouchableOpacity>
 					</View>
 				</View>
@@ -895,7 +897,6 @@ export default function ProfileScreen() {
 					/>
 				</View>
 			</ScrollView>
-
 		</SafeAreaView>
 	);
 }

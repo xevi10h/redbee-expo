@@ -191,7 +191,7 @@ export interface VideoView {
 	viewer_country?: string;
 	viewer_city?: string;
 	viewer_ip_hash?: string;
-	device_type?: 'mobile' | 'tablet' | 'desktop' | 'tv';
+	device_type?: 'mobile' | 'tablet' | 'desktop' | 'tv' | 'web';
 	browser?: string;
 	platform?: 'ios' | 'android' | 'web';
 	referrer_source?: string;
@@ -281,12 +281,7 @@ export interface VideoAnalyticsData {
 
 export interface VideoAnalyticsInteraction {
 	id: string;
-	user: {
-		id: string;
-		username: string;
-		display_name?: string;
-		avatar_url?: string;
-	};
+	user: User;
 	created_at: string;
 	text?: string; // Para comentarios
 	country?: string;

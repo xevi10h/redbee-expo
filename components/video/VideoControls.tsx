@@ -15,7 +15,7 @@ import {
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatNumber, formatTimeAgo } from '@/shared/functions/utils';
-import { Comment, User, Video as VideoType } from '@/shared/types';
+import { User, Video as VideoType } from '@/shared/types';
 import { PremiumModal } from './PremiumModal';
 
 const SCREEN_WIDTH = 375; // Default width for styling
@@ -42,7 +42,6 @@ interface VideoControlsProps {
 	onHideVideo?: () => void;
 	onDeleteVideo?: () => void;
 	onUserPress: () => void;
-	onCommentAdded: (comment: Comment) => void;
 	onShowAnalytics?: () => void;
 }
 
@@ -57,7 +56,6 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 	onHideVideo,
 	onDeleteVideo,
 	onUserPress,
-	onCommentAdded,
 	onShowAnalytics,
 }) => {
 	const { t } = useTranslation();
@@ -112,9 +110,9 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 				{
 					text: 'Ocultar',
 					style: 'default',
-					onPress: () => onHideVideo && onHideVideo()
-				}
-			]
+					onPress: () => onHideVideo && onHideVideo(),
+				},
+			],
 		);
 	};
 
@@ -127,9 +125,9 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 				{
 					text: 'Eliminar',
 					style: 'destructive',
-					onPress: () => onDeleteVideo && onDeleteVideo()
-				}
-			]
+					onPress: () => onDeleteVideo && onDeleteVideo(),
+				},
+			],
 		);
 	};
 
@@ -245,7 +243,11 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 									start={{ x: 0, y: 0 }}
 									end={{ x: 1, y: 0 }}
 								>
-									<MaterialCommunityIcons name="crown" size={16} color={Colors.text} />
+									<MaterialCommunityIcons
+										name="crown"
+										size={16}
+										color={Colors.text}
+									/>
 									<Text style={styles.subscribeText}>
 										{t('video.subscribe')}
 									</Text>
@@ -261,7 +263,11 @@ export const VideoControls: React.FC<VideoControlsProps> = ({
 						style={styles.premiumIndicator}
 						onPress={() => !video.is_subscribed && setShowPremiumModal(true)}
 					>
-						<MaterialCommunityIcons name="crown" size={20} color={Colors.premium} />
+						<MaterialCommunityIcons
+							name="crown"
+							size={20}
+							color={Colors.premium}
+						/>
 					</TouchableOpacity>
 				)}
 

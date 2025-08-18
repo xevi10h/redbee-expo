@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	ActivityIndicator,
 	Alert,
@@ -31,16 +31,15 @@ export default function VideoScreen() {
 
 	const {
 		handleLike,
-		handleComment,
 		handleFollow,
 		handleSubscribe,
 		handleReport,
-		updateVideoState,
+		handleCommentAdded,
 	} = useVideoPlayerInteractions();
 
 	useEffect(() => {
 		if (!user?.id || !videoId) {
-			router.replace('/(tabs)/');
+			router.replace('/(tabs)');
 			return;
 		}
 
@@ -56,15 +55,15 @@ export default function VideoScreen() {
 		try {
 			// Get videos using search and find the specific video
 			const result = await VideoService.searchVideos('', user.id, 0, 50);
-			
+
 			if (!result.success || !result.data) {
 				setError('Video not found');
 				return;
 			}
 
 			// Find the specific video by ID
-			const targetVideo = result.data.videos.find(v => v.id === videoId);
-			
+			const targetVideo = result.data.videos.find((v) => v.id === videoId);
+
 			if (!targetVideo) {
 				setError('Video not found');
 				return;
@@ -104,8 +103,8 @@ export default function VideoScreen() {
 				Alert.alert('Video oculto', 'El video ha sido ocultado exitosamente.', [
 					{
 						text: 'OK',
-						onPress: () => router.back()
-					}
+						onPress: () => router.back(),
+					},
 				]);
 			} else {
 				Alert.alert('Error', result.error || 'No se pudo ocultar el video');
@@ -129,22 +128,29 @@ export default function VideoScreen() {
 						try {
 							const result = await VideoService.deleteVideo(videoId);
 							if (result.success) {
-								Alert.alert('Video eliminado', 'El video ha sido eliminado exitosamente.', [
-									{
-										text: 'OK',
-										onPress: () => router.back()
-									}
-								]);
+								Alert.alert(
+									'Video eliminado',
+									'El video ha sido eliminado exitosamente.',
+									[
+										{
+											text: 'OK',
+											onPress: () => router.back(),
+										},
+									],
+								);
 							} else {
-								Alert.alert('Error', result.error || 'No se pudo eliminar el video');
+								Alert.alert(
+									'Error',
+									result.error || 'No se pudo eliminar el video',
+								);
 							}
 						} catch (error) {
 							console.error('Error deleting video:', error);
 							Alert.alert('Error', 'No se pudo eliminar el video');
 						}
-					}
-				}
-			]
+					},
+				},
+			],
 		);
 	};
 
@@ -156,19 +162,16 @@ export default function VideoScreen() {
 				video={item}
 				isActive={index === currentVideoIndex}
 				currentUser={user}
-				onLike={() => handleLike(item.id, updateVideoState)}
-				onComment={() => handleComment(item.id)}
-				onFollow={() => handleFollow(item.user_id, updateVideoState)}
-				onSubscribe={() => handleSubscribe(item.user_id, updateVideoState)}
+				onLike={() => handleLike(item.id)}
+				onFollow={() => handleFollow(item.user_id)}
+				onSubscribe={() => handleSubscribe(item.user_id)}
 				onReport={() => handleReport(item.id, 'inappropriate')}
 				onHideVideo={() => handleHideVideo(item.id)}
 				onDeleteVideo={() => handleDeleteVideo(item.id)}
 				onUserPress={() => handleUserPress(item)}
-				onCommentAdded={(comment) => {
+				onCommentAdded={() => {
 					// Update video comment count
-					updateVideoState(item.id, {
-						comments_count: item.comments_count + 1,
-					});
+					handleCommentAdded(item.id);
 				}}
 				onShowAnalytics={() => router.push(`/video/${item.id}/analytics`)}
 				isFullscreen={true}

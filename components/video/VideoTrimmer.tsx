@@ -1,6 +1,6 @@
 import { useEvent, useEventListener } from 'expo';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
 	Alert,
 	Dimensions,
@@ -24,8 +24,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
-import { VideoThumbnails } from './VideoThumbnails';
 import { SimpleTrimmerBar } from './SimpleTrimmerBar';
+import { VideoThumbnails } from './VideoThumbnails';
 
 const { width: screenWidth } = Dimensions.get('window');
 const TRIMMER_WIDTH = screenWidth - 32;
@@ -62,17 +62,21 @@ export function VideoTrimmer({
 	// Smart thumbnail loading based on video characteristics
 	useEffect(() => {
 		// Disable thumbnails for very long videos or when performance might be poor
-		if (duration > 120) { // Disable thumbnails for videos longer than 2 minutes
+		if (duration > 120) {
+			// Disable thumbnails for videos longer than 2 minutes
 			setUseThumbnails(false);
 		}
-		
+
 		// Also check if video seems to be from iCloud (might be slow)
-		const isLikelyiCloud = videoUri.includes('icloud') || 
-							   videoUri.includes('CloudDocs') ||
-							   videoUri.includes('tmp'); // Sometimes iCloud videos are in tmp
-		
+		const isLikelyiCloud =
+			videoUri.includes('icloud') ||
+			videoUri.includes('CloudDocs') ||
+			videoUri.includes('tmp'); // Sometimes iCloud videos are in tmp
+
 		if (isLikelyiCloud) {
-			console.log('🔄 Detected potential iCloud video, using simplified trimmer');
+			console.log(
+				'🔄 Detected potential iCloud video, using simplified trimmer',
+			);
 			setUseThumbnails(false);
 			setLoadingMessage('Descargando de iCloud...');
 		}
@@ -84,7 +88,7 @@ export function VideoTrimmer({
 		player.muted = false;
 		player.timeUpdateEventInterval = 0.1; // Faster updates for better responsiveness
 		// Optimize for trimming use case
-		player.shouldCorrectPitch = false; // Disable pitch correction for better performance
+		player.preservesPitch = false; // Disable pitch correction for better performance
 		// Reduce quality for faster loading
 		player.playbackRate = 1.0;
 	});
@@ -119,7 +123,8 @@ export function VideoTrimmer({
 			setCurrentTime(time);
 
 			// Custom loop within selected range with debouncing
-			if (time >= endTime - 0.1 && isPlaying) { // Small buffer to prevent rapid looping
+			if (time >= endTime - 0.1 && isPlaying) {
+				// Small buffer to prevent rapid looping
 				try {
 					player.currentTime = startTime;
 				} catch (error) {
@@ -152,7 +157,9 @@ export function VideoTrimmer({
 		// Quick timeout for local videos
 		const quickTimeout = setTimeout(() => {
 			if (!isLoaded) {
-				console.log('Video taking longer than expected, checking if it needs download...');
+				console.log(
+					'Video taking longer than expected, checking if it needs download...',
+				);
 				setLoadingMessage('Esto está tardando más de lo normal...');
 			}
 		}, 3000); // 3 second warning

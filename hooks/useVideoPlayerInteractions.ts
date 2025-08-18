@@ -92,12 +92,6 @@ export const useVideoPlayerInteractions = () => {
 		}
 	}, [user, userInteractions]);
 
-	// Handle comment action (for opening comments)
-	const handleComment = useCallback((videoId: string) => {
-		// This function is used to trigger opening the comments modal
-		// The actual comment functionality is handled by the VideoPlayer component
-		console.log('Opening comments for video:', videoId);
-	}, []);
 
 	// Handle comment count update
 	const handleCommentAdded = useCallback((videoId: string) => {
@@ -121,7 +115,6 @@ export const useVideoPlayerInteractions = () => {
 		videos,
 		setVideos,
 		handleLike,
-		handleComment,
 		handleFollow,
 		handleSubscribe,
 		handleCommentAdded,

@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
 	FlatList,
 	StyleSheet,
@@ -23,7 +23,9 @@ export default function VideoAnalyticsLikesPage() {
 	const router = useRouter();
 
 	const [likes, setLikes] = useState<VideoAnalyticsInteraction[]>([]);
-	const [filteredLikes, setFilteredLikes] = useState<VideoAnalyticsInteraction[]>([]);
+	const [filteredLikes, setFilteredLikes] = useState<
+		VideoAnalyticsInteraction[]
+	>([]);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSearching, setIsSearching] = useState(false);
@@ -46,7 +48,7 @@ export default function VideoAnalyticsLikesPage() {
 
 			// Cargar todos los likes (sin límite)
 			const response = await AnalyticsService.getRecentLikes(id, 1000);
-			
+
 			if (response.success && response.data) {
 				setLikes(response.data);
 				setFilteredLikes(response.data);
@@ -61,32 +63,38 @@ export default function VideoAnalyticsLikesPage() {
 		}
 	}, [id]);
 
-	const handleSearch = useCallback(async (query: string) => {
-		if (!id) return;
+	const handleSearch = useCallback(
+		async (query: string) => {
+			if (!id) return;
 
-		setSearchQuery(query);
-		
-		if (!query.trim()) {
-			setFilteredLikes(likes);
-			return;
-		}
+			setSearchQuery(query);
 
-		setIsSearching(true);
-		try {
-			const response = await AnalyticsService.searchLikesByUsername(id, query);
-			if (response.success) {
-				const searchResults = response.data || [];
-				setFilteredLikes(searchResults);
-			} else {
-				setFilteredLikes([]);
+			if (!query.trim()) {
+				setFilteredLikes(likes);
+				return;
 			}
-		} catch (error) {
-			console.error('Error searching likes:', error);
-			setFilteredLikes([]);
-		} finally {
-			setIsSearching(false);
-		}
-	}, [id, likes]);
+
+			setIsSearching(true);
+			try {
+				const response = await AnalyticsService.searchLikesByUsername(
+					id,
+					query,
+				);
+				if (response.success) {
+					const searchResults = response.data || [];
+					setFilteredLikes(searchResults);
+				} else {
+					setFilteredLikes([]);
+				}
+			} catch (error) {
+				console.error('Error searching likes:', error);
+				setFilteredLikes([]);
+			} finally {
+				setIsSearching(false);
+			}
+		},
+		[id, likes],
+	);
 
 	useEffect(() => {
 		loadAllLikes();
@@ -107,10 +115,9 @@ export default function VideoAnalyticsLikesPage() {
 				{searchQuery ? 'No se encontraron likes' : 'Aún no hay likes'}
 			</Text>
 			<Text style={styles.emptySubtitle}>
-				{searchQuery 
+				{searchQuery
 					? `No hay usuarios con "${searchQuery}" que hayan dado like`
-					: 'Cuando alguien le dé like a tu video, aparecerá aquí'
-				}
+					: 'Cuando alguien le dé like a tu video, aparecerá aquí'}
 			</Text>
 		</View>
 	);
@@ -135,16 +142,14 @@ export default function VideoAnalyticsLikesPage() {
 	return (
 		<SafeAreaView style={styles.container}>
 			<StatusBar style="light" />
-			
+
 			{/* Header */}
 			<View style={styles.header}>
 				<TouchableOpacity onPress={handleClose} style={styles.closeButton}>
 					<Feather name="arrow-left" size={24} color={Colors.text} />
 				</TouchableOpacity>
 				<View style={styles.headerContent}>
-					<Text style={styles.headerTitle}>
-						Likes ({filteredLikes.length})
-					</Text>
+					<Text style={styles.headerTitle}>Likes ({filteredLikes.length})</Text>
 					{videoTitle && (
 						<Text style={styles.videoTitle} numberOfLines={1}>
 							{videoTitle}
@@ -179,7 +184,9 @@ export default function VideoAnalyticsLikesPage() {
 						ListEmptyComponent={renderEmptyState}
 						style={styles.list}
 						showsVerticalScrollIndicator={false}
-						contentContainerStyle={filteredLikes.length === 0 ? styles.emptyListContainer : undefined}
+						contentContainerStyle={
+							filteredLikes.length === 0 ? styles.emptyListContainer : undefined
+						}
 					/>
 				</>
 			)}

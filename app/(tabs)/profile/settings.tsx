@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import {
 	ActionSheetIOS,
 	Alert,
+	AlertButton,
 	Linking,
 	Platform,
 	ScrollView,
@@ -142,11 +143,9 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 			);
 		} else {
 			// Android - usar Alert tradicional
-			Alert.alert(
-				t('settings.selectLanguage'),
-				t('settings.languageChangeNote'),
-				languages
-					.map((lang) => ({
+			const buttons: AlertButton[] = [
+				...languages.map(
+					(lang): AlertButton => ({
 						text: lang.name,
 						onPress: () => {
 							if (lang.code !== currentLanguage) {
@@ -156,13 +155,18 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
 								);
 							}
 						},
-					}))
-					.concat([
-						{
-							text: cancelText,
-							style: 'cancel',
-						},
-					]),
+					}),
+				),
+				{
+					text: cancelText,
+					style: 'cancel',
+				},
+			];
+
+			Alert.alert(
+				t('settings.selectLanguage'),
+				t('settings.languageChangeNote'),
+				buttons,
 				{ cancelable: true },
 			);
 		}

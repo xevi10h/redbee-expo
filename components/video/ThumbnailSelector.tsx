@@ -135,7 +135,7 @@ const ThumbnailOption = memo(function ThumbnailOption({
 
 	useEffect(() => {
 		let mounted = true;
-		let timeoutId: NodeJS.Timeout;
+		let timeoutId: ReturnType<typeof setTimeout>;
 
 		const handleStatusChange = (status: any) => {
 			if (!mounted) return;

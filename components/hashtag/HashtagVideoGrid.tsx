@@ -76,7 +76,7 @@ const VideoGridItem: React.FC<{
 						<Feather name="user" size={12} color={Colors.textTertiary} />
 					</View>
 					<Text style={styles.authorName} numberOfLines={1}>
-						@{video.author?.username || 'Usuario'}
+						@{video.user?.username || 'Usuario'}
 					</Text>
 				</View>
 

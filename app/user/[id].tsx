@@ -873,6 +873,17 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		position: 'relative',
 	},
+	thumbnailImage: {
+		width: '100%',
+		height: '100%',
+		backgroundColor: Colors.backgroundSecondary,
+	},
+	placeholderThumbnail: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: Colors.backgroundSecondary,
+	},
 	premiumBadge: {
 		position: 'absolute',
 		top: 8,

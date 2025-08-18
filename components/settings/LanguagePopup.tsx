@@ -38,7 +38,11 @@ export const LanguagePopup: React.FC<LanguagePopupProps> = ({
 	const { t } = useTranslation();
 	const scaleAnim = useRef(new Animated.Value(0)).current;
 	const fadeAnim = useRef(new Animated.Value(0)).current;
-	const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0, width: 0 });
+	const [popupPosition, setPopupPosition] = useState({
+		top: 0,
+		left: 0,
+		width: 0,
+	});
 
 	const languages: LanguageOption[] = [
 		{ code: 'es_ES', name: t('settings.languages.es_ES') },
@@ -108,7 +112,7 @@ export const LanguagePopup: React.FC<LanguagePopupProps> = ({
 		<>
 			{/* Backdrop */}
 			<Pressable style={styles.backdrop} onPress={onClose} />
-			
+
 			{/* Popup */}
 			<Animated.View
 				style={[
@@ -120,10 +124,12 @@ export const LanguagePopup: React.FC<LanguagePopupProps> = ({
 						opacity: fadeAnim,
 						transform: [
 							{ scale: scaleAnim },
-							{ translateY: scaleAnim.interpolate({
-								inputRange: [0, 1],
-								outputRange: [-10, 0]
-							}) }
+							{
+								translateY: scaleAnim.interpolate({
+									inputRange: [0, 1],
+									outputRange: [-10, 0],
+								}),
+							},
 						],
 					},
 				]}
@@ -146,7 +152,7 @@ export const LanguagePopup: React.FC<LanguagePopupProps> = ({
 				</View>
 
 				{/* Languages List */}
-				<ScrollView 
+				<ScrollView
 					style={styles.languagesList}
 					showsVerticalScrollIndicator={false}
 					nestedScrollEnabled={true}
@@ -154,7 +160,7 @@ export const LanguagePopup: React.FC<LanguagePopupProps> = ({
 					{languages.map((language, index) => {
 						const isSelected = currentLanguage === language.code;
 						const isLast = index === languages.length - 1;
-						
+
 						return (
 							<TouchableOpacity
 								key={language.code}
@@ -166,10 +172,12 @@ export const LanguagePopup: React.FC<LanguagePopupProps> = ({
 								onPress={() => handleLanguagePress(language.code)}
 								activeOpacity={0.7}
 							>
-								<Text style={[
-									styles.languageName,
-									isSelected && styles.selectedLanguageName,
-								]}>
+								<Text
+									style={[
+										styles.languageName,
+										isSelected && styles.selectedLanguageName,
+									]}
+								>
 									{language.name}
 								</Text>
 
@@ -189,7 +197,12 @@ export const LanguagePopup: React.FC<LanguagePopupProps> = ({
 				</ScrollView>
 
 				{/* Arrow pointing up to anchor */}
-				<View style={[styles.arrow, { left: Math.min(16, popupPosition.width / 2 - 8) }]} />
+				<View
+					style={[
+						styles.arrow,
+						{ left: Math.min(16, popupPosition.width / 2 - 8) },
+					]}
+				/>
 			</Animated.View>
 		</>
 	);
@@ -273,7 +286,7 @@ const styles = StyleSheet.create({
 		borderBottomColor: Colors.borderSecondary,
 	},
 	selectedLanguageItem: {
-		backgroundColor: Colors.primaryBackground,
+		backgroundColor: Colors.background,
 	},
 	languageName: {
 		fontSize: 15,

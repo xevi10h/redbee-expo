@@ -1,18 +1,13 @@
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import {
-	StyleSheet,
-	Text,
-	TouchableOpacity,
-	View,
-} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
-import { 
-	Notification, 
-	NotificationService 
+import {
+	Notification,
+	NotificationService,
 } from '@/services/notificationService';
 
 interface NotificationItemProps {
@@ -29,21 +24,24 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 	const { t } = useTranslation();
 	const message = NotificationService.getNotificationMessage(notification, t);
 	const iconName = NotificationService.getNotificationIcon(notification.type);
-	
+
 	const getTimeAgo = (dateString: string): string => {
 		const now = new Date();
 		const notificationDate = new Date(dateString);
-		const diffInMinutes = Math.floor((now.getTime() - notificationDate.getTime()) / (1000 * 60));
+		const diffInMinutes = Math.floor(
+			(now.getTime() - notificationDate.getTime()) / (1000 * 60),
+		);
 
 		if (diffInMinutes < 1) return t('notifications.justNow');
-		if (diffInMinutes < 60) return `${diffInMinutes}${t('notifications.minutesAgo')}`;
-		
+		if (diffInMinutes < 60)
+			return `${diffInMinutes}${t('notifications.minutesAgo')}`;
+
 		const diffInHours = Math.floor(diffInMinutes / 60);
 		if (diffInHours < 24) return `${diffInHours}${t('notifications.hoursAgo')}`;
-		
+
 		const diffInDays = Math.floor(diffInHours / 24);
 		if (diffInDays < 7) return `${diffInDays}${t('notifications.daysAgo')}`;
-		
+
 		const diffInWeeks = Math.floor(diffInDays / 7);
 		return `${diffInWeeks}${t('notifications.weeksAgo')}`;
 	};
@@ -93,14 +91,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 			</View>
 
 			{/* Unread Indicator */}
-			{!notification.is_read && (
-				<View style={styles.unreadDot} />
-			)}
+			{!notification.is_read && <View style={styles.unreadDot} />}
 		</TouchableOpacity>
 	);
 };
 
-const getIconColors = (type: Notification['type']): string[] => {
+const getIconColors = (
+	type: Notification['type'],
+): readonly [string, string] => {
 	switch (type) {
 		case 'video_like':
 			return ['#ff6b6b', '#ee5a52'];

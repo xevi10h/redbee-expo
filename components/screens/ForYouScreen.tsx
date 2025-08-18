@@ -1,3 +1,9 @@
+import { VideoFeedLoader } from '@/components/ui/VideoFeedLoader';
+import { VideoPlayer } from '@/components/video/VideoPlayer';
+import { Colors } from '@/constants/Colors';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useVideoFeedWithPermissions } from '@/hooks/useVideoFeedWithPermissions';
+import { Comment, User } from '@/shared/types';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -12,12 +18,6 @@ import {
 	View,
 	ViewToken,
 } from 'react-native';
-import { VideoFeedLoader } from '@/components/ui/VideoFeedLoader';
-import { VideoPlayer } from '@/components/video/VideoPlayer';
-import { Colors } from '@/constants/Colors';
-import { useTranslation } from '@/hooks/useTranslation';
-import { useVideoFeedWithPermissions } from '@/hooks/useVideoFeedWithPermissions';
-import { Comment, User } from '@/shared/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -120,9 +120,12 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 	);
 
 	// Handle analytics
-	const handleShowAnalytics = useCallback((videoId: string, videoTitle?: string) => {
-		router.push(`/video/${videoId}/analytics`);
-	}, [router]);
+	const handleShowAnalytics = useCallback(
+		(videoId: string, videoTitle?: string) => {
+			router.push(`/video/${videoId}/analytics`);
+		},
+		[router],
+	);
 
 	// Render individual video item
 	const renderVideoItem = useCallback(
@@ -136,7 +139,6 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 						isActive={isVideoActive}
 						currentUser={user}
 						onLike={() => handleVideoLike(item.id)}
-						onComment={() => handleVideoComment(item.id)}
 						onFollow={() => item.user?.id && handleUserFollow(item.user.id)}
 						onSubscribe={() =>
 							item.user?.id && handleUserSubscribe(item.user.id)
@@ -252,7 +254,6 @@ export const ForYouScreen: React.FC<ForYouScreenProps> = ({
 			{showMainLoader && (
 				<VideoFeedLoader message={t('common.loading')} showIcon={true} />
 			)}
-
 		</View>
 	);
 };

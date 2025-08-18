@@ -69,7 +69,9 @@ export const ReportsMetrics: React.FC<ReportsMetricsProps> = ({
 				<View style={styles.emptyState}>
 					<Feather name="shield-off" size={24} color={Colors.success} />
 					<Text style={styles.emptyText}>No hay reportes</Text>
-					<Text style={styles.emptySubtext}>¡Tu contenido cumple las normas!</Text>
+					<Text style={styles.emptySubtext}>
+						¡Tu contenido cumple las normas!
+					</Text>
 				</View>
 			</View>
 		);
@@ -91,7 +93,8 @@ export const ReportsMetrics: React.FC<ReportsMetricsProps> = ({
 			<View style={styles.alertBox}>
 				<Feather name="info" size={16} color={Colors.warning} />
 				<Text style={styles.alertText}>
-					Los reportes se revisan automáticamente. Contenido con muchos reportes puede ser ocultado temporalmente.
+					Los reportes se revisan automáticamente. Contenido con muchos reportes
+					puede ser ocultado temporalmente.
 				</Text>
 			</View>
 
@@ -102,10 +105,15 @@ export const ReportsMetrics: React.FC<ReportsMetricsProps> = ({
 						<View key={item.reason} style={styles.reasonItem}>
 							<View style={styles.reasonHeader}>
 								<View style={styles.reasonInfo}>
-									<View style={[styles.reasonIcon, { backgroundColor: `${reasonColor}20` }]}>
-										<Feather 
-											name={getReasonIcon(item.reason)} 
-											size={14} 
+									<View
+										style={[
+											styles.reasonIcon,
+											{ backgroundColor: `${reasonColor}20` },
+										]}
+									>
+										<Feather
+											name={getReasonIcon(item.reason)}
+											size={14}
 											color={reasonColor}
 										/>
 									</View>
@@ -113,22 +121,24 @@ export const ReportsMetrics: React.FC<ReportsMetricsProps> = ({
 										{getReasonLabel(item.reason)}
 									</Text>
 								</View>
-								
+
 								<View style={styles.reasonStats}>
 									<Text style={styles.reasonCount}>{item.count}</Text>
-									<Text style={styles.reasonPercentage}>({item.percentage}%)</Text>
+									<Text style={styles.reasonPercentage}>
+										({item.percentage}%)
+									</Text>
 								</View>
 							</View>
-							
+
 							{/* Barra de progreso */}
 							<View style={styles.progressBarContainer}>
-								<View 
+								<View
 									style={[
 										styles.progressBar,
-										{ 
+										{
 											width: `${item.percentage}%`,
 											backgroundColor: reasonColor,
-										}
+										},
 									]}
 								/>
 							</View>
@@ -210,7 +220,7 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		padding: 12,
 		borderWidth: 1,
-		borderColor: Colors.borderTertiary,
+		borderColor: Colors.borderSecondary,
 	},
 	reasonHeader: {
 		flexDirection: 'row',
@@ -265,7 +275,7 @@ const styles = StyleSheet.create({
 		marginTop: 16,
 		paddingTop: 12,
 		borderTopWidth: 1,
-		borderTopColor: Colors.borderTertiary,
+		borderTopColor: Colors.borderSecondary,
 	},
 	footerText: {
 		fontSize: 12,
