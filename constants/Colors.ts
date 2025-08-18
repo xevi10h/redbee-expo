@@ -25,6 +25,7 @@ export const Colors = {
 	error: '#DC3545',
 	warning: '#FFC107',
 	info: '#17A2B8',
+	accent: '#F77737',
 
 	// Interactive colors
 	link: '#E1306C',

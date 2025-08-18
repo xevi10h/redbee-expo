@@ -329,6 +329,10 @@ export default function ProfileScreen() {
 		router.push(`/video/${videoId}/analytics`);
 	};
 
+	const handleAudienceCenter = () => {
+		router.push('/(tabs)/profile/audience-center');
+	};
+
 	// Get current videos based on selected tab
 	const getCurrentVideos = () => {
 		switch (currentTab) {
@@ -636,7 +640,7 @@ export default function ProfileScreen() {
 
 					{user.bio && <Text style={styles.bio}>{user.bio}</Text>}
 
-					{/* Edit Profile Button */}
+					{/* Action Buttons */}
 					<View style={styles.actionButtons}>
 						<TouchableOpacity
 							style={styles.editProfileButton}
@@ -646,6 +650,17 @@ export default function ProfileScreen() {
 							<Feather name="edit" size={16} color={Colors.textSecondary} />
 							<Text style={styles.editProfileButtonText}>
 								{t('profile.editProfile')}
+							</Text>
+						</TouchableOpacity>
+						
+						<TouchableOpacity
+							style={styles.analyticsButton}
+							onPress={handleAudienceCenter}
+							activeOpacity={0.8}
+						>
+							<Feather name="bar-chart-2" size={16} color={Colors.primary} />
+							<Text style={styles.analyticsButtonText}>
+								Analíticas
 							</Text>
 						</TouchableOpacity>
 					</View>
@@ -1021,6 +1036,23 @@ const styles = StyleSheet.create({
 		fontFamily: 'Inter-SemiBold',
 		fontWeight: '500',
 		color: Colors.textSecondary,
+	},
+	analyticsButton: {
+		flex: 1,
+		backgroundColor: 'rgba(255, 107, 129, 0.1)',
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: Colors.primary,
+		alignItems: 'center',
+		justifyContent: 'center',
+		flexDirection: 'row',
+		gap: 8,
+	},
+	analyticsButtonText: {
+		fontSize: 14,
+		fontFamily: 'Inter-SemiBold',
+		fontWeight: '500',
+		color: Colors.primary,
 	},
 	tabsContainer: {
 		flexDirection: 'row',

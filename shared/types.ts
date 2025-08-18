@@ -419,3 +419,74 @@ export interface CommentWithLikesResponse {
 	likes_count: number;
 	recent_likers: Pick<User, 'id' | 'username' | 'avatar_url'>[];
 }
+
+// AUDIENCE ANALYTICS TYPES
+export interface AudienceMetricsSummary {
+	total_videos: number;
+	total_views: number;
+	unique_viewers: number;
+	total_likes: number;
+	total_comments: number;
+	total_shares: number;
+	total_reports: number;
+	avg_watch_duration: number;
+	avg_completion_rate: number;
+	premium_viewer_percentage: number;
+	follower_percentage: number;
+	audience_retention_rate: number;
+	top_performing_videos: {
+		id: string;
+		title: string;
+		views: number;
+		likes: number;
+	}[];
+	period_growth: {
+		views_growth: number;
+		likes_growth: number;
+		followers_growth: number;
+	};
+}
+
+export interface AudienceEngagementTrends {
+	date: string;
+	views: number;
+	likes: number;
+	comments: number;
+	shares: number;
+	engagement_rate: number;
+}
+
+export interface AudienceGeographicData {
+	country: string;
+	views: number;
+	percentage: number;
+	cities_count: number;
+}
+
+export interface AudienceHourlyPattern {
+	hour: number;
+	views: number;
+	unique_views: number;
+	percentage: number;
+}
+
+export interface AudienceVideoPerformance {
+	video_id: string;
+	title: string;
+	views: number;
+	likes: number;
+	comments: number;
+	shares: number;
+	avg_watch_duration: number;
+	completion_rate: number;
+	engagement_rate: number;
+	created_at: string;
+}
+
+export interface AudienceAnalyticsData {
+	summary: AudienceMetricsSummary;
+	engagement_trends: AudienceEngagementTrends[];
+	geographic_data: AudienceGeographicData[];
+	hourly_patterns: AudienceHourlyPattern[];
+	video_performance: AudienceVideoPerformance[];
+}
