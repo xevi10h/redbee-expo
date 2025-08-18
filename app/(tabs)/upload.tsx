@@ -1,9 +1,8 @@
 import { Feather } from '@expo/vector-icons';
-import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
 	Alert,
 	Platform,
@@ -22,7 +21,6 @@ import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useUploadState } from '@/hooks/useUploadState';
-import { VideoCompression } from '@/services/videoCompression';
 import { VideoService } from '@/services/videoService';
 import { useAuthStore } from '@/stores/authStore';
 import { router } from 'expo-router';
@@ -286,125 +284,37 @@ export default function UploadScreen() {
 	}) => {
 		if (!selectedVideo || !user) {
 			Alert.alert('Error', 'No hay usuario autenticado o video seleccionado', [
-				{ text: 'OK' }
+				{ text: 'OK' },
 			]);
 			return;
 		}
 
-		// Verificar que el usuario esté autenticado antes de proceder
-		try {
-			const { refreshSession } = useAuthStore.getState();
-			await refreshSession();
-			
-			const currentUser = useAuthStore.getState().user;
-			if (!currentUser || !useAuthStore.getState().isAuthenticated) {
-				Alert.alert(
-					'Sesión expirada', 
-					'Tu sesión ha expirado. Por favor, inicia sesión de nuevo.',
-					[
-						{ 
-							text: 'Iniciar sesión', 
-							onPress: () => router.push('/auth/sign-in')
-						}
-					]
-				);
-				return;
-			}
-		} catch (authError) {
-			console.error('❌ Authentication check failed:', authError);
-			Alert.alert(
-				'Error de autenticación', 
-				'No se pudo verificar tu sesión. Por favor, inicia sesión de nuevo.',
-				[
-					{ 
-						text: 'Iniciar sesión', 
-						onPress: () => router.push('/auth/sign-in')
-					}
-				]
-			);
-			return;
-		}
+		console.log(
+			'🚀 User clicked "Compartir", starting real compression upload process...',
+		);
 
-		// AQUÍ ES DONDE DEBE EMPEZAR "Cargando... X%"
-		console.log('🚀 User clicked "Siguiente", starting upload process...');
-
-		// MANTENER EL EDITOR ABIERTO y mostrar overlay de carga
-		// NO cerrar el editor, solo activar estado de upload
+		// Activar estado de uploading INMEDIATAMENTE
 		setIsUploading(true);
 		setUploading(true);
 		setUploadProgress(0);
+		setUploadStage('compression'); // Empezar con compresión
 		setCompressionProgress(0);
-		setUploadStage('uploading'); // Mostrar directamente "Subiendo video..."
 
 		try {
-			// Step 1: Compress video before upload
-			console.log('🔄 Starting video compression...');
-
-			const hasSize = (
-				fileInfo: FileSystem.FileInfo,
-			): fileInfo is FileSystem.FileInfo & { size: number } => {
-				return 'size' in fileInfo && typeof fileInfo.size === 'number';
-			};
-
-			// Obtener información real del archivo de vídeo
-			const videoFileInfo = await FileSystem.getInfoAsync(selectedVideo.uri);
-			const actualSizeMB = hasSize(videoFileInfo)
-				? videoFileInfo.size / (1024 * 1024)
-				: 100;
-
-			const videoDurationSeconds = selectedVideo.duration / 1000;
-			const recommendedSettings = VideoCompression.getRecommendedSettings(
-				videoDurationSeconds,
-				actualSizeMB, // Usar el tamaño real del archivo
-			);
-
-			console.log(
-				`📱 Video info: ${actualSizeMB.toFixed(
-					2,
-				)}MB, ${videoDurationSeconds.toFixed(1)}s`,
-			);
-			console.log('📋 Compression settings:', recommendedSettings);
-
-			const compressionResult = await VideoCompression.compressVideo(
-				selectedVideo.uri,
-				{
-					...recommendedSettings,
-					onProgress: (progress) => {
-						// Mapear progreso de compresión (0-50% del total)
-						const totalProgress = progress * 0.5;
-						setUploadProgress(totalProgress);
-						console.log(
-							`📊 Compression progress: ${progress}%, Total: ${totalProgress.toFixed(
-								1,
-							)}%`,
-						);
-					},
-				},
-			);
-
-			if (!compressionResult.success) {
-				throw new Error(compressionResult.error || 'Video compression failed');
+			// Activar background task para compresión (útil para videos largos)
+			try {
+				const { VideoCompression } = await import(
+					'@/services/videoCompression'
+				);
+				await VideoCompression.activateBackgroundTask();
+				console.log('✅ Background compression task activated');
+			} catch (bgError) {
+				console.warn('⚠️ Failed to activate background task:', bgError);
 			}
 
-			console.log('✅ Video compressed successfully');
-
-			// Step 2: Upload compressed video (continuar desde 50%)
-			console.log('📤 Starting video upload phase...');
-
-			const videoToUpload = compressionResult.uri || selectedVideo.uri;
-
-			// Información detallada del archivo a subir
-			const finalFileInfo = await FileSystem.getInfoAsync(videoToUpload);
-			console.log(`📤 Uploading file:`, {
-				uri: videoToUpload,
-				exists: finalFileInfo.exists,
-				size: hasSize(finalFileInfo)
-					? `${(finalFileInfo.size / 1024 / 1024).toFixed(2)}MB`
-					: 'Unknown',
-			});
-
+			// Usar el nuevo VideoService con compresión real
 			const uploadResult = await VideoService.uploadVideo({
-				videoUri: videoToUpload,
+				videoUri: selectedVideo.uri,
 				title: data.title,
 				description: data.description,
 				hashtags: data.hashtags,
@@ -414,52 +324,56 @@ export default function UploadScreen() {
 				endTime: data.endTime,
 				thumbnailTime: data.thumbnailTime,
 				onProgress: (progress) => {
-					// Mapear progreso de upload (50-100% del total)
-					const totalProgress = 50 + progress * 0.5;
-					setUploadProgress(totalProgress);
-					console.log(
-						`📊 Upload progress: ${progress}%, Total: ${totalProgress.toFixed(
-							1,
-						)}%`,
-					);
+					setUploadProgress(progress);
+					console.log(`📊 Upload progress: ${progress.toFixed(1)}%`);
+
+					// Actualizar estado basado en progreso
+					if (progress < 50) {
+						setUploadStage('compression');
+						// Mapear progreso de compresión (0-50% del total)
+						const compressionProgress = (progress / 50) * 100;
+						setCompressionProgress(compressionProgress);
+					} else {
+						setUploadStage('uploading');
+						setCompressionProgress(100); // Compresión completada
+					}
 				},
 			});
 
 			console.log('📋 Upload result:', uploadResult);
 
 			if (uploadResult.success) {
-				// Refresh user session to update videos_count in the profile
-				// The database trigger already incremented the count, we just need to fetch the updated data
+				// Desactivar background task
+				try {
+					const { VideoCompression } = await import(
+						'@/services/videoCompression'
+					);
+					await VideoCompression.deactivateBackgroundTask();
+					await VideoCompression.cleanupTempFiles();
+				} catch (cleanupError) {
+					console.warn('⚠️ Cleanup warning:', cleanupError);
+				}
+
+				// Refresh user session
 				try {
 					await refreshSession();
 					console.log('✅ User profile refreshed after video upload');
 				} catch (error) {
-					console.warn(
-						'⚠️ Failed to refresh user session after video upload:',
-						error,
-					);
+					console.warn('⚠️ Failed to refresh user session:', error);
 				}
 
-				// Clean up temporary compression files
-				await VideoCompression.cleanupTempFiles();
-
-				const compressionInfo = compressionResult.compressionRatio
-					? `\n\nCompresión: ${compressionResult.compressionRatio.toFixed(
-							1,
-					  )}x reducción de tamaño`
-					: '';
-
+				// Mostrar mensaje de éxito con información de compresión
 				Alert.alert(
 					t('upload.uploadSuccess'),
-					`Tu video ha sido subido exitosamente!${compressionInfo}`,
+					'¡Tu video ha sido subido exitosamente!\n\n✅ Compresión con calidad HD estándar aplicada\n🎯 Formato optimizado para todas las plataformas',
 					[
 						{
 							text: t('common.ok'),
 							onPress: () => {
+								// Limpiar estado y navegar
 								setSelectedVideo(null);
 								setShowEditor(false);
 								setUploadStage('idle');
-								// Navigate to profile to see the new video
 								router.push('/(tabs)/profile');
 							},
 						},
@@ -469,28 +383,34 @@ export default function UploadScreen() {
 				const errorMsg = uploadResult.error || 'Failed to upload video';
 				console.error('❌ Upload failed:', errorMsg);
 
-				// Dar información más específica sobre el error
-				let userMessage = errorMsg;
-				if (errorMsg.includes('Network request failed')) {
-					userMessage =
-						'Error de conexión. Verifica tu conexión a internet e intenta de nuevo.';
-				} else if (errorMsg.includes('file too large')) {
-					userMessage =
-						'El archivo es demasiado grande. Intenta con un vídeo más pequeño.';
-				}
-
-				Alert.alert(t('common.error'), userMessage, [{ text: t('common.ok') }]);
+				// Mostrar error específico
+				Alert.alert(t('common.error'), errorMsg, [{ text: t('common.ok') }]);
 			}
 		} catch (error) {
-			console.error('Upload error:', error);
+			console.error('💥 Unexpected upload error:', error);
 
-			// Clean up any temporary files on error
-			await VideoCompression.cleanupTempFiles();
+			// Cancelar cualquier compresión activa
+			try {
+				await VideoService.cancelUpload();
+			} catch (cancelError) {
+				console.warn('Failed to cancel upload:', cancelError);
+			}
 
 			const errorMessage =
-				error instanceof Error ? error.message : 'Upload failed';
+				error instanceof Error ? error.message : 'Upload failed unexpectedly';
 			Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
 		} finally {
+			// Desactivar background task y limpiar archivos temporales
+			try {
+				const { VideoCompression } = await import(
+					'@/services/videoCompression'
+				);
+				await VideoCompression.deactivateBackgroundTask();
+				await VideoCompression.cleanupTempFiles();
+			} catch (finalCleanupError) {
+				console.warn('Final cleanup warning:', finalCleanupError);
+			}
+
 			// Resetear todos los estados
 			setIsUploading(false);
 			setUploading(false);
@@ -503,6 +423,46 @@ export default function UploadScreen() {
 			setSelecting(false);
 		}
 	};
+
+	// Función adicional para cancelar upload
+	const handleCancelUpload = async () => {
+		Alert.alert(
+			'Cancelar subida',
+			'¿Estás seguro de que quieres cancelar la subida? La compresión en curso se detendrá.',
+			[
+				{ text: 'Continuar subida', style: 'cancel' },
+				{
+					text: 'Sí, cancelar',
+					style: 'destructive',
+					onPress: async () => {
+						try {
+							// Cancelar upload y compresión
+							await VideoService.cancelUpload();
+
+							// Resetear estados
+							setIsUploading(false);
+							setUploading(false);
+							setUploadStage('idle');
+							setUploadProgress(0);
+							setCompressionProgress(0);
+
+							console.log('🛑 Upload cancelled by user');
+						} catch (error) {
+							console.warn('Failed to cancel upload:', error);
+						}
+					},
+				},
+			],
+		);
+	};
+
+	// UseEffect para cleanup al desmontar componente
+	useEffect(() => {
+		return () => {
+			// Cleanup al desmontar componente
+			VideoService.cancelUpload().catch(console.warn);
+		};
+	}, []);
 
 	const handleVideoEditorCancel = () => {
 		// Limpiar interval si existe

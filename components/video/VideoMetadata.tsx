@@ -227,20 +227,115 @@ export function VideoMetadata({
 			{isUploading && (
 				<View style={styles.uploadOverlay}>
 					<View style={styles.uploadContainer}>
-						<CircularProgress 
-							progress={uploadProgress} 
+						{/* Progreso principal */}
+						<CircularProgress
+							progress={uploadProgress}
 							size={80}
 							strokeWidth={8}
-							color={Colors.primary}
+							color={
+								uploadStage === 'compression' ? Colors.warning : Colors.primary
+							}
 							backgroundColor={Colors.textTertiary}
 							showPercentage={true}
 						/>
-						<Text style={styles.uploadText}>Subiendo video...</Text>
-						<Text style={styles.uploadSubtext}>
-							{uploadProgress < 50 
-								? 'Procesando y comprimiendo...' 
-								: 'Enviando al servidor...'}
+
+						{/* Título del estado */}
+						<Text style={styles.uploadText}>
+							{uploadStage === 'compression'
+								? 'Comprimiendo video...'
+								: 'Subiendo video...'}
 						</Text>
+
+						{/* Descripción detallada del proceso */}
+						<Text style={styles.uploadSubtext}>
+							{uploadStage === 'compression'
+								? 'Aplicando compresión HD estándar (720p, 1.5Mbps)'
+								: uploadProgress < 90
+								? 'Enviando al servidor con formato optimizado...'
+								: 'Finalizando y creando registro...'}
+						</Text>
+
+						{/* Barra de progreso adicional para compresión */}
+						{uploadStage === 'compression' && (
+							<View style={styles.compressionProgressContainer}>
+								<View style={styles.compressionProgressBar}>
+									<View
+										style={[
+											styles.compressionProgressFill,
+											{ width: `${compressionProgress}%` },
+										]}
+									/>
+								</View>
+								<Text style={styles.compressionProgressText}>
+									{Math.round(compressionProgress)}% comprimido
+								</Text>
+							</View>
+						)}
+
+						{/* Información adicional durante compresión */}
+						{uploadStage === 'compression' && (
+							<View style={styles.compressionInfo}>
+								<View style={styles.compressionStat}>
+									<Feather
+										name="video"
+										size={14}
+										color={Colors.textSecondary}
+									/>
+									<Text style={styles.compressionStatText}>720p HD</Text>
+								</View>
+								<View style={styles.compressionStat}>
+									<Feather name="zap" size={14} color={Colors.textSecondary} />
+									<Text style={styles.compressionStatText}>1.5 Mbps</Text>
+								</View>
+								<View style={styles.compressionStat}>
+									<Feather
+										name="minimize-2"
+										size={14}
+										color={Colors.textSecondary}
+									/>
+									<Text style={styles.compressionStatText}>Max 25MB</Text>
+								</View>
+							</View>
+						)}
+
+						{/* Botón de cancelar mejorado */}
+						{uploadProgress < 90 && (
+							<TouchableOpacity
+								style={styles.cancelUploadButton}
+								onPress={() => {
+									Alert.alert(
+										'Cancelar subida',
+										uploadStage === 'compression'
+											? '¿Cancelar la compresión del video?'
+											: '¿Cancelar la subida del video?',
+										[
+											{ text: 'Continuar', style: 'cancel' },
+											{
+												text: 'Cancelar',
+												style: 'destructive',
+												onPress: onBack,
+											},
+										],
+									);
+								}}
+							>
+								<Text style={styles.cancelUploadText}>
+									{uploadStage === 'compression'
+										? 'Cancelar compresión'
+										: 'Cancelar subida'}
+								</Text>
+							</TouchableOpacity>
+						)}
+
+						{/* Indicador de que no se puede salir durante la subida final */}
+						{uploadProgress >= 90 && (
+							<View style={styles.finalStageContainer}>
+								<Feather name="lock" size={16} color={Colors.textTertiary} />
+								<Text style={styles.finalStageText}>
+									Finalizando... No cerrar la app
+								</Text>
+							</View>
+						)}
 					</View>
 				</View>
 			)}
@@ -423,22 +518,24 @@ const styles = StyleSheet.create({
 		left: 0,
 		right: 0,
 		bottom: 0,
-		backgroundColor: 'rgba(0, 0, 0, 0.8)',
+		backgroundColor: 'rgba(0, 0, 0, 0.85)',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
 	uploadContainer: {
 		backgroundColor: Colors.backgroundSecondary,
 		padding: 24,
-		borderRadius: 12,
+		borderRadius: 16,
 		alignItems: 'center',
+		maxWidth: '90%',
+		minWidth: 280,
 	},
 	uploadText: {
 		fontSize: 16,
-		fontFamily: 'Inter-Medium',
-		fontWeight: '500',
+		fontFamily: 'Inter-SemiBold',
+		fontWeight: '600',
 		color: Colors.text,
-		marginTop: 12,
+		marginTop: 16,
 		textAlign: 'center',
 	},
 	uploadSubtext: {
@@ -447,5 +544,77 @@ const styles = StyleSheet.create({
 		color: Colors.textSecondary,
 		marginTop: 4,
 		textAlign: 'center',
+		lineHeight: 16,
+	},
+	compressionProgressContainer: {
+		width: '100%',
+		marginTop: 16,
+		alignItems: 'center',
+	},
+	compressionProgressBar: {
+		width: '100%',
+		height: 4,
+		backgroundColor: Colors.borderSecondary,
+		borderRadius: 2,
+		overflow: 'hidden',
+	},
+	compressionProgressFill: {
+		height: '100%',
+		backgroundColor: Colors.warning,
+		borderRadius: 2,
+	},
+	compressionProgressText: {
+		fontSize: 10,
+		fontFamily: 'Inter-Medium',
+		color: Colors.textTertiary,
+		marginTop: 4,
+	},
+	compressionInfo: {
+		flexDirection: 'row',
+		justifyContent: 'space-around',
+		width: '100%',
+		marginTop: 12,
+		paddingTop: 12,
+		borderTopWidth: 1,
+		borderTopColor: Colors.borderSecondary,
+	},
+	compressionStat: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 4,
+	},
+	compressionStatText: {
+		fontSize: 10,
+		fontFamily: 'Inter-Medium',
+		color: Colors.textSecondary,
+	},
+	cancelUploadButton: {
+		marginTop: 20,
+		paddingHorizontal: 20,
+		paddingVertical: 10,
+		borderRadius: 8,
+		borderWidth: 1,
+		borderColor: Colors.textTertiary,
+		backgroundColor: 'rgba(255, 255, 255, 0.05)',
+	},
+	cancelUploadText: {
+		fontSize: 14,
+		fontFamily: 'Inter-Medium',
+		color: Colors.textSecondary,
+		textAlign: 'center',
+	},
+	finalStageContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
+		marginTop: 16,
+		padding: 8,
+		backgroundColor: 'rgba(255, 255, 255, 0.05)',
+		borderRadius: 6,
+	},
+	finalStageText: {
+		fontSize: 12,
+		fontFamily: 'Inter-Medium',
+		color: Colors.textTertiary,
 	},
 });

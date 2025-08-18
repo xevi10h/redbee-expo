@@ -381,12 +381,13 @@ export class VideoService {
 	static async getUserVideos(
 		userId: string,
 		viewerId: string,
-		includeHidden: boolean = false
+		includeHidden: boolean = false,
 	): Promise<AuthResponse<{ videos: Video[] }>> {
 		try {
 			let query = supabase
 				.from('videos')
-				.select(`
+				.select(
+					`
 					*,
 					user:profiles!videos_user_id_fkey (
 						id,
@@ -396,7 +397,8 @@ export class VideoService {
 						subscription_price,
 						subscription_currency
 					)
-				`)
+				`,
+				)
 				.eq('user_id', userId)
 				.order('created_at', { ascending: false });
 
@@ -432,7 +434,7 @@ export class VideoService {
 			}
 
 			// Get interactions for these videos
-			const videoIds = data.map(v => v.id);
+			const videoIds = data.map((v) => v.id);
 			let interactions: any = {};
 
 			if (videoIds.length > 0 && viewerId) {
@@ -501,7 +503,8 @@ export class VideoService {
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Failed to get user videos',
+				error:
+					error instanceof Error ? error.message : 'Failed to get user videos',
 			};
 		}
 	}
@@ -652,9 +655,8 @@ export class VideoService {
 		}
 	}
 
-
 	/**
-	 * Upload a new video with thumbnail generation and progress tracking
+	 * Upload a new video with real compression using react-native-compressor
 	 */
 	static async uploadVideo(data: {
 		videoUri: string;
@@ -668,115 +670,154 @@ export class VideoService {
 		thumbnailTime?: number;
 		onProgress?: (progress: number) => void;
 	}): Promise<AuthResponse<{ videoId: string }>> {
-		const { videoUri, title, description, hashtags, isPremium, userId, thumbnailTime, onProgress } = data;
+		const {
+			videoUri,
+			title,
+			description,
+			hashtags,
+			isPremium,
+			userId,
+			thumbnailTime,
+			onProgress,
+		} = data;
 		const timestamp = Date.now();
-		const videoFileName = `video_${userId}_${timestamp}.mp4`;
-		const thumbnailFileName = `thumbnail_${userId}_${timestamp}.jpg`;
+		const videoFileName = `${userId}/video_${timestamp}.mp4`;
+		const thumbnailFileName = `${userId}/thumbnail_${timestamp}.jpg`;
 		let thumbnailUrl: string | null = null;
+		let compressedVideoUri: string | null = null;
+		let compressionCancellationId: string | undefined;
 
 		try {
-			console.log('📱 Starting video upload process...');
-			onProgress?.(5); // Starting
-			
-			// Verify authentication first
-			const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-			if (sessionError || !session || !session.access_token) {
-				console.error('❌ Authentication error:', sessionError);
-				throw new Error('User not authenticated. Please log in again.');
-			}
-			
-			console.log('✅ User authenticated, proceeding with upload...');
-			console.log('🔑 User ID:', session.user.id);
-			
-			// Verify user ID matches
-			if (session.user.id !== userId) {
-				throw new Error('User ID mismatch. Please log in again.');
-			}
-			
-			// Generate thumbnail first
-			const thumbTime = thumbnailTime !== undefined && thumbnailTime >= 0 ? thumbnailTime : 1;
+			console.log('🚀 Starting REAL video upload process...');
+			onProgress?.(5);
+
+			// Step 1: Verify authentication with retry
+			await this.verifyAuthenticationWithRetry();
+			console.log('✅ Authentication verified');
+			onProgress?.(10);
+
+			// Step 2: ✅ ACTIVAR BACKGROUND TASK (opcional)
 			try {
+				const { VideoCompression } = await import(
+					'@/services/videoCompression'
+				);
+				await VideoCompression.activateBackgroundTask();
+			} catch (bgError) {
+				console.warn('⚠️ Background task not activated (optional):', bgError);
+			}
+
+			// Step 3: ✅ COMPRESIÓN REAL OBLIGATORIA
+			console.log('🔄 Starting REAL video compression...');
+			const compressionResult = await this.compressVideoStandard(videoUri, {
+				onProgress: (progress) => {
+					// Map compression progress to 10-50% of total
+					const totalProgress = 10 + progress * 0.4;
+					onProgress?.(totalProgress);
+				},
+			});
+
+			if (!compressionResult.success || !compressionResult.uri) {
+				throw new Error(`REAL compression failed: ${compressionResult.error}`);
+			}
+
+			compressedVideoUri = compressionResult.uri;
+			compressionCancellationId = compressionResult.cancellationId;
+
+			// Log compression stats
+			if (compressionResult.compressionRatio) {
+				console.log(
+					`✅ REAL compression ratio: ${compressionResult.compressionRatio.toFixed(
+						1,
+					)}x`,
+				);
+			}
+
+			onProgress?.(50);
+
+			// Step 4: Generate thumbnail from compressed video
+			console.log('🖼️ Generating thumbnail...');
+			try {
+				const thumbTime =
+					thumbnailTime !== undefined && thumbnailTime >= 0 ? thumbnailTime : 1;
 				const timeInMilliseconds = Math.round(Number(thumbTime) * 1000);
-				const { uri: thumbnailUri } = await getThumbnailAsync(videoUri, {
-					time: timeInMilliseconds,
-					quality: 0.8,
-				});
+
+				const { uri: thumbnailUri } = await getThumbnailAsync(
+					compressedVideoUri,
+					{
+						time: timeInMilliseconds,
+						quality: 0.8,
+					},
+				);
 
 				if (thumbnailUri) {
-					const { error: thumbnailUploadError } = await supabase.storage
-						.from('thumbnails')
-						.upload(thumbnailFileName, {
-							uri: thumbnailUri,
-							type: 'image/jpeg',
-							name: thumbnailFileName,
-						} as any);
+					const thumbnailUploadResult = await this.uploadThumbnailWithRetry(
+						'thumbnails',
+						thumbnailFileName,
+						thumbnailUri,
+						'image/jpeg',
+					);
 
-					if (!thumbnailUploadError) {
+					if (thumbnailUploadResult.success) {
 						const { data: thumbUrlData } = supabase.storage
 							.from('thumbnails')
 							.getPublicUrl(thumbnailFileName);
 						thumbnailUrl = thumbUrlData.publicUrl;
 						console.log('✅ Thumbnail uploaded successfully');
-						onProgress?.(15); // Thumbnail complete
-					} else {
-						console.warn('⚠️ Thumbnail upload failed:', thumbnailUploadError.message);
 					}
 				}
 			} catch (thumbnailError) {
-				console.warn('⚠️ Thumbnail generation failed, continuing without thumbnail:', thumbnailError);
-			}
-			
-			// Upload video with comprehensive diagnostics and fallback strategies
-			console.log('📹 Uploading video file...');
-			onProgress?.(20); // Starting video upload
-			
-			// Get file info for debugging
-			const videoFileInfo = await FileSystem.getInfoAsync(videoUri);
-			
-			if (!videoFileInfo.exists) {
-				throw new Error('Video file not found at URI');
+				console.warn('⚠️ Thumbnail generation failed:', thumbnailError);
 			}
 
-			// Upload video directly using Supabase client
-			console.log('📤 Uploading video to Supabase...');
-			onProgress?.(30); // Starting upload
-			
-			const { data: uploadData, error: uploadError } = await supabase.storage
-				.from('videos')
-				.upload(videoFileName, {
-					uri: videoUri,
-					type: 'video/mp4',
-					name: videoFileName,
-				} as any);
-			
-			if (uploadError) {
-				console.error('❌ Video upload failed:', uploadError);
-				// Clean up thumbnail if it was uploaded
-				if (thumbnailUrl) {
-					await supabase.storage.from('thumbnails').remove([thumbnailFileName]);
-				}
-				
-				// Provide more specific error messages
-				if (uploadError.message.includes('row-level security policy')) {
-					throw new Error('Authentication error. Please log out and log in again.');
-				} else if (uploadError.message.includes('file too large')) {
-					throw new Error('Video file is too large. Maximum size is 100MB.');
-				} else if (uploadError.message.includes('Network request failed')) {
-					throw new Error('Network error. Check your internet connection and try again.');
-				} else {
-					throw new Error(`Upload failed: ${uploadError.message}`);
-				}
+			onProgress?.(60);
+
+			// Step 5: ✅ UPLOAD con verificación de tamaño
+			console.log('📤 Uploading compressed video...');
+
+			// Verificar tamaño antes de upload
+			const compressedInfo = await FileSystem.getInfoAsync(compressedVideoUri);
+			const compressedSizeMB =
+				'size' in compressedInfo ? compressedInfo.size / (1024 * 1024) : 0;
+
+			if (compressedSizeMB > 100) {
+				throw new Error(
+					`Compressed video too large: ${compressedSizeMB.toFixed(
+						2,
+					)}MB. Maximum allowed: 100MB`,
+				);
+			}
+
+			console.log(
+				`📦 Uploading compressed video: ${compressedSizeMB.toFixed(2)}MB`,
+			);
+
+			const videoUploadResult = await this.uploadFileWithRetry(
+				'videos',
+				videoFileName,
+				compressedVideoUri,
+				'video/mp4',
+				{
+					onProgress: (progress) => {
+						// Map upload progress to 60-90% of total
+						const totalProgress = 60 + progress * 0.3;
+						onProgress?.(totalProgress);
+					},
+					maxRetries: 5, // Más reintentos para archivos grandes
+				},
+			);
+
+			if (!videoUploadResult.success) {
+				throw new Error(`Video upload failed: ${videoUploadResult.error}`);
 			}
 
 			console.log('✅ Video uploaded successfully');
-			onProgress?.(85); // Creating database record
+			onProgress?.(90);
 
-			// Get video public URL
+			// Step 6: Create database record
 			const { data: videoUrlData } = supabase.storage
 				.from('videos')
 				.getPublicUrl(videoFileName);
 
-			// Insert video record in database
 			const { data: videoData, error: dbError } = await supabase
 				.from('videos')
 				.insert({
@@ -794,38 +835,520 @@ export class VideoService {
 
 			if (dbError) {
 				console.error('❌ Database insert failed:', dbError);
-				// Clean up uploaded files
 				await Promise.all([
-					supabase.storage.from('videos').remove([videoFileName]),
-					thumbnailUrl ? supabase.storage.from('thumbnails').remove([thumbnailFileName]) : Promise.resolve()
+					this.cleanupFile('videos', videoFileName),
+					thumbnailUrl
+						? this.cleanupFile('thumbnails', thumbnailFileName)
+						: Promise.resolve(),
 				]);
-				return {
-					success: false,
-					error: `Failed to save video record: ${dbError.message}`,
-				};
+				throw new Error(`Failed to save video record: ${dbError.message}`);
 			}
 
-			console.log('🎉 Video upload completed successfully!');
-			onProgress?.(100); // Complete
+			console.log('🎉 Video upload completed with REAL compression!');
+			onProgress?.(100);
+
+			// Cleanup
+			await this.cleanupTempFile(compressedVideoUri);
+
 			return {
 				success: true,
 				data: { videoId: videoData.id },
 			};
-
 		} catch (error) {
-			console.error('💥 Video upload process error:', error);
-			// Clean up thumbnail if it was uploaded
-			try {
-				if (thumbnailUrl) {
-					await supabase.storage.from('thumbnails').remove([thumbnailFileName]);
+			console.error('💥 Video upload error:', error);
+
+			// Cancel compression if active
+			if (compressionCancellationId) {
+				try {
+					const { VideoCompression } = await import(
+						'@/services/videoCompression'
+					);
+					VideoCompression.cancelCompression(compressionCancellationId);
+				} catch (cancelError) {
+					console.warn('Failed to cancel compression:', cancelError);
 				}
-			} catch (cleanupError) {
-				console.warn('Failed to cleanup thumbnail:', cleanupError);
 			}
-			
+
+			// Cleanup files
+			await Promise.all([
+				this.cleanupFile('videos', videoFileName),
+				thumbnailUrl
+					? this.cleanupFile('thumbnails', thumbnailFileName)
+					: Promise.resolve(),
+				compressedVideoUri
+					? this.cleanupTempFile(compressedVideoUri)
+					: Promise.resolve(),
+			]);
+
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Failed to upload video',
+				error: this.getErrorMessage(error),
+			};
+		} finally {
+			// ✅ DESACTIVAR BACKGROUND TASK (opcional)
+			try {
+				const { VideoCompression } = await import(
+					'@/services/videoCompression'
+				);
+				await VideoCompression.deactivateBackgroundTask();
+				await VideoCompression.cleanupTempFiles();
+			} catch (cleanupError) {
+				console.warn('⚠️ Cleanup warning (optional):', cleanupError);
+			}
+		}
+	}
+
+	/**
+	 * Compress video with standard settings using react-native-compressor
+	 * Always compress for consistency using real compression
+	 */
+	private static async compressVideoStandard(
+		videoUri: string,
+		options: { onProgress?: (progress: number) => void } = {},
+	): Promise<{
+		success: boolean;
+		uri?: string;
+		error?: string;
+		compressionRatio?: number;
+		cancellationId?: string;
+	}> {
+		try {
+			console.log(
+				'🎯 Starting REAL compression with react-native-compressor...',
+			);
+
+			// Import VideoCompression service
+			const { VideoCompression } = await import('@/services/videoCompression');
+
+			// Get original file size for logging
+			const originalInfo = await FileSystem.getInfoAsync(videoUri);
+			const originalSizeMB =
+				'size' in originalInfo ? originalInfo.size / (1024 * 1024) : 0;
+
+			console.log(`📹 Original size: ${originalSizeMB.toFixed(2)}MB`);
+
+			// ✅ CONFIGURACIÓN ESTÁNDAR FIJA para compresión real
+			const compressionSettings: Parameters<
+				typeof VideoCompression.compressVideo
+			>[1] = {
+				quality: 'medium' as const,
+				maxFileSize: 25,
+				resolution: '720p' as const,
+				fps: 30,
+				bitrate: 1500, // 1.5 Mbps
+				format: 'mp4' as const,
+				onProgress: options.onProgress,
+			};
+
+			console.log('🔧 Using compression settings:', compressionSettings);
+
+			// ✅ USAR COMPRESIÓN REAL
+			const result = await VideoCompression.compressVideo(
+				videoUri,
+				compressionSettings,
+			);
+
+			if (result.success && result.uri) {
+				// Verificar el resultado
+				const compressedInfo = await FileSystem.getInfoAsync(result.uri);
+				const compressedSizeMB =
+					'size' in compressedInfo ? compressedInfo.size / (1024 * 1024) : 0;
+				const ratio =
+					originalSizeMB > 0 ? originalSizeMB / compressedSizeMB : 1;
+
+				console.log(
+					`🎉 REAL compression complete: ${originalSizeMB.toFixed(
+						2,
+					)}MB → ${compressedSizeMB.toFixed(2)}MB (${ratio.toFixed(
+						1,
+					)}x reduction)`,
+				);
+
+				// ✅ VERIFICAR QUE REALMENTE SE COMPRIMIÓ
+				if (ratio < 1.5 && originalSizeMB > 30) {
+					console.warn(
+						`⚠️ Compression ratio too low (${ratio.toFixed(
+							1,
+						)}x) for large file. May need different settings.`,
+					);
+				}
+
+				return {
+					success: true,
+					uri: result.uri,
+					compressionRatio: ratio,
+					cancellationId: result.cancellationId,
+				};
+			}
+
+			return {
+				success: false,
+				error: result.error || 'REAL compression failed',
+			};
+		} catch (error) {
+			console.error('❌ REAL compression error:', error);
+			return {
+				success: false,
+				error:
+					error instanceof Error ? error.message : 'REAL compression failed',
+			};
+		}
+	}
+
+	private static isErrorWithMessage(
+		error: unknown,
+	): error is { message: string } {
+		return (
+			typeof error === 'object' &&
+			error !== null &&
+			'message' in error &&
+			typeof (error as { message: unknown }).message === 'string'
+		);
+	}
+
+	/**
+	 * Upload file with retry logic and better error handling
+	 */
+	private static async uploadFileWithRetry(
+		bucket: string,
+		fileName: string,
+		fileUri: string,
+		contentType: string,
+		options: {
+			onProgress?: (progress: number) => void;
+			maxRetries?: number;
+		} = {},
+	): Promise<{ success: boolean; error?: string }> {
+		const { maxRetries = 5, onProgress } = options;
+		let lastError: any;
+
+		const fileInfo = await FileSystem.getInfoAsync(fileUri);
+		if (!fileInfo.exists) {
+			return { success: false, error: `File not found: ${fileUri}` };
+		}
+
+		const fileSizeMB = 'size' in fileInfo ? fileInfo.size / (1024 * 1024) : 0;
+		console.log(
+			`📤 Preparing to upload ${fileName}: ${fileSizeMB.toFixed(2)}MB`,
+		);
+
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
+			try {
+				console.log(
+					`📤 Upload attempt ${attempt}/${maxRetries} for ${fileName}`,
+				);
+
+				const {
+					data: { session },
+					error: sessionError,
+				} = await supabase.auth.getSession();
+				if (sessionError || !session) {
+					throw new Error('Authentication required before upload');
+				}
+
+				// ✅ Para archivos más grandes (videos), usar FileSystem.uploadAsync con fetch
+				// Este método funciona mejor con archivos binarios grandes en React Native
+				
+				// 1. Usar la sesión ya obtenida anteriormente
+				if (!session?.access_token) {
+					throw new Error('No valid authentication token found');
+				}
+
+				// 2. Usar FileSystem.uploadAsync para manejar archivos grandes correctamente
+				const uploadResponse = await FileSystem.uploadAsync(
+					`${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/${bucket}/${fileName}`,
+					fileUri,
+					{
+						fieldName: 'file',
+						httpMethod: 'POST',
+						uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+						headers: {
+							'Authorization': `Bearer ${session.access_token}`,
+							'x-upsert': 'false',
+						},
+						parameters: {
+							// Parámetros adicionales si son necesarios
+						},
+					}
+				);
+
+				// 3. Verificar la respuesta
+				if (uploadResponse.status !== 200) {
+					const responseBody = uploadResponse.body;
+					throw new Error(`Upload failed with status ${uploadResponse.status}: ${responseBody}`);
+				}
+
+				console.log(`✅ Upload successful on attempt ${attempt}`);
+				onProgress?.(100);
+				return { success: true };
+			} catch (error) {
+				lastError = error;
+				console.error(`❌ Upload attempt ${attempt} failed:`, error);
+
+				// ... (la lógica de reintentos se mantiene igual)
+				if (this.isErrorWithMessage(error)) {
+					const message = error.message.toLowerCase();
+					if (
+						message.includes('already exists') ||
+						message.includes('file too large')
+					) {
+						console.log(
+							'🚫 Not retrying due to permanent error type:',
+							message,
+						);
+						break;
+					}
+				}
+
+				if (attempt < maxRetries) {
+					const delay = Math.min(Math.pow(2, attempt) * 1000, 10000);
+					console.log(`⏳ Retrying in ${delay}ms...`);
+					await new Promise((resolve) => setTimeout(resolve, delay));
+				}
+			}
+		}
+
+		return {
+			success: false,
+			error: this.getErrorMessage(lastError),
+		};
+	}
+
+	/**
+	 * Upload THUMBNAIL with retry logic using the React Native specific method.
+	 */
+	private static async uploadThumbnailWithRetry(
+		bucket: string,
+		fileName: string,
+		fileUri: string,
+		contentType: string,
+		options: {
+			maxRetries?: number;
+		} = {},
+	): Promise<{ success: boolean; error?: string }> {
+		const { maxRetries = 3 } = options; // Menos reintentos para archivos pequeños
+		let lastError: any;
+
+		// Verificar si el archivo existe
+		const fileInfo = await FileSystem.getInfoAsync(fileUri);
+		if (!fileInfo.exists) {
+			return { success: false, error: `Thumbnail file not found: ${fileUri}` };
+		}
+
+		console.log(`🖼️ Preparing to upload thumbnail ${fileName}`);
+
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
+			try {
+				console.log(
+					`🖼️ Thumbnail Upload attempt ${attempt}/${maxRetries} for ${fileName}`,
+				);
+
+				const {
+					data: { session },
+					error: sessionError,
+				} = await supabase.auth.getSession();
+				if (sessionError || !session) {
+					throw new Error('Authentication required before upload');
+				}
+
+				// ✅ Usamos el método de subida específico para React Native que funciona para imágenes
+				const { data, error } = await supabase.storage.from(bucket).upload(
+					fileName,
+					{
+						uri: fileUri,
+						type: contentType,
+						name: fileName,
+					} as any,
+					{
+						upsert: false, // No sobrescribir
+					},
+				);
+
+				if (error) {
+					throw error;
+				}
+
+				console.log(`✅ Thumbnail upload successful on attempt ${attempt}`);
+				return { success: true };
+			} catch (error) {
+				lastError = error;
+				console.error(`❌ Thumbnail upload attempt ${attempt} failed:`, error);
+
+				if (attempt < maxRetries) {
+					const delay = Math.pow(2, attempt) * 500; // Delay más corto
+					console.log(`⏳ Retrying thumbnail upload in ${delay}ms...`);
+					await new Promise((resolve) => setTimeout(resolve, delay));
+				}
+			}
+		}
+
+		return {
+			success: false,
+			error: this.getErrorMessage(lastError),
+		};
+	}
+
+	/**
+	 * Verify authentication with retry
+	 */
+	private static async verifyAuthenticationWithRetry(
+		maxRetries: number = 2,
+	): Promise<void> {
+		for (let attempt = 1; attempt <= maxRetries; attempt++) {
+			try {
+				const {
+					data: { session },
+					error,
+				} = await supabase.auth.getSession();
+
+				if (error) {
+					throw new Error(`Authentication error: ${error.message}`);
+				}
+
+				if (!session || !session.access_token) {
+					throw new Error('No valid session found');
+				}
+
+				// Additional check: verify token is not expired
+				const now = Math.floor(Date.now() / 1000);
+				if (session.expires_at && session.expires_at < now) {
+					throw new Error('Session token expired');
+				}
+
+				return; // Success
+			} catch (error) {
+				if (attempt < maxRetries) {
+					console.warn(
+						`⚠️ Auth verification attempt ${attempt} failed, retrying...`,
+					);
+					// Try to refresh session
+					try {
+						await supabase.auth.refreshSession();
+					} catch (refreshError) {
+						console.warn('Session refresh failed:', refreshError);
+					}
+					await new Promise((resolve) => setTimeout(resolve, 1000));
+				} else {
+					throw error;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Clean up uploaded file
+	 */
+	private static async cleanupFile(
+		bucket: string,
+		fileName: string,
+	): Promise<void> {
+		try {
+			await supabase.storage.from(bucket).remove([fileName]);
+			console.log(`🧹 Cleaned up ${bucket}/${fileName}`);
+		} catch (error) {
+			console.warn(`Failed to cleanup ${bucket}/${fileName}:`, error);
+		}
+	}
+
+	/**
+	 * Clean up temporary file with better detection for react-native-compressor files
+	 */
+	private static async cleanupTempFile(fileUri: string): Promise<void> {
+		try {
+			if (
+				fileUri &&
+				(fileUri.includes('cache') ||
+					fileUri.includes('tmp') ||
+					fileUri.includes('compressed') ||
+					fileUri.includes('Documents'))
+			) {
+				await FileSystem.deleteAsync(fileUri, { idempotent: true });
+				console.log(`🧹 Cleaned up temp file: ${fileUri}`);
+			}
+		} catch (error) {
+			console.warn(`Failed to cleanup temp file ${fileUri}:`, error);
+		}
+	}
+
+	/**
+	 * Enhanced error message handling for compression-specific errors
+	 */
+	private static getErrorMessage(error: any): string {
+		if (typeof error === 'string') return error;
+		if (error instanceof Error) return error.message;
+
+		if (error?.message) {
+			const message = error.message.toLowerCase();
+
+			// Errores de compresión
+			if (message.includes('compression cancelled')) {
+				return 'Video compression was cancelled. Please try again.';
+			}
+			if (message.includes('compression failed')) {
+				return 'Video compression failed. Please try with a different video or check your device storage.';
+			}
+			if (message.includes('format not supported')) {
+				return 'Video format not supported. Please use MP4 format.';
+			}
+
+			// Errores de upload
+			if (message.includes('file too large')) {
+				return 'Video file is too large even after compression. Please try a shorter video.';
+			}
+			if (message.includes('network request failed')) {
+				return 'Network error during upload. Please check your internet connection and try again.';
+			}
+			if (message.includes('row-level security')) {
+				return 'Authentication error. Please log out and log in again.';
+			}
+			if (message.includes('already exists')) {
+				return 'A file with this name already exists. Please try again.';
+			}
+
+			return error.message;
+		}
+
+		return 'Upload failed. Please try again.';
+	}
+
+	/**
+	 * Cancel upload process if in progress
+	 */
+	static async cancelUpload(): Promise<void> {
+		try {
+			const { VideoCompression } = await import('@/services/videoCompression');
+
+			// Cancel all active compressions
+			VideoCompression.cancelAllCompressions();
+
+			// Clean up temp files
+			await VideoCompression.cleanupTempFiles();
+
+			console.log('🛑 Upload process cancelled');
+		} catch (error) {
+			console.warn('Failed to cancel upload:', error);
+		}
+	}
+
+	/**
+	 * Get upload status and active operations
+	 */
+	static async getUploadStatus(): Promise<{
+		hasActiveCompressions: boolean;
+		activeCompressionIds: string[];
+	}> {
+		try {
+			const { VideoCompression } = await import('@/services/videoCompression');
+
+			return {
+				hasActiveCompressions: VideoCompression.hasActiveCompressions(),
+				activeCompressionIds: VideoCompression.getActiveCompressions(),
+			};
+		} catch (error) {
+			console.warn('Failed to get upload status:', error);
+			return {
+				hasActiveCompressions: false,
+				activeCompressionIds: [],
 			};
 		}
 	}
@@ -923,10 +1446,11 @@ export class VideoService {
 
 			// Search for videos that contain this specific hashtag in their hashtags array
 			const page = Math.floor(offset / limit);
-			
+
 			let query = supabase
 				.from('videos')
-				.select(`
+				.select(
+					`
 					*,
 					user:profiles!videos_user_id_fkey (
 						id,
@@ -936,7 +1460,8 @@ export class VideoService {
 						subscription_price,
 						subscription_currency
 					)
-				`)
+				`,
+				)
 				.contains('hashtags', [hashtag])
 				.eq('is_hidden', false)
 				.order('created_at', { ascending: false });
@@ -970,7 +1495,7 @@ export class VideoService {
 			}
 
 			// Get interactions for these videos
-			const videoIds = data.map(v => v.id);
+			const videoIds = data.map((v) => v.id);
 			let interactions: any = {};
 
 			if (videoIds.length > 0) {
@@ -1032,7 +1557,9 @@ export class VideoService {
 				};
 			});
 
-			console.log(`🔍 Found ${processedVideos.length} videos for hashtag "${hashtag}"`);
+			console.log(
+				`🔍 Found ${processedVideos.length} videos for hashtag "${hashtag}"`,
+			);
 
 			// Calculate if there are more results
 			const total = count || 0;
@@ -1050,7 +1577,10 @@ export class VideoService {
 			console.error('❌ Error in getVideosByHashtag:', error);
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Failed to get videos by hashtag',
+				error:
+					error instanceof Error
+						? error.message
+						: 'Failed to get videos by hashtag',
 			};
 		}
 	}
@@ -1093,22 +1623,22 @@ export class VideoService {
 
 			// Delete files from storage (don't fail if this doesn't work)
 			const deletePromises = [];
-			
+
 			if (videoFileName) {
 				deletePromises.push(
-					supabase.storage.from('videos').remove([videoFileName])
+					supabase.storage.from('videos').remove([videoFileName]),
 				);
 			}
-			
+
 			if (thumbnailFileName) {
 				deletePromises.push(
-					supabase.storage.from('thumbnails').remove([thumbnailFileName])
+					supabase.storage.from('thumbnails').remove([thumbnailFileName]),
 				);
 			}
 
 			// Execute deletions in parallel, but don't wait for them to complete
-			Promise.all(deletePromises).catch(error => 
-				console.warn('Failed to delete some storage files:', error)
+			Promise.all(deletePromises).catch((error) =>
+				console.warn('Failed to delete some storage files:', error),
 			);
 
 			return {
@@ -1118,9 +1648,9 @@ export class VideoService {
 		} catch (error) {
 			return {
 				success: false,
-				error: error instanceof Error ? error.message : 'Failed to delete video',
+				error:
+					error instanceof Error ? error.message : 'Failed to delete video',
 			};
 		}
 	}
-
 }

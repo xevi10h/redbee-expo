@@ -157,6 +157,8 @@ export default function VideoScreen() {
 	const renderVideoItem = ({ item, index }: { item: Video; index: number }) => {
 		if (!user) return null;
 
+		console.log('Rendering video:', item, 'at index:', index);
+
 		return (
 			<VideoPlayer
 				video={item}

@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { VideoMetadata } from './VideoMetadata';
 import { VideoTrimmer } from './VideoTrimmer';
-import { useTranslation } from '@/hooks/useTranslation';
 
 interface VideoEditorProps {
 	videoUri: string;
@@ -33,8 +32,6 @@ export function VideoEditor({
 	compressionProgress = 0,
 	uploadStage = 'idle',
 }: VideoEditorProps) {
-	const { t } = useTranslation();
-	
 	// State for the two-step process
 	const [step, setStep] = useState<'trim' | 'metadata'>('trim');
 	const [startTime, setStartTime] = useState(0);
@@ -52,7 +49,6 @@ export function VideoEditor({
 		setStartTime(start);
 		setEndTime(end);
 	};
-
 
 	const handleMetadataBack = () => {
 		setStep('trim');
