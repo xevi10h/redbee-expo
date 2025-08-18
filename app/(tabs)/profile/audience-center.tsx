@@ -17,16 +17,17 @@ import { useRequireAuth } from '@/hooks/useAuth';
 import { AudienceAnalyticsService } from '@/services/audienceAnalyticsService';
 import type { AudienceAnalyticsData } from '@/shared/types';
 
-import { AudienceSummaryCards } from '@/components/audience/AudienceSummaryCards';
 import { AudienceEngagementChart } from '@/components/audience/AudienceEngagementChart';
 import { AudienceGeographicChart } from '@/components/audience/AudienceGeographicChart';
 import { AudienceHourlyChart } from '@/components/audience/AudienceHourlyChart';
+import { AudienceSummaryCards } from '@/components/audience/AudienceSummaryCards';
 import { AudienceVideoPerformance } from '@/components/audience/AudienceVideoPerformance';
 
 export default function AudienceCenterScreen() {
 	const router = useRouter();
 	const { user } = useRequireAuth();
-	const [analyticsData, setAnalyticsData] = useState<AudienceAnalyticsData | null>(null);
+	const [analyticsData, setAnalyticsData] =
+		useState<AudienceAnalyticsData | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -44,10 +45,11 @@ export default function AudienceCenterScreen() {
 				}
 				setError(null);
 
-				const response = await AudienceAnalyticsService.getUserAudienceAnalytics(
-					user.id,
-					selectedPeriod
-				);
+				const response =
+					await AudienceAnalyticsService.getUserAudienceAnalytics(
+						user.id,
+						selectedPeriod,
+					);
 
 				if (response.success && response.data) {
 					setAnalyticsData(response.data);
@@ -62,7 +64,7 @@ export default function AudienceCenterScreen() {
 				setIsRefreshing(false);
 			}
 		},
-		[user?.id, selectedPeriod]
+		[user?.id, selectedPeriod],
 	);
 
 	useEffect(() => {
@@ -99,7 +101,8 @@ export default function AudienceCenterScreen() {
 						<Text
 							style={[
 								styles.periodButtonText,
-								selectedPeriod === period.value && styles.activePeriodButtonText,
+								selectedPeriod === period.value &&
+									styles.activePeriodButtonText,
 							]}
 						>
 							{period.label}
@@ -115,10 +118,15 @@ export default function AudienceCenterScreen() {
 			<SafeAreaView style={styles.container}>
 				<StatusBar style="light" />
 				<View style={styles.header}>
-					<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+					<TouchableOpacity
+						onPress={() => router.back()}
+						style={styles.backButton}
+					>
 						<Feather name="arrow-left" size={24} color={Colors.text} />
 					</TouchableOpacity>
-					<Text style={styles.headerTitle}>Cargando centro de audiencia...</Text>
+					<Text style={styles.headerTitle}>
+						Cargando centro de audiencia...
+					</Text>
 				</View>
 				<View style={styles.loadingContainer}>
 					<Feather name="bar-chart-2" size={48} color={Colors.primary} />
@@ -133,7 +141,10 @@ export default function AudienceCenterScreen() {
 			<SafeAreaView style={styles.container}>
 				<StatusBar style="light" />
 				<View style={styles.header}>
-					<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+					<TouchableOpacity
+						onPress={() => router.back()}
+						style={styles.backButton}
+					>
 						<Feather name="arrow-left" size={24} color={Colors.text} />
 					</TouchableOpacity>
 					<Text style={styles.headerTitle}>Error</Text>
@@ -165,7 +176,10 @@ export default function AudienceCenterScreen() {
 
 			{/* Header */}
 			<View style={styles.header}>
-				<TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+				<TouchableOpacity
+					onPress={() => router.back()}
+					style={styles.backButton}
+				>
 					<Feather name="arrow-left" size={24} color={Colors.text} />
 				</TouchableOpacity>
 				<View style={styles.headerContent}>

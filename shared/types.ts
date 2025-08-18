@@ -485,3 +485,12 @@ export interface AudienceAnalyticsData {
 	hourly_patterns: AudienceHourlyPattern[];
 	video_performance: AudienceVideoPerformance[];
 }
+
+export interface AuthResponse<T = any> {
+	success: boolean;
+	data?: T;
+	error?: string;
+}
+
+// ✅ Agregar ApiResponse como alias de AuthResponse
+export type ApiResponse<T = any> = AuthResponse<T>;

@@ -457,7 +457,7 @@ export class NotificationService {
 				// Single notification
 				return {
 					id: group[0].id,
-					type: 'single',
+					type: 'single' as const,
 					notification: group[0],
 					notifications: group,
 					count: 1,
@@ -471,7 +471,7 @@ export class NotificationService {
 				
 				return {
 					id: `group_${firstNotification.type}_${firstNotification.entity_id}`,
-					type: 'group',
+					type: 'group' as const,
 					notification: firstNotification,
 					notifications: group,
 					count: group.length,

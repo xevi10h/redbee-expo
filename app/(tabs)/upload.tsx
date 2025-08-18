@@ -284,7 +284,46 @@ export default function UploadScreen() {
 		hashtags: string[];
 		isPremium: boolean;
 	}) => {
-		if (!selectedVideo || !user) return;
+		if (!selectedVideo || !user) {
+			Alert.alert('Error', 'No hay usuario autenticado o video seleccionado', [
+				{ text: 'OK' }
+			]);
+			return;
+		}
+
+		// Verificar que el usuario esté autenticado antes de proceder
+		try {
+			const { refreshSession } = useAuthStore.getState();
+			await refreshSession();
+			
+			const currentUser = useAuthStore.getState().user;
+			if (!currentUser || !useAuthStore.getState().isAuthenticated) {
+				Alert.alert(
+					'Sesión expirada', 
+					'Tu sesión ha expirado. Por favor, inicia sesión de nuevo.',
+					[
+						{ 
+							text: 'Iniciar sesión', 
+							onPress: () => router.push('/auth/sign-in')
+						}
+					]
+				);
+				return;
+			}
+		} catch (authError) {
+			console.error('❌ Authentication check failed:', authError);
+			Alert.alert(
+				'Error de autenticación', 
+				'No se pudo verificar tu sesión. Por favor, inicia sesión de nuevo.',
+				[
+					{ 
+						text: 'Iniciar sesión', 
+						onPress: () => router.push('/auth/sign-in')
+					}
+				]
+			);
+			return;
+		}
 
 		// AQUÍ ES DONDE DEBE EMPEZAR "Cargando... X%"
 		console.log('🚀 User clicked "Siguiente", starting upload process...');

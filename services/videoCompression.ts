@@ -1,6 +1,4 @@
-import { Video } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
 
 export interface CompressionOptions {
 	quality?: 'low' | 'medium' | 'high';
@@ -39,6 +37,10 @@ class VideoCompressionService {
 
 			// Get original file info
 			const originalFileInfo = await FileSystem.getInfoAsync(videoUri);
+			if (!originalFileInfo.exists) {
+				throw new Error('Video file does not exist');
+			}
+			
 			const originalSize = originalFileInfo.size || 0;
 			const originalSizeMB = originalSize / (1024 * 1024);
 

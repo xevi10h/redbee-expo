@@ -1,15 +1,15 @@
 import { supabase } from '@/lib/supabase';
-import { ApiResponse } from '@/shared/types';
 import type {
-	VideoAnalyticsData,
-	VideoAnalyticsSummary,
-	VideoHourlyData,
-	VideoView,
-	VideoShare,
-	VideoAnalyticsInteraction,
 	ReportsByReason,
+	VideoAnalyticsData,
+	VideoAnalyticsInteraction,
+	VideoAnalyticsSummary,
 	VideoDailyMetrics,
+	VideoHourlyData,
+	VideoShare,
+	VideoView,
 } from '@/shared/types';
+import { ApiResponse } from '@/shared/types';
 
 /**
  * AnalyticsService - Servicio para gestionar analíticas de videos
@@ -131,7 +131,10 @@ export class AnalyticsService {
 			// Obtener resumen general (desde siempre si daysBack es null)
 			const summaryResponse = await this.getVideoSummary(videoId, daysBack);
 			if (!summaryResponse.success) {
-				return summaryResponse;
+				return { 
+					success: false, 
+					error: summaryResponse.error || 'Failed to load video summary'
+				};
 			}
 
 			// Obtener datos por horas (desde siempre si daysBack es null)
@@ -294,8 +297,8 @@ export class AnalyticsService {
 				}, {} as Record<string, number>);
 
 			const topCountries = Object.entries(countryCounts)
-				.map(([country, views]) => ({ country, views }))
-				.sort((a, b) => b.views - a.views)
+				.map(([country, count]) => ({ country, count }))
+				.sort((a, b) => b.count - a.count)
 				.slice(0, 10);
 
 			const summary: VideoAnalyticsSummary = {
@@ -448,27 +451,43 @@ export class AnalyticsService {
 		limit: number = 50
 	): Promise<ApiResponse<VideoAnalyticsInteraction[]>> {
 		try {
-			const { data, error } = await supabase
+			// 1. Obtener likes
+			const { data: likes, error: likesError } = await supabase
 				.from('likes')
-				.select(`
-					id,
-					created_at,
-					profiles!likes_user_id_fkey(id, username, display_name, avatar_url)
-				`)
+				.select('id, user_id, created_at')
 				.eq('video_id', videoId)
 				.order('created_at', { ascending: false })
 				.limit(limit);
-
-			if (error) {
-				return { success: false, error: error.message };
+	
+			if (likesError) {
+				return { success: false, error: likesError.message };
 			}
-
-			const formattedLikes = data?.map(like => ({
-				id: like.id,
-				user: like.profiles,
-				created_at: like.created_at,
-			})) || [];
-
+	
+			if (!likes || likes.length === 0) {
+				return { success: true, data: [] };
+			}
+	
+			// 2. Obtener información de usuarios
+			const userIds = [...new Set(likes.map(like => like.user_id))];
+			const { data: users, error: usersError } = await supabase
+				.from('profiles')
+				.select('id, username, display_name, avatar_url')
+				.in('id', userIds);
+	
+			if (usersError) {
+				return { success: false, error: usersError.message };
+			}
+	
+			// 3. Combinar datos
+			const formattedLikes = likes.map(like => {
+				const user = users?.find(u => u.id === like.user_id);
+				return {
+					id: like.id,
+					user: user as any,
+					created_at: like.created_at,
+				};
+			}).filter(like => like.user !== null);
+	
 			return { success: true, data: formattedLikes };
 		} catch (error) {
 			console.error('Exception in getRecentLikes:', error);
@@ -484,29 +503,44 @@ export class AnalyticsService {
 		limit: number = 50
 	): Promise<ApiResponse<VideoAnalyticsInteraction[]>> {
 		try {
-			const { data, error } = await supabase
+			// 1. Obtener comentarios
+			const { data: comments, error: commentsError } = await supabase
 				.from('comments')
-				.select(`
-					id,
-					text,
-					created_at,
-					profiles!comments_user_id_fkey(id, username, display_name, avatar_url)
-				`)
+				.select('id, user_id, text, created_at')
 				.eq('video_id', videoId)
 				.order('created_at', { ascending: false })
 				.limit(limit);
-
-			if (error) {
-				return { success: false, error: error.message };
+	
+			if (commentsError) {
+				return { success: false, error: commentsError.message };
 			}
-
-			const formattedComments = data?.map(comment => ({
-				id: comment.id,
-				user: comment.profiles,
-				text: comment.text,
-				created_at: comment.created_at,
-			})) || [];
-
+	
+			if (!comments || comments.length === 0) {
+				return { success: true, data: [] };
+			}
+	
+			// 2. Obtener información de usuarios
+			const userIds = [...new Set(comments.map(comment => comment.user_id))];
+			const { data: users, error: usersError } = await supabase
+				.from('profiles')
+				.select('id, username, display_name, avatar_url')
+				.in('id', userIds);
+	
+			if (usersError) {
+				return { success: false, error: usersError.message };
+			}
+	
+			// 3. Combinar datos
+			const formattedComments = comments.map(comment => {
+				const user = users?.find(u => u.id === comment.user_id);
+				return {
+					id: comment.id,
+					user: user as any,
+					text: comment.text,
+					created_at: comment.created_at,
+				};
+			}).filter(comment => comment.user !== null);
+	
 			return { success: true, data: formattedComments };
 		} catch (error) {
 			console.error('Exception in getRecentComments:', error);
@@ -594,23 +628,25 @@ export class AnalyticsService {
 				.select(`
 					id,
 					created_at,
-					profiles!likes_user_id_fkey(id, username, display_name, avatar_url)
+					user_id,
+					profiles:user_id(id, username, display_name, avatar_url)
 				`)
 				.eq('video_id', videoId)
+				.not('profiles', 'is', null)
 				.ilike('profiles.username', `%${username}%`)
 				.order('created_at', { ascending: false })
 				.limit(limit);
-
+	
 			if (error) {
 				return { success: false, error: error.message };
 			}
-
+	
 			const formattedLikes = data?.map(like => ({
 				id: like.id,
-				user: like.profiles,
+				user: like.profiles as any,
 				created_at: like.created_at,
 			})).filter(like => like.user !== null) || [];
-
+	
 			return { success: true, data: formattedLikes };
 		} catch (error) {
 			console.error('Exception in searchLikesByUsername:', error);
@@ -627,30 +663,43 @@ export class AnalyticsService {
 		limit: number = 20
 	): Promise<ApiResponse<VideoAnalyticsInteraction[]>> {
 		try {
-			const { data, error } = await supabase
+			// 1. Buscar usuarios que coincidan
+			const { data: users, error: usersError } = await supabase
+				.from('profiles')
+				.select('id, username, display_name, avatar_url')
+				.ilike('username', `%${username}%`)
+				.limit(50);
+	
+			if (usersError || !users || users.length === 0) {
+				return { success: true, data: [] };
+			}
+	
+			const userIds = users.map(u => u.id);
+	
+			// 2. Buscar comentarios de esos usuarios
+			const { data: comments, error: commentsError } = await supabase
 				.from('comments')
-				.select(`
-					id,
-					text,
-					created_at,
-					profiles!comments_user_id_fkey(id, username, display_name, avatar_url)
-				`)
+				.select('id, user_id, text, created_at')
 				.eq('video_id', videoId)
-				.ilike('profiles.username', `%${username}%`)
+				.in('user_id', userIds)
 				.order('created_at', { ascending: false })
 				.limit(limit);
-
-			if (error) {
-				return { success: false, error: error.message };
+	
+			if (commentsError) {
+				return { success: false, error: commentsError.message };
 			}
-
-			const formattedComments = data?.map(comment => ({
-				id: comment.id,
-				user: comment.profiles,
-				text: comment.text,
-				created_at: comment.created_at,
-			})).filter(comment => comment.user !== null) || [];
-
+	
+			// 3. Combinar datos
+			const formattedComments = comments?.map(comment => {
+				const user = users.find(u => u.id === comment.user_id);
+				return {
+					id: comment.id,
+					user: user as any,
+					text: comment.text,
+					created_at: comment.created_at,
+				};
+			}).filter(comment => comment.user !== null) || [];
+	
 			return { success: true, data: formattedComments };
 		} catch (error) {
 			console.error('Exception in searchCommentsByUsername:', error);

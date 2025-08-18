@@ -190,6 +190,13 @@ export class SearchService {
 					},
 				};
 			}
+			
+			if (!viewerId) {
+				return {
+					success: false,
+					error: 'Viewer ID is required to search users',
+				};
+			}
 
 			// Search for videos containing this hashtag using the specific hashtag method
 			const { VideoService } = await import('./videoService');

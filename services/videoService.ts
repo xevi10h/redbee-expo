@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { AuthResponse, Video } from '@/shared/types';
-import { getThumbnailAsync } from 'expo-video-thumbnails';
 import * as FileSystem from 'expo-file-system';
+import { getThumbnailAsync } from 'expo-video-thumbnails';
 
 export interface VideoFilters {
 	feed_type?: 'forYou' | 'following';
@@ -678,6 +678,21 @@ export class VideoService {
 			console.log('📱 Starting video upload process...');
 			onProgress?.(5); // Starting
 			
+			// Verify authentication first
+			const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+			if (sessionError || !session || !session.access_token) {
+				console.error('❌ Authentication error:', sessionError);
+				throw new Error('User not authenticated. Please log in again.');
+			}
+			
+			console.log('✅ User authenticated, proceeding with upload...');
+			console.log('🔑 User ID:', session.user.id);
+			
+			// Verify user ID matches
+			if (session.user.id !== userId) {
+				throw new Error('User ID mismatch. Please log in again.');
+			}
+			
 			// Generate thumbnail first
 			const thumbTime = thumbnailTime !== undefined && thumbnailTime >= 0 ? thumbnailTime : 1;
 			try {
@@ -703,6 +718,8 @@ export class VideoService {
 						thumbnailUrl = thumbUrlData.publicUrl;
 						console.log('✅ Thumbnail uploaded successfully');
 						onProgress?.(15); // Thumbnail complete
+					} else {
+						console.warn('⚠️ Thumbnail upload failed:', thumbnailUploadError.message);
 					}
 				}
 			} catch (thumbnailError) {
@@ -715,167 +732,39 @@ export class VideoService {
 			
 			// Get file info for debugging
 			const videoFileInfo = await FileSystem.getInfoAsync(videoUri);
-			console.log('Video file info:', {
-				exists: videoFileInfo.exists,
-				size: videoFileInfo.size ? `${Math.round(videoFileInfo.size / 1024 / 1024 * 100) / 100}MB` : 'Unknown',
-				uri: videoUri,
-			});
 			
 			if (!videoFileInfo.exists) {
 				throw new Error('Video file not found at URI');
 			}
-			
-			// Get auth session for upload
-			const { data: { session } } = await supabase.auth.getSession();
-			const authToken = session?.access_token;
-			
-			if (!authToken) {
-				throw new Error('No authentication token found');
-			}
 
-			const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-			const uploadUrl = `${supabaseUrl}/storage/v1/object/videos/${videoFileName}`;
-			console.log('Upload URL:', uploadUrl);
+			// Upload video directly using Supabase client
+			console.log('📤 Uploading video to Supabase...');
+			onProgress?.(30); // Starting upload
 			
-			// Simple upload approach - back to basics
-			let uploadSuccessful = false;
+			const { data: uploadData, error: uploadError } = await supabase.storage
+				.from('videos')
+				.upload(videoFileName, {
+					uri: videoUri,
+					type: 'video/mp4',
+					name: videoFileName,
+				} as any);
 			
-			console.log('Testing Supabase connection first...');
-			onProgress?.(30); // Testing connection
-			try {
-				// Test basic Supabase connection
-				const { data: testData, error: testError } = await supabase.storage
-					.from('videos')
-					.list('', { limit: 1 });
-				
-				if (testError) {
-					console.log('❌ Supabase connection test failed:', testError.message);
-					throw new Error(`Supabase connection issue: ${testError.message}`);
-				}
-				console.log('✅ Supabase connection OK');
-				onProgress?.(40); // Connection OK
-			} catch (connectionError) {
-				console.log('❌ Connection test failed:', connectionError);
-				throw new Error('Cannot connect to Supabase');
-			}
-			
-			// Try the simplest approach first - copy file to temp location and upload
-			console.log('Trying simple file copy and upload...');
-			try {
-				// Copy file to a clean temp location
-				const tempDir = FileSystem.documentDirectory + 'temp/';
-				const tempFilePath = tempDir + videoFileName;
-				
-				// Ensure temp directory exists
-				await FileSystem.makeDirectoryAsync(tempDir, { intermediates: true });
-				
-				// Copy the video file
-				await FileSystem.copyAsync({
-					from: videoUri,
-					to: tempFilePath,
-				});
-				
-				console.log('File copied to temp location:', tempFilePath);
-				onProgress?.(60); // File copied
-				
-				// Verify the copied file
-				const tempFileInfo = await FileSystem.getInfoAsync(tempFilePath);
-				console.log('Temp file info:', {
-					exists: tempFileInfo.exists,
-					size: tempFileInfo.size ? `${Math.round(tempFileInfo.size / 1024 / 1024 * 100) / 100}MB` : 'Unknown',
-				});
-				
-				if (!tempFileInfo.exists) {
-					throw new Error('Failed to copy file to temp location');
-				}
-				
-				// Now upload from the clean temp location
-				const { data: uploadData, error: uploadError } = await supabase.storage
-					.from('videos')
-					.upload(videoFileName, {
-						uri: tempFilePath,
-						type: 'video/mp4',
-						name: videoFileName,
-					} as any);
-				
-				// Clean up temp file
-				try {
-					await FileSystem.deleteAsync(tempFilePath);
-					await FileSystem.deleteAsync(tempDir);
-				} catch (cleanupError) {
-					console.log('Warning: Could not clean up temp files:', cleanupError);
-				}
-				
-				if (uploadError) {
-					console.log('❌ Upload failed:', uploadError.message);
-					throw new Error(uploadError.message);
-				}
-				
-				console.log('✅ Upload successful!', uploadData);
-				onProgress?.(80); // Upload complete
-				uploadSuccessful = true;
-				
-			} catch (tempUploadError) {
-				console.log('❌ Temp file upload failed:', tempUploadError.message);
-			}
-			
-			// If temp approach failed, try direct upload with better error handling
-			if (!uploadSuccessful) {
-				console.log('Trying direct upload with detailed diagnostics...');
-				try {
-					// Check if URI is accessible
-					const uriInfo = await FileSystem.getInfoAsync(videoUri);
-					if (!uriInfo.exists) {
-						throw new Error('Source video file does not exist');
-					}
-					
-					console.log('Attempting direct Supabase upload...');
-					const { data: directUpload, error: directError } = await supabase.storage
-						.from('videos')
-						.upload(videoFileName, {
-							uri: videoUri,
-							type: 'video/mp4',
-							name: videoFileName,
-						} as any);
-					
-					if (directError) {
-						console.log('❌ Direct upload failed:', {
-							message: directError.message,
-							statusCode: directError.statusCode,
-							error: directError.error,
-						});
-						throw new Error(`Direct upload failed: ${directError.message}`);
-					}
-					
-					console.log('✅ Direct upload successful!');
-					uploadSuccessful = true;
-					
-				} catch (directUploadError) {
-					console.log('❌ Direct upload error:', directUploadError.message);
-				}
-			}
-			
-			// If both methods failed
-			if (!uploadSuccessful) {
-				console.error('❌ All upload methods failed');
+			if (uploadError) {
+				console.error('❌ Video upload failed:', uploadError);
 				// Clean up thumbnail if it was uploaded
 				if (thumbnailUrl) {
 					await supabase.storage.from('thumbnails').remove([thumbnailFileName]);
 				}
 				
-				const fileSizeMB = videoFileInfo.size ? Math.round(videoFileInfo.size / 1024 / 1024 * 100) / 100 : 0;
-				
-				// Provide specific error messages based on common scenarios
-				if (fileSizeMB > 50) {
-					return {
-						success: false,
-						error: `Video file is large (${fileSizeMB}MB). Large files may fail on iOS Simulator. Try testing on a physical device or use a smaller video file.`,
-					};
+				// Provide more specific error messages
+				if (uploadError.message.includes('row-level security policy')) {
+					throw new Error('Authentication error. Please log out and log in again.');
+				} else if (uploadError.message.includes('file too large')) {
+					throw new Error('Video file is too large. Maximum size is 100MB.');
+				} else if (uploadError.message.includes('Network request failed')) {
+					throw new Error('Network error. Check your internet connection and try again.');
 				} else {
-					return {
-						success: false,
-						error: `Video upload failed. This often happens on iOS Simulator with video files. Please try:\n\n1. Test on a physical device\n2. Use a smaller video file\n3. Record a new video directly in the app`,
-					};
+					throw new Error(`Upload failed: ${uploadError.message}`);
 				}
 			}
 

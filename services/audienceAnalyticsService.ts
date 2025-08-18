@@ -1,13 +1,14 @@
 import { supabase } from '@/lib/supabase';
-import { ApiResponse } from '@/shared/types';
 import type {
 	AudienceAnalyticsData,
-	AudienceMetricsSummary,
-	AudienceVideoPerformance,
 	AudienceEngagementTrends,
 	AudienceGeographicData,
 	AudienceHourlyPattern,
+	AudienceMetricsSummary,
+	AudienceVideoPerformance,
+	AuthResponse,
 } from '@/shared/types';
+import { ApiResponse } from '@/shared/types';
 
 /**
  * AudienceAnalyticsService - Servicio para analíticas agregadas de audiencia
@@ -26,7 +27,7 @@ export class AudienceAnalyticsService {
 	static async getUserAudienceAnalytics(
 		userId: string,
 		daysBack: number = 30
-	): Promise<ApiResponse<AudienceAnalyticsData>> {
+	):Promise<AuthResponse<AudienceAnalyticsData>> {
 		try {
 			// Verificar que el usuario esté autenticado y sea el propietario
 			const { data: { user } } = await supabase.auth.getUser();
@@ -50,7 +51,18 @@ export class AudienceAnalyticsService {
 			]);
 
 			if (!summaryResponse.success) {
-				return summaryResponse;
+				return { 
+					success: false, 
+					error: summaryResponse.error || 'Failed to load audience summary'
+				};
+			}
+	
+			// ✅ Verificar que tenemos los datos necesarios
+			if (!summaryResponse.data) {
+				return { 
+					success: false, 
+					error: 'No summary data available'
+				};
 			}
 
 			const audienceData: AudienceAnalyticsData = {
@@ -163,7 +175,7 @@ export class AudienceAnalyticsService {
 				// Stats de videos para obtener views totales actuales
 				supabase
 					.from('videos')
-					.select('views_count, likes_count, title, created_at')
+					.select('id, views_count, likes_count, title, created_at')
 					.eq('user_id', userId)
 					.order('views_count', { ascending: false }),
 			]);
