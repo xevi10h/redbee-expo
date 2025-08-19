@@ -17,12 +17,12 @@ import { HashtagInput } from '@/components/ui/HashtagInput';
 import { Input } from '@/components/ui/Input';
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useAuthStore } from '@/stores/authStore';
 import { ThumbnailSelector } from './ThumbnailSelector';
 
 interface VideoMetadataProps {
 	videoUri: string;
-	startTime: number;
-	endTime: number;
+	duration: number;
 	onSave: (data: {
 		title: string;
 		description: string;
@@ -38,8 +38,7 @@ interface VideoMetadataProps {
 
 export function VideoMetadata({
 	videoUri,
-	startTime,
-	endTime,
+	duration,
 	onSave,
 	onBack,
 	onCancelUpload,
@@ -47,13 +46,16 @@ export function VideoMetadata({
 	uploadProgress = 0,
 }: VideoMetadataProps) {
 	const { t } = useTranslation();
+	const has_premium_content = useAuthStore(
+		(state) => state.user?.has_premium_content,
+	);
 
 	// Form state
 	const [title, setTitle] = useState('');
 	const [description, setDescription] = useState('');
 	const [hashtags, setHashtags] = useState<string[]>([]);
 	const [isPremium, setIsPremium] = useState(false);
-	const [thumbnailTime, setThumbnailTime] = useState(startTime);
+	const [thumbnailTime, setThumbnailTime] = useState(0);
 	const [showThumbnailSelector, setShowThumbnailSelector] = useState(false);
 
 	// Video player for preview - show thumbnail frame
@@ -101,7 +103,7 @@ export function VideoMetadata({
 				<TouchableOpacity onPress={onBack} disabled={isUploading}>
 					<Feather name="arrow-left" size={24} color={Colors.text} />
 				</TouchableOpacity>
-				<Text style={styles.title}>Compartir</Text>
+				<Text style={styles.title}>{t('common.share')}</Text>
 				<View style={{ width: 24 }} />
 			</View>
 
@@ -123,9 +125,7 @@ export function VideoMetadata({
 							allowsPictureInPicture={false}
 						/>
 						<View style={styles.videoOverlay}>
-							<Text style={styles.videoDuration}>
-								{formatTime(endTime - startTime)}
-							</Text>
+							<Text style={styles.videoDuration}>{formatTime(duration)}</Text>
 						</View>
 						<View style={styles.editOverlay}>
 							<View style={styles.editIcon}>
@@ -178,28 +178,32 @@ export function VideoMetadata({
 					/>
 
 					{/* Premium Toggle */}
-					<View style={styles.premiumContainer}>
-						<View style={styles.premiumInfo}>
-							<Text style={styles.premiumTitle}>{t('upload.makePremium')}</Text>
-							<Text style={styles.premiumDescription}>
-								{isPremium
-									? t('upload.premiumDescription')
-									: t('upload.publicDescription')}
-							</Text>
+					{has_premium_content && (
+						<View style={styles.premiumContainer}>
+							<View style={styles.premiumInfo}>
+								<Text style={styles.premiumTitle}>
+									{t('upload.makePremium')}
+								</Text>
+								<Text style={styles.premiumDescription}>
+									{isPremium
+										? t('upload.premiumDescription')
+										: t('upload.publicDescription')}
+								</Text>
+							</View>
+							<TouchableOpacity
+								style={[styles.toggle, isPremium && styles.toggleActive]}
+								onPress={() => setIsPremium(!isPremium)}
+								disabled={isUploading}
+							>
+								<View
+									style={[
+										styles.toggleThumb,
+										isPremium && styles.toggleThumbActive,
+									]}
+								/>
+							</TouchableOpacity>
 						</View>
-						<TouchableOpacity
-							style={[styles.toggle, isPremium && styles.toggleActive]}
-							onPress={() => setIsPremium(!isPremium)}
-							disabled={isUploading}
-						>
-							<View
-								style={[
-									styles.toggleThumb,
-									isPremium && styles.toggleThumbActive,
-								]}
-							/>
-						</TouchableOpacity>
-					</View>
+					)}
 				</View>
 
 				{/* Action Buttons */}
@@ -234,7 +238,7 @@ export function VideoMetadata({
 							showPercentage={true}
 						/>
 
-						<Text style={styles.uploadText}>Subiendo video...</Text>
+						<Text style={styles.uploadText}>{t('upload.uploadingVideo')}</Text>
 
 						<Text style={styles.uploadSubtext}>
 							{uploadProgress < 90
@@ -292,8 +296,8 @@ export function VideoMetadata({
 			<ThumbnailSelector
 				visible={showThumbnailSelector}
 				videoUri={videoUri}
-				startTime={startTime}
-				endTime={endTime}
+				startTime={0}
+				endTime={duration}
 				selectedTime={thumbnailTime}
 				onSelect={handleThumbnailSelect}
 				onClose={() => setShowThumbnailSelector(false)}

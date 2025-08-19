@@ -2,10 +2,10 @@ import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
 	Alert,
-	Platform,
+	EventSubscription,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CircularProgress } from '@/components/ui/CircularProgress';
 import { Spinner } from '@/components/ui/Spinner';
-import { VideoEditor } from '@/components/video';
+import { VideoMetadata } from '@/components/video';
 import { Colors } from '@/constants/Colors';
 import { useRequireAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -24,6 +24,10 @@ import { useUploadState } from '@/hooks/useUploadState';
 import { VideoService } from '@/services/videoService';
 import { useAuthStore } from '@/stores/authStore';
 import { router } from 'expo-router';
+import NativeVideoTrim, {
+	isValidFile,
+	showEditor,
+} from 'react-native-video-trim';
 
 interface VideoData {
 	uri: string;
@@ -37,7 +41,6 @@ export default function UploadScreen() {
 	const { setSelecting, setUploading, setEditing } = useUploadState();
 
 	const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
-	const [showEditor, setShowEditor] = useState(false);
 	const [isUploading, setIsUploading] = useState(false);
 	const [isSelectingVideo, setIsSelectingVideo] = useState(false);
 	const [isLoadingVideo, setIsLoadingVideo] = useState(false);
@@ -47,6 +50,35 @@ export default function UploadScreen() {
 	const [loadingInterval, setLoadingInterval] = useState<
 		number | NodeJS.Timeout | null
 	>(null);
+
+	const listenerSubscription = useRef<Record<string, EventSubscription>>({});
+
+	useEffect(() => {
+		listenerSubscription.current.onCancel = NativeVideoTrim.onCancel(() => {
+			setSelectedVideo(null);
+			setIsLoadingVideo(false);
+			setLoadingProgress(0);
+			setIsSelectingVideo(false);
+			setSelecting(false);
+			setIsUploading(false);
+			setUploading(false);
+			isCancelingRef.current = false;
+			cleanupInterval();
+		});
+
+		listenerSubscription.current.onFinishTrimming =
+			NativeVideoTrim.onFinishTrimming(({ outputPath, startTime, endTime }) => {
+				setSelectedVideo({
+					uri: outputPath,
+					duration: (endTime - startTime) / 1000,
+				});
+			});
+
+		return () => {
+			listenerSubscription.current.onCancel?.remove();
+			listenerSubscription.current.onFinishTrimming?.remove();
+		};
+	});
 
 	const cleanupInterval = () => {
 		if (loadingInterval) {
@@ -95,13 +127,7 @@ export default function UploadScreen() {
 			// Launch gallery picker
 			const result = await ImagePicker.launchImageLibraryAsync({
 				mediaTypes: ['videos'],
-				allowsEditing: false,
-				quality: 1.0,
-				videoMaxDuration: 300,
-				...(Platform.OS === 'ios' && {
-					videoExportPreset: ImagePicker.VideoExportPreset.HighestQuality,
-					allowsMultipleSelection: false,
-				}),
+				videoMaxDuration: 300, // 5 minutes max
 			});
 
 			if (!result.canceled && result.assets[0]) {
@@ -157,14 +183,23 @@ export default function UploadScreen() {
 					return;
 				}
 
+				try {
+					// Open the video editor and handle the export as well as any occuring errors.
+					isValidFile(result.assets![0]?.uri || '').then((res) =>
+						console.log(res),
+					);
+
+					showEditor(result.assets![0]?.uri || '', {
+						minDuration: 15,
+						maxDuration: 300,
+					});
+				} catch (error) {
+					// There was an error generating the video.
+					console.log(error);
+				}
+
 				// Video seleccionado correctamente, ahora mostrar carga
 				console.log('✅ Video selected by user, starting loading phase...');
-
-				// FASE 2: CARGANDO - Terminar selección y empezar carga
-				setIsSelectingVideo(false);
-				setSelecting(false);
-				setIsLoadingVideo(true);
-				setLoadingProgress(0);
 
 				console.log(
 					'🔄 FASE 2: Transitioned to loading state, UI should update now',
@@ -178,38 +213,6 @@ export default function UploadScreen() {
 				setSelectedVideo(videoData);
 
 				// Usar setTimeout para hacer la simulación asíncrona y no bloquear la UI
-				setTimeout(() => {
-					console.log('📱 Starting video loading simulation...');
-
-					// Simular progreso de carga del video
-					let progress = 0;
-					const interval = setInterval(() => {
-						progress += Math.random() * 8 + 3; // 3-11% incrementos más pequeños
-
-						// Actualizar progreso en la UI
-						setLoadingProgress(Math.min(progress, 100));
-						console.log(
-							`📊 Video loading: ${Math.round(Math.min(progress, 100))}%`,
-						);
-
-						if (progress >= 100) {
-							clearInterval(interval);
-							setLoadingInterval(null);
-
-							// Una vez completada la carga, abrir el editor después de un breve delay
-							setTimeout(() => {
-								console.log('✅ Video loading completed, opening editor...');
-								setIsLoadingVideo(false);
-								setLoadingProgress(0);
-								setShowEditor(true);
-								setEditing(true);
-							}, 200);
-						}
-					}, 200); // Cada 200ms para más fluidez
-
-					// Guardar referencia del intervalo para poder limpiarlo si es necesario
-					setLoadingInterval(interval);
-				}, 50); // Delay mínimo para permitir que la UI se actualice primero
 			} else {
 				// Usuario canceló la selección
 				console.log('❌ User canceled video selection');
@@ -271,8 +274,6 @@ export default function UploadScreen() {
 	};
 
 	const handleVideoEditorSave = async (data: {
-		startTime: number;
-		endTime: number;
 		thumbnailTime: number;
 		title: string;
 		description: string;
@@ -316,8 +317,6 @@ export default function UploadScreen() {
 				hashtags: data.hashtags,
 				isPremium: data.isPremium,
 				userId: user.id,
-				startTime: data.startTime,
-				endTime: data.endTime,
 				thumbnailTime: data.thumbnailTime,
 				onProgress: (progress) => {
 					setUploadProgress(progress);
@@ -358,7 +357,7 @@ export default function UploadScreen() {
 							onPress: () => {
 								// Limpiar TODOS los estados para que las tabs vuelvan a aparecer
 								setSelectedVideo(null);
-								setShowEditor(false);
+
 								setEditing(false);
 								setUploading(false);
 								setIsUploading(false);
@@ -368,7 +367,7 @@ export default function UploadScreen() {
 								setIsSelectingVideo(false);
 								setSelecting(false);
 								isCancelingRef.current = false;
-								
+
 								// Navegar al perfil
 								router.push('/(tabs)/profile');
 							},
@@ -383,7 +382,10 @@ export default function UploadScreen() {
 				if (!isCancelingRef.current && !errorMsg.includes('cancelled')) {
 					Alert.alert(t('common.error'), errorMsg, [{ text: t('common.ok') }]);
 				} else {
-					console.log('🛑 Upload failed but canceling - suppressing error alert:', errorMsg);
+					console.log(
+						'🛑 Upload failed but canceling - suppressing error alert:',
+						errorMsg,
+					);
 				}
 			}
 		} catch (error) {
@@ -398,12 +400,17 @@ export default function UploadScreen() {
 
 			const errorMessage =
 				error instanceof Error ? error.message : 'Upload failed unexpectedly';
-			
+
 			// Solo mostrar error si no estamos cancelando Y no es un mensaje de cancelación
 			if (!isCancelingRef.current && !errorMessage.includes('cancelled')) {
-				Alert.alert(t('common.error'), errorMessage, [{ text: t('common.ok') }]);
+				Alert.alert(t('common.error'), errorMessage, [
+					{ text: t('common.ok') },
+				]);
 			} else {
-				console.log('🛑 Unexpected error but canceling - suppressing error alert:', errorMessage);
+				console.log(
+					'🛑 Unexpected error but canceling - suppressing error alert:',
+					errorMessage,
+				);
 			}
 		} finally {
 			// Desactivar background task y limpiar archivos temporales
@@ -435,10 +442,10 @@ export default function UploadScreen() {
 	const handleCancelUpload = async () => {
 		try {
 			console.log('🛑 Canceling upload and compression...');
-			
+
 			// Marcar que estamos cancelando para evitar mostrar errores
 			isCancelingRef.current = true;
-			
+
 			// Cancelar upload y compresión
 			await VideoService.cancelUpload();
 
@@ -487,7 +494,6 @@ export default function UploadScreen() {
 
 		// Resetear todos los estados al cancelar
 		setSelectedVideo(null);
-		setShowEditor(false);
 		setEditing(false);
 		setIsLoadingVideo(false);
 		setLoadingProgress(0);
@@ -502,14 +508,13 @@ export default function UploadScreen() {
 		return null; // useRequireAuth will handle redirect
 	}
 
-	// Show video editor when video is selected
-	if (showEditor && selectedVideo) {
+	if (selectedVideo) {
 		return (
-			<VideoEditor
+			<VideoMetadata
 				videoUri={selectedVideo.uri}
-				duration={selectedVideo.duration / 1000} // Convert to seconds
+				duration={selectedVideo.duration}
 				onSave={handleVideoEditorSave}
-				onCancel={handleVideoEditorCancel}
+				onBack={handleVideoEditorCancel}
 				onCancelUpload={handleCancelUpload}
 				isUploading={isUploading}
 				uploadProgress={uploadProgress}
@@ -584,10 +589,6 @@ export default function UploadScreen() {
 							</Text>
 						</View>
 						<View style={styles.infoItem}>
-							<Feather name="file" size={16} color={Colors.textTertiary} />
-							<Text style={styles.infoText}>Máximo 100MB por video</Text>
-						</View>
-						<View style={styles.infoItem}>
 							<Feather name="edit-3" size={16} color={Colors.textTertiary} />
 							<Text style={styles.infoText}>
 								Podrás recortar y editar después de seleccionar
@@ -609,8 +610,10 @@ export default function UploadScreen() {
 							backgroundColor={Colors.textTertiary}
 							showPercentage={true}
 						/>
-						<Text style={styles.loadingText}>Subiendo video...</Text>
-						<Text style={styles.loadingSubtext}>Procesando y enviando al servidor</Text>
+						<Text style={styles.loadingText}>{t('upload.uploadingVideo')}</Text>
+						<Text style={styles.loadingSubtext}>
+							Procesando y enviando al servidor
+						</Text>
 					</View>
 				</View>
 			)}
