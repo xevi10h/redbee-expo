@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/Button';
+import { SubscriptionModal } from '@/components/modals/SubscriptionModal';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -208,6 +209,8 @@ export default function UserProfileScreen() {
 	};
 
 	const [currentTab, setCurrentTab] = useState<ExternalProfileTab>('public');
+	const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+	const [subscriptionLoading, setSubscriptionLoading] = useState(false);
 
 	// Update tab when userProfile loads and changes
 	useEffect(() => {
@@ -230,13 +233,45 @@ export default function UserProfileScreen() {
 		}
 	}, [handleFollow, t]);
 
-	const handleSubscribePress = useCallback(async () => {
+	const handleSubscribePress = useCallback(() => {
+		setShowSubscriptionModal(true);
+	}, []);
+
+	const handleSubscriptionConfirm = useCallback(async () => {
+		setSubscriptionLoading(true);
 		try {
-			await handleSubscribe();
+			if (isSubscribed) {
+				// Handle unsubscribe
+				const { SubscriptionService } = await import('@/services/subscriptionService');
+				
+				// Get user's subscription to this creator
+				const { data: subscriptions } = await SubscriptionService.getAllUserSubscriptions(currentUser?.id || '');
+				const subscription = subscriptions.find(sub => sub.creator_id === id && sub.status === 'active');
+				
+				if (subscription) {
+					const result = await SubscriptionService.cancelSubscription(subscription.stripe_subscription_id!);
+					if (result.success) {
+						Alert.alert(
+							'Suscripción cancelada',
+							'Tu suscripción ha sido cancelada. Mantendrás acceso hasta el final del período actual.',
+							[{ text: 'Entendido' }]
+						);
+						// Refresh the profile to update subscription state
+						router.replace(`/user/${id}`);
+					} else {
+						throw new Error(result.error);
+					}
+				}
+			} else {
+				// Handle subscribe
+				await handleSubscribe();
+			}
 		} catch (error) {
-			Alert.alert(t('common.error'), 'No se pudo procesar la suscripción');
+			Alert.alert(t('common.error'), 'No se pudo procesar la acción');
+		} finally {
+			setSubscriptionLoading(false);
 		}
-	}, [handleSubscribe, t]);
+	}, [isSubscribed, handleSubscribe, currentUser?.id, id, t]);
 
 	const handleBackPress = useCallback(() => {
 		router.back();
@@ -637,6 +672,18 @@ export default function UserProfileScreen() {
 					)}
 				</View>
 			</ScrollView>
+
+			{/* Subscription Modal */}
+			<SubscriptionModal
+				visible={showSubscriptionModal}
+				onClose={() => setShowSubscriptionModal(false)}
+				onConfirm={handleSubscriptionConfirm}
+				creatorName={userProfile?.display_name || userProfile?.username || ''}
+				price={userProfile?.subscription_price || 0}
+				currency={userProfile?.subscription_currency || 'USD'}
+				isSubscribed={isSubscribed}
+				loading={subscriptionLoading}
+			/>
 		</SafeAreaView>
 	);
 }
