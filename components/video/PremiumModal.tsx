@@ -1,7 +1,8 @@
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+	ActivityIndicator,
 	Animated,
 	Dimensions,
 	Pressable,
@@ -13,6 +14,7 @@ import {
 
 import { Colors } from '@/constants/Colors';
 import { useTranslation } from '@/hooks/useTranslation';
+import { PaymentService } from '@/services/paymentService';
 import { Video as VideoType } from '@/shared/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -32,9 +34,12 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
 }) => {
 	const { t } = useTranslation();
 	const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+	const [loading, setLoading] = useState(false);
+	const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
 
 	useEffect(() => {
 		if (isVisible) {
+			checkPaymentMethods();
 			Animated.spring(slideAnim, {
 				toValue: 0,
 				useNativeDriver: true,
@@ -50,6 +55,34 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
 			}).start();
 		}
 	}, [isVisible, slideAnim]);
+
+	const checkPaymentMethods = async () => {
+		try {
+			const response = await PaymentService.getPaymentMethods();
+			if (response.success && response.data) {
+				setHasPaymentMethod(response.data.length > 0);
+			}
+		} catch (error) {
+			console.error('Error checking payment methods:', error);
+			setHasPaymentMethod(false);
+		}
+	};
+
+	const handleSubscribe = async () => {
+		if (!hasPaymentMethod) {
+			// Navigate to add payment method first
+			onClose();
+			// You might want to add navigation logic here
+			return;
+		}
+
+		setLoading(true);
+		try {
+			await onSubscribe();
+		} finally {
+			setLoading(false);
+		}
+	};
 
 	if (!isVisible) return null;
 
@@ -96,32 +129,26 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
 							{t('video.subscribeToWatch')}
 						</Text>
 						<Text style={styles.benefitsSubtitle}>
-							Suscríbete para disfrutar de todo el contenido premium
+							{t('video.subscriptionBenefits.supportCreator')}
 						</Text>
 
 						<View style={styles.benefitsList}>
 							<View style={styles.benefitItem}>
 								<Feather name="check" size={20} color={Colors.premium} />
 								<Text style={styles.benefitText}>
-									Acceso a todos los videos premium
+									{t('video.subscriptionBenefits.accessPremium')}
 								</Text>
 							</View>
 							<View style={styles.benefitItem}>
 								<Feather name="check" size={20} color={Colors.premium} />
 								<Text style={styles.benefitText}>
-									Comentar en contenido exclusivo
+									{t('video.subscriptionBenefits.commentPremium')}
 								</Text>
 							</View>
 							<View style={styles.benefitItem}>
 								<Feather name="check" size={20} color={Colors.premium} />
 								<Text style={styles.benefitText}>
-									Apoyar directamente al creador
-								</Text>
-							</View>
-							<View style={styles.benefitItem}>
-								<Feather name="check" size={20} color={Colors.premium} />
-								<Text style={styles.benefitText}>
-									Disfrutar de contenido de mayor calidad
+									{t('video.subscriptionBenefits.supportCreator')}
 								</Text>
 							</View>
 						</View>
@@ -134,28 +161,66 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
 						<Text style={styles.pricePeriod}>/mes</Text>
 					</View>
 
-					<TouchableOpacity
-						style={styles.subscribeButton}
-						onPress={onSubscribe}
-						activeOpacity={0.8}
-					>
-						<LinearGradient
-							colors={Colors.gradientPrimary}
-							style={styles.subscribeGradient}
-							start={{ x: 0, y: 0 }}
-							end={{ x: 1, y: 0 }}
+					{!hasPaymentMethod ? (
+						<TouchableOpacity
+							style={styles.paymentMethodButton}
+							onPress={handleSubscribe}
+							activeOpacity={0.8}
+							disabled={loading}
 						>
-							<MaterialCommunityIcons
-								name="crown"
-								size={20}
-								color={Colors.text}
-							/>
-							<Text style={styles.subscribeText}>{t('video.subscribe')}</Text>
-						</LinearGradient>
-					</TouchableOpacity>
+							<View style={styles.paymentMethodContent}>
+								{loading ? (
+									<ActivityIndicator size="small" color={Colors.primary} />
+								) : (
+									<>
+										<Feather
+											name="credit-card"
+											size={20}
+											color={Colors.primary}
+										/>
+										<Text style={styles.paymentMethodText}>
+											{t('subscriptions.addPaymentMethodFirst')}
+										</Text>
+									</>
+								)}
+							</View>
+						</TouchableOpacity>
+					) : (
+						<TouchableOpacity
+							style={styles.subscribeButton}
+							onPress={handleSubscribe}
+							activeOpacity={0.8}
+							disabled={loading}
+						>
+							<LinearGradient
+								colors={Colors.gradientPrimary}
+								style={styles.subscribeGradient}
+								start={{ x: 0, y: 0 }}
+								end={{ x: 1, y: 0 }}
+							>
+								{loading ? (
+									<ActivityIndicator size="small" color={Colors.text} />
+								) : (
+									<>
+										<MaterialCommunityIcons
+											name="crown"
+											size={20}
+											color={Colors.text}
+										/>
+										<Text style={styles.subscribeText}>
+											{t('video.subscribe')}
+										</Text>
+									</>
+								)}
+							</LinearGradient>
+						</TouchableOpacity>
+					)}
 
 					<Text style={styles.disclaimer}>
-						Puedes cancelar en cualquier momento
+						{t('subscriptions.confirmCancelMessage', {
+							username: '',
+							endDate: '',
+						}).split('?')[1] || 'You can cancel anytime'}
 					</Text>
 				</View>
 			</Animated.View>
@@ -307,6 +372,26 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		fontFamily: 'Inter-SemiBold',
 		color: Colors.text,
+	},
+	paymentMethodButton: {
+		borderRadius: 8,
+		borderWidth: 2,
+		borderColor: Colors.primary,
+		backgroundColor: Colors.backgroundSecondary,
+		marginBottom: 16,
+	},
+	paymentMethodContent: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingHorizontal: 24,
+		paddingVertical: 16,
+		gap: 8,
+	},
+	paymentMethodText: {
+		fontSize: 16,
+		fontFamily: 'Inter-SemiBold',
+		color: Colors.primary,
 	},
 	disclaimer: {
 		fontSize: 12,

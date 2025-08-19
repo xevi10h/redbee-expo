@@ -15,6 +15,7 @@ import { Colors } from '@/constants/Colors';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 import { useDeepLinks } from '@/hooks/useDeepLinks';
 import { useTranslation } from '@/hooks/useTranslation';
+import { PaymentService } from '@/services/paymentService';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -42,6 +43,10 @@ export default function RootLayout() {
 			SplashScreen.hideAsync();
 		}
 	}, [loaded, isInitialized]);
+
+	useEffect(() => {
+		PaymentService.initializeStripe();
+	}, []);
 
 	if (!loaded || isLoading || !isInitialized) {
 		return (

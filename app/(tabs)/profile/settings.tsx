@@ -425,6 +425,32 @@ export default function SettingsScreen() {
 					/>
 				</View>
 
+				{/* Payments & Subscriptions Section */}
+				<View style={styles.section}>
+					<Text style={styles.sectionTitle}>{t('payments.title')}</Text>
+
+					<SettingsItem
+						title={t('settings.paymentMethods')}
+						subtitle={t('settings.paymentMethodsSubtitle')}
+						icon="credit-card"
+						onPress={() => router.push('/(tabs)/profile/payment-methods')}
+					/>
+
+					<SettingsItem
+						title={t('settings.subscriptions')}
+						subtitle={t('settings.subscriptionsSubtitle')}
+						icon="users"
+						onPress={() => router.push('/(tabs)/profile/subscriptions')}
+					/>
+
+					<SettingsItem
+						title={t('settings.earnings')}
+						subtitle={t('settings.earningsSubtitle')}
+						icon="dollar-sign"
+						onPress={() => router.push('/(tabs)/profile/earnings')}
+					/>
+				</View>
+
 				{/* Legal Section */}
 				<View style={styles.section}>
 					<Text style={styles.sectionTitle}>{t('settings.legal')}</Text>

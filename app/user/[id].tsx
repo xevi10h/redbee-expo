@@ -795,6 +795,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 16,
 		paddingVertical: 10,
 		gap: 8,
+		height: '100%',
 	},
 	subscribeTextContainer: {
 		alignItems: 'center',
