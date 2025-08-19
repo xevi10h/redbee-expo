@@ -18,15 +18,18 @@
 			"supportsTablet": true,
 			"usesAppleSignIn": true,
 			"bundleIdentifier": "com.redbeeapp.mobile",
+			"buildNumber": "1",
 			"entitlements": {
 				"com.apple.developer.applesignin": ["Default", "Default"],
-				"com.apple.developer.associated-domains": ["applinks:redbeeapp.com"]
+				"com.apple.developer.associated-domains": ["applinks:redbeeapp.com"],
+				"com.apple.developer.in-app-payments": ["merchant.com.redbeeapp.mobile"]
 			},
 			"infoPlist": {
 				"ITSAppUsesNonExemptEncryption": false
 			}
 		},
 		"android": {
+			"versionCode": 1,
 			"adaptiveIcon": {
 				"foregroundImage": "./assets/images/adaptative-icon.png",
 				"backgroundColor": "#ffffff"
