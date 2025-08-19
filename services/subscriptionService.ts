@@ -1,17 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { AuthResponse } from '@/shared/types';
+import { confirmPayment } from '@stripe/stripe-react-native';
 import { Platform } from 'react-native';
-import { PaymentService } from './paymentService';
-
-// Import Stripe only on native platforms
-let Stripe: any;
-if (Platform.OS !== 'web') {
-	try {
-		Stripe = require('@stripe/stripe-react-native').default;
-	} catch (e) {
-		console.warn('Stripe not available on this platform');
-	}
-}
 
 export interface SubscriptionPlan {
 	price: number;
@@ -25,7 +15,7 @@ export interface Subscription {
 	subscriber_id: string;
 	creator_id: string;
 	stripe_subscription_id?: string;
-	status: 'active' | 'canceled' | 'past_due' | 'unpaid';
+	status: 'active' | 'canceled' | 'past_due' | 'unpaid' | 'incomplete';
 	current_period_start: string;
 	current_period_end: string;
 	price: number;
@@ -39,14 +29,68 @@ export interface Subscription {
 	};
 }
 
+export interface PaymentMethod {
+	id: string;
+	stripe_payment_method_id: string;
+	type: string;
+	card_brand?: string;
+	card_last4?: string;
+	card_exp_month?: number;
+	card_exp_year?: number;
+	is_default: boolean;
+}
+
 export class SubscriptionService {
 	/**
-	 * Create subscription for a creator
+	 * Get user's payment methods for subscription selection
 	 */
-	static async createSubscription(creatorId: string): Promise<
+	static async getPaymentMethodsForSubscription(): Promise<
+		AuthResponse<PaymentMethod[]>
+	> {
+		try {
+			const { data, error } = await supabase
+				.from('payment_methods')
+				.select('*')
+				.eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+				.order('is_default', { ascending: false })
+				.order('created_at', { ascending: false });
+
+			if (error) {
+				return {
+					success: false,
+					error: error.message,
+				};
+			}
+
+			return {
+				success: true,
+				data: data || [],
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error:
+					error instanceof Error
+						? error.message
+						: 'Failed to get payment methods',
+			};
+		}
+	}
+
+	/**
+	 * Create subscription with selected payment method
+	 */
+	static async createSubscription(
+		creatorId: string,
+		selectedPaymentMethodId?: string,
+	): Promise<
 		AuthResponse<{
 			subscription_id: string;
 			client_secret?: string;
+			requires_action?: boolean;
+			processing?: boolean;
+			pending?: boolean;
+			needs_attention?: boolean;
 		}>
 	> {
 		try {
@@ -71,41 +115,28 @@ export class SubscriptionService {
 				};
 			}
 
-			// Get user's default payment method
-			const { data: paymentMethods, error: pmError } = await supabase
-				.from('payment_methods')
-				.select('stripe_payment_method_id')
-				.eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-				.eq('is_default', true)
-				.limit(1);
-
-			if (pmError) {
-				return {
-					success: false,
-					error: 'Failed to retrieve payment methods. Please try again later.',
-				};
-			}
-
 			let paymentMethodId: string;
 
-			if (!paymentMethods || paymentMethods.length === 0) {
-				// User doesn't have a payment method, let them add one now
-				console.log('No payment method found, prompting user to add one...');
-				
-				const addPaymentResult = await PaymentService.addPaymentMethod();
-				
-				if (!addPaymentResult.success || !addPaymentResult.data) {
+			if (selectedPaymentMethodId) {
+				// Use the selected payment method
+				paymentMethodId = selectedPaymentMethodId;
+			} else {
+				// Get user's default payment method
+				const { data: paymentMethods, error: pmError } = await supabase
+					.from('payment_methods')
+					.select('stripe_payment_method_id')
+					.eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+					.eq('is_default', true)
+					.limit(1);
+
+				if (pmError || !paymentMethods || paymentMethods.length === 0) {
 					return {
 						success: false,
-						error: addPaymentResult.error || 'Failed to add payment method',
+						error:
+							'No payment method found. Please add a payment method first.',
 					};
 				}
 
-				// Set the new payment method as default and use it for subscription
-				await PaymentService.setDefaultPaymentMethod(addPaymentResult.data.id);
-				paymentMethodId = addPaymentResult.data.stripe_payment_method_id;
-			} else {
-				// Use existing default payment method
 				paymentMethodId = paymentMethods[0].stripe_payment_method_id;
 			}
 
@@ -119,6 +150,8 @@ export class SubscriptionService {
 				},
 			});
 
+			console.log('Subscription creation response:', response);
+
 			if (response.error) {
 				return {
 					success: false,
@@ -126,11 +159,68 @@ export class SubscriptionService {
 				};
 			}
 
-			const { subscription_id, client_secret } = response.data;
+			const {
+				subscription_id,
+				client_secret,
+				status,
+				requires_action,
+				payment_intent_status,
+			} = response.data;
 
-			// If payment requires confirmation, handle it with Stripe
-			if (client_secret) {
-				const { error: stripeError } = await Stripe.confirmPayment(
+			console.log('Subscription created:', {
+				subscription_id,
+				status,
+				requires_action,
+				payment_intent_status,
+			});
+
+			// If subscription is already active (payment succeeded immediately)
+			if (status === 'active') {
+				console.log('Subscription is immediately active');
+				return {
+					success: true,
+					data: {
+						subscription_id,
+					},
+				};
+			}
+
+			// If subscription is processing, let user know it's being processed
+			if (status === 'processing' || payment_intent_status === 'processing') {
+				console.log('Payment is processing, will be confirmed shortly');
+
+				// Optionally poll for status updates or show processing message
+				setTimeout(async () => {
+					await this.refreshSubscriptionStatus(subscription_id);
+				}, 3000);
+
+				return {
+					success: true,
+					data: {
+						subscription_id,
+						processing: true,
+					},
+				};
+			}
+
+			// If payment requires confirmation, handle it
+			if (requires_action && client_secret) {
+				console.log('Payment requires confirmation, processing...');
+
+				if (Platform.OS === 'web') {
+					// For web, return the client secret so the UI can handle it
+					return {
+						success: true,
+						data: {
+							subscription_id,
+							client_secret,
+							requires_action: true,
+						},
+					};
+				}
+
+				// For mobile, confirm payment with Stripe
+				const { error: stripeError, paymentIntent } = await confirmPayment(
 					client_secret,
 					{
 						paymentMethodType: 'Card',
@@ -138,27 +228,100 @@ export class SubscriptionService {
 				);
 
 				if (stripeError) {
+					console.error('Stripe payment error:', stripeError);
+
+					// Cancel the subscription since payment failed
+					await this.cancelSubscription(subscription_id);
+
 					return {
 						success: false,
 						error: stripeError.message,
 					};
 				}
+
+				console.log('Payment confirmed successfully:', paymentIntent?.status);
+
+				// Wait a moment for Stripe webhooks to process
+				await new Promise((resolve) => setTimeout(resolve, 2000));
+
+				// Refresh subscription status
+				const refreshResult = await this.refreshSubscriptionStatus(
+					subscription_id,
+				);
+
+				if (!refreshResult.success) {
+					console.warn(
+						'Could not refresh subscription status after payment confirmation',
+					);
+				}
+
+				return {
+					success: true,
+					data: {
+						subscription_id,
+					},
+				};
 			}
+
+			// For incomplete status without requires_action, it might be pending
+			if (status === 'incomplete') {
+				console.log('Subscription is incomplete, may need time to process');
+
+				// Try to refresh status after a moment
+				setTimeout(async () => {
+					try {
+						await this.refreshSubscriptionStatus(subscription_id);
+					} catch (error) {
+						console.error('Error refreshing subscription status:', error);
+					}
+				}, 2000);
+
+				return {
+					success: true,
+					data: {
+						subscription_id,
+						pending: true,
+					},
+				};
+			}
+
+			// If we get here, log the unexpected state but don't fail completely
+			console.warn('Unexpected subscription state:', {
+				status,
+				requires_action,
+				payment_intent_status,
+			});
 
 			return {
 				success: true,
 				data: {
 					subscription_id,
-					client_secret,
+					needs_attention: true,
 				},
 			};
 		} catch (error) {
+			console.error('Create subscription error:', error);
+
+			// If we created a subscription but then failed, return the ID for debugging
+			let errorData: any = {};
+			if (
+				error instanceof Error &&
+				error.message &&
+				error.message.includes('subscription_id:')
+			) {
+				const subscriptionId = error.message
+					.split('subscription_id:')[1]
+					.trim();
+				errorData.subscription_id = subscriptionId;
+			}
+
 			return {
 				success: false,
 				error:
 					error instanceof Error
 						? error.message
 						: 'Failed to create subscription',
+				data: Object.keys(errorData).length > 0 ? errorData : undefined,
 			};
 		}
 	}
@@ -170,7 +333,6 @@ export class SubscriptionService {
 		subscriptionId: string,
 	): Promise<AuthResponse<void>> {
 		try {
-			// Cancel with Supabase Edge Function
 			const response = await supabase.functions.invoke('cancel-subscription', {
 				body: {
 					subscription_id: subscriptionId,
@@ -195,6 +357,60 @@ export class SubscriptionService {
 						? error.message
 						: 'Failed to cancel subscription',
 			};
+		}
+	}
+
+	/**
+	 * Refresh subscription status from Stripe
+	 */
+	static async refreshSubscriptionStatus(
+		subscriptionId: string,
+	): Promise<AuthResponse<void>> {
+		try {
+			const response = await supabase.functions.invoke('confirm-subscription', {
+				body: {
+					subscription_id: subscriptionId,
+				},
+			});
+
+			if (response.error) {
+				return {
+					success: false,
+					error:
+						response.error.message || 'Failed to refresh subscription status',
+				};
+			}
+
+			return {
+				success: true,
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error:
+					error instanceof Error
+						? error.message
+						: 'Failed to refresh subscription status',
+			};
+		}
+	}
+
+	/**
+	 * Debug subscription (only for development)
+	 */
+	static async debugSubscription(subscriptionId: string): Promise<any> {
+		try {
+			const response = await supabase.functions.invoke('debug-subscription', {
+				body: {
+					subscription_id: subscriptionId,
+				},
+			});
+
+			console.log('Debug subscription response:', response);
+			return response.data;
+		} catch (error) {
+			console.error('Debug subscription error:', error);
+			return null;
 		}
 	}
 
@@ -245,7 +461,7 @@ export class SubscriptionService {
 	}
 
 	/**
-	 * Get all subscriptions (active and inactive)
+	 * Get all subscriptions (active and inactive), with only the latest subscription per creator
 	 */
 	static async getAllUserSubscriptions(
 		userId: string,
@@ -274,9 +490,20 @@ export class SubscriptionService {
 				};
 			}
 
+			// Remove duplicates by keeping only the latest subscription for each creator
+			const uniqueSubscriptions: Subscription[] = [];
+			const seenCreators = new Set<string>();
+
+			(data || []).forEach((subscription) => {
+				if (!seenCreators.has(subscription.creator_id)) {
+					seenCreators.add(subscription.creator_id);
+					uniqueSubscriptions.push(subscription);
+				}
+			});
+
 			return {
 				success: true,
-				data: data || [],
+				data: uniqueSubscriptions,
 			};
 		} catch (error) {
 			return {

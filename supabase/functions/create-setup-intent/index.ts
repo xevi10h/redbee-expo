@@ -1,6 +1,6 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@14.21.0'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import Stripe from 'https://esm.sh/stripe@14.21.0';
 
 const corsHeaders = {
 	'Access-Control-Allow-Origin': '*',
@@ -14,17 +14,14 @@ serve(async (req) => {
 	}
 
 	try {
-		// Get the authorization header from the request
 		const authHeader = req.headers.get('Authorization')!;
 		const token = authHeader.replace('Bearer ', '');
 
-		// Create a Supabase client with the service role key
 		const supabaseAdmin = createClient(
 			Deno.env.get('SUPABASE_URL') ?? '',
 			Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
 		);
 
-		// Get the user from the token
 		const {
 			data: { user },
 			error: userError,
@@ -37,35 +34,31 @@ serve(async (req) => {
 			});
 		}
 
-		// Initialize Stripe
 		const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
 			apiVersion: '2023-10-16',
 		});
 
-		// Get or create Stripe customer
-		let customerId: string;
-
-		// Check if user already has a Stripe customer ID
-		const { data: profile } = await supabaseAdmin
+		// Get user's Stripe customer ID
+		const { data: userProfile } = await supabaseAdmin
 			.from('profiles')
 			.select('stripe_customer_id')
 			.eq('id', user.id)
 			.single();
 
-		if (profile?.stripe_customer_id) {
-			customerId = profile.stripe_customer_id;
-		} else {
-			// Create new Stripe customer
+		let customerId = userProfile?.stripe_customer_id;
+
+		// Create customer if not exists
+		if (!customerId) {
 			const customer = await stripe.customers.create({
 				email: user.email,
 				metadata: {
-					supabase_user_id: user.id,
+					user_id: user.id,
 				},
 			});
 
 			customerId = customer.id;
 
-			// Save customer ID to profile
+			// Update profile with customer ID
 			await supabaseAdmin
 				.from('profiles')
 				.update({ stripe_customer_id: customerId })
@@ -80,7 +73,10 @@ serve(async (req) => {
 		});
 
 		return new Response(
-			JSON.stringify({ client_secret: setupIntent.client_secret }),
+			JSON.stringify({
+				client_secret: setupIntent.client_secret,
+				setup_intent_id: setupIntent.id,
+			}),
 			{
 				status: 200,
 				headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -16,8 +16,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PaymentMethodSelectionModal } from '@/components/modals/PaymentMethodSelectionModal';
 import { Button } from '@/components/ui/Button';
-import { SubscriptionModal } from '@/components/modals/SubscriptionModal';
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -190,12 +190,17 @@ export default function UserProfileScreen() {
 		error,
 		isFollowing,
 		isSubscribed,
+		showPaymentMethodModal,
 		handleFollow,
-		handleSubscribe,
+		handleSubscribePress,
+		handleSubscribeWithPaymentMethod,
 		handleBlock,
 		handleReport,
 		loadUserVideos,
 		setSortOption,
+		checkIncompleteSubscriptions,
+		setShowPaymentMethodModal,
+		isSubscribeLoading,
 	} = useUserProfile(id!, currentUser?.id);
 
 	type ExternalProfileTab = 'public' | 'premium' | 'videos';
@@ -221,6 +226,24 @@ export default function UserProfileScreen() {
 		}
 	}, [userProfile, loadUserVideos]);
 
+	// Check for incomplete subscriptions once when profile loads (if not subscribed)
+	useEffect(() => {
+		if (userProfile && !isSubscribed && !isLoading && currentUser?.id) {
+			// Add a small delay to avoid interfering with initial loading
+			const timer = setTimeout(() => {
+				checkIncompleteSubscriptions();
+			}, 1500);
+
+			return () => clearTimeout(timer);
+		}
+	}, [
+		userProfile,
+		isSubscribed,
+		isLoading,
+		currentUser?.id,
+		checkIncompleteSubscriptions,
+	]);
+
 	const handleVideoPress = useCallback((video: Video) => {
 		router.push(`/video/${video.id}`);
 	}, []);
@@ -233,52 +256,11 @@ export default function UserProfileScreen() {
 		}
 	}, [handleFollow, t]);
 
-	const handleSubscribePress = useCallback(() => {
-		setShowSubscriptionModal(true);
-	}, []);
-
-	const handleSubscriptionConfirm = useCallback(async () => {
-		setSubscriptionLoading(true);
-		try {
-			if (isSubscribed) {
-				// Handle unsubscribe
-				const { SubscriptionService } = await import('@/services/subscriptionService');
-				
-				// Get user's subscription to this creator
-				const { data: subscriptions } = await SubscriptionService.getAllUserSubscriptions(currentUser?.id || '');
-				const subscription = subscriptions.find(sub => sub.creator_id === id && sub.status === 'active');
-				
-				if (subscription) {
-					const result = await SubscriptionService.cancelSubscription(subscription.stripe_subscription_id!);
-					if (result.success) {
-						Alert.alert(
-							'Suscripción cancelada',
-							'Tu suscripción ha sido cancelada. Mantendrás acceso hasta el final del período actual.',
-							[{ text: 'Entendido' }]
-						);
-						// Refresh the profile to update subscription state
-						router.replace(`/user/${id}`);
-					} else {
-						throw new Error(result.error);
-					}
-				}
-			} else {
-				// Handle subscribe
-				await handleSubscribe();
-			}
-		} catch (error) {
-			Alert.alert(t('common.error'), 'No se pudo procesar la acción');
-		} finally {
-			setSubscriptionLoading(false);
-		}
-	}, [isSubscribed, handleSubscribe, currentUser?.id, id, t]);
-
 	const handleBackPress = useCallback(() => {
 		router.back();
 	}, []);
 
 	const handleShareProfile = useCallback(() => {
-		// TODO: Implement share functionality
 		Alert.alert('Compartir perfil', 'Funcionalidad próximamente');
 	}, []);
 
@@ -674,15 +656,14 @@ export default function UserProfileScreen() {
 			</ScrollView>
 
 			{/* Subscription Modal */}
-			<SubscriptionModal
-				visible={showSubscriptionModal}
-				onClose={() => setShowSubscriptionModal(false)}
-				onConfirm={handleSubscriptionConfirm}
+			<PaymentMethodSelectionModal
+				visible={showPaymentMethodModal}
+				onClose={() => setShowPaymentMethodModal(false)}
+				onConfirm={handleSubscribeWithPaymentMethod}
 				creatorName={userProfile?.display_name || userProfile?.username || ''}
 				price={userProfile?.subscription_price || 0}
 				currency={userProfile?.subscription_currency || 'USD'}
-				isSubscribed={isSubscribed}
-				loading={subscriptionLoading}
+				loading={isSubscribeLoading}
 			/>
 		</SafeAreaView>
 	);

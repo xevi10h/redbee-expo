@@ -1,6 +1,6 @@
 import { UserService, VideoService } from '@/services';
 import { User, Video } from '@/shared/types';
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 
 export type VideoSortOption = 'created_at' | 'views_count' | 'likes_count';
@@ -17,6 +17,7 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 	const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
 		{},
 	);
+	const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
 
 	const setSpecificLoading = useCallback((key: string, loading: boolean) => {
 		setLoadingStates((prev) => ({ ...prev, [key]: loading }));
@@ -27,15 +28,17 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 		const sorted = [...userVideos].sort((a, b) => {
 			switch (sortOption) {
 				case 'views_count':
-					return b.views_count - a.views_count; // Descendente (más visualizaciones primero)
+					return b.views_count - a.views_count;
 				case 'likes_count':
-					return b.likes_count - a.likes_count; // Descendente (más me gusta primero)
+					return b.likes_count - a.likes_count;
 				case 'created_at':
 				default:
-					return new Date(b.created_at).getTime() - new Date(a.created_at).getTime(); // Descendente (más recientes primero)
+					return (
+						new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+					);
 			}
 		});
-		
+
 		return sorted;
 	}, [userVideos, sortOption]);
 
@@ -78,11 +81,9 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 		setIsLoadingVideos(true);
 
 		try {
-			// Usar la función de búsqueda con el user_id como filtro
 			const result = await VideoService.searchVideos('', viewerId, 0, 50);
 
 			if (result.success && result.data) {
-				// Filtrar solo los videos del usuario actual
 				const filteredVideos = result.data.videos.filter(
 					(video) => video.user_id === userId,
 				);
@@ -176,49 +177,206 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 		}
 	}, [userId, viewerId, isFollowing, userProfile, setSpecificLoading]);
 
-	// Handle subscribe/unsubscribe
-	const handleSubscribe = useCallback(async () => {
+	// Handle subscribe button press (opens payment method modal)
+	const handleSubscribePress = useCallback(() => {
 		if (!userId || !viewerId || userId === viewerId) return;
 
-		const loadingKey = `subscribe-${userId}`;
-		setSpecificLoading(loadingKey, true);
+		if (isSubscribed) {
+			// Handle unsubscribe directly
+			handleUnsubscribe();
+		} else {
+			// Open payment method selection modal
+			setShowPaymentMethodModal(true);
+		}
+	}, [userId, viewerId, isSubscribed]);
 
-		try {
-			// Import SubscriptionService dynamically
-			const { SubscriptionService } = await import(
-				'@/services/subscriptionService'
-			);
-			const result = await SubscriptionService.createSubscription(userId);
+	// Handle subscription with selected payment method
+	const handleSubscribeWithPaymentMethod = useCallback(
+		async (paymentMethodId?: string) => {
+			if (!userId || !viewerId || userId === viewerId) return;
 
-			if (result.success) {
-				setIsSubscribed(true);
-				if (userProfile) {
-					setUserProfile((prev) =>
-						prev
-							? {
-									...prev,
-									subscribers_count: prev.subscribers_count + 1,
-							  }
-							: prev,
+			const loadingKey = `subscribe-${userId}`;
+			setSpecificLoading(loadingKey, true);
+
+			try {
+				const { SubscriptionService } = await import(
+					'@/services/subscriptionService'
+				);
+
+				console.log(
+					'Creating subscription with payment method:',
+					paymentMethodId,
+				);
+				const result = await SubscriptionService.createSubscription(
+					userId,
+					paymentMethodId,
+				);
+
+				console.log('Subscription result:', result);
+
+				if (result.success) {
+					// Close modal
+					setShowPaymentMethodModal(false);
+
+					// Handle different result states
+					if (result.data?.processing) {
+						Alert.alert(
+							'Pago en proceso',
+							'Tu pago está siendo procesado. Te notificaremos cuando se complete la suscripción.',
+							[{ text: 'Entendido' }],
+						);
+						// Don't update UI yet, wait for confirmation
+						return;
+					}
+
+					if (result.data?.pending) {
+						Alert.alert(
+							'Suscripción pendiente',
+							'Tu suscripción está siendo procesada. Esto puede tomar unos momentos.',
+							[{ text: 'Entendido' }],
+						);
+						// Check status after a moment
+						setTimeout(() => {
+							checkIncompleteSubscriptions();
+						}, 5000);
+						return;
+					}
+
+					if (result.data?.needs_attention) {
+						// Debug the subscription to understand what's happening
+						console.log('Subscription needs attention, debugging...');
+						const debugInfo = await SubscriptionService.debugSubscription(
+							result.data.subscription_id,
+						);
+						console.log('Debug info:', debugInfo);
+
+						Alert.alert(
+							'Revisar suscripción',
+							'La suscripción necesita atención. Por favor contacta soporte si el problema persiste.',
+							[{ text: 'Entendido' }],
+						);
+						return;
+					}
+
+					// Normal successful subscription
+					setIsSubscribed(true);
+					if (userProfile) {
+						setUserProfile((prev) =>
+							prev
+								? {
+										...prev,
+										subscribers_count: prev.subscribers_count + 1,
+								  }
+								: prev,
+						);
+					}
+
+					Alert.alert(
+						'¡Suscripción exitosa!',
+						'Ahora tienes acceso a todo el contenido premium de este creador.',
+						[{ text: 'Perfecto' }],
+					);
+				} else {
+					console.error('Subscription failed:', result.error);
+
+					// If we have a subscription_id but it failed, debug it
+					if (result.data?.subscription_id) {
+						console.log('Debugging failed subscription...');
+						const debugInfo = await SubscriptionService.debugSubscription(
+							result.data.subscription_id,
+						);
+						console.log('Failed subscription debug info:', debugInfo);
+					}
+
+					Alert.alert(
+						'Error en el pago',
+						result.error || 'No se pudo procesar la suscripción',
 					);
 				}
-				Alert.alert(
-					'¡Suscripción exitosa!',
-					'Ahora tienes acceso a todo el contenido premium de este creador.',
-					[{ text: 'Perfecto' }],
-				);
-			} else {
-				Alert.alert(
-					'Error en el pago',
-					result.error || 'No se pudo procesar la suscripción',
-				);
+			} catch (error) {
+				console.error('Subscribe error:', error);
+				Alert.alert('Error', 'No se pudo procesar la suscripción');
+			} finally {
+				setSpecificLoading(loadingKey, false);
 			}
-		} catch (error) {
-			console.error('Subscribe error:', error);
-			Alert.alert('Error', 'No se pudo procesar la suscripción');
-		} finally {
-			setSpecificLoading(loadingKey, false);
-		}
+		},
+		[userId, viewerId, userProfile, setSpecificLoading],
+	);
+
+	// Handle unsubscribe
+	const handleUnsubscribe = useCallback(async () => {
+		if (!userId || !viewerId || userId === viewerId) return;
+
+		Alert.alert(
+			'Cancelar suscripción',
+			'¿Estás seguro de que quieres cancelar tu suscripción? Mantendrás acceso hasta el final del período actual.',
+			[
+				{ text: 'No, mantener', style: 'cancel' },
+				{
+					text: 'Sí, cancelar',
+					style: 'destructive',
+					onPress: async () => {
+						const loadingKey = `subscribe-${userId}`;
+						setSpecificLoading(loadingKey, true);
+
+						try {
+							const { SubscriptionService } = await import(
+								'@/services/subscriptionService'
+							);
+
+							// Get user's subscription to this creator
+							const { data: subscriptions } =
+								await SubscriptionService.getAllUserSubscriptions(viewerId);
+
+							if (!subscriptions) {
+								throw new Error('No subscriptions found');
+							}
+
+							const subscription = subscriptions.find(
+								(sub) => sub.creator_id === userId && sub.status === 'active',
+							);
+
+							if (subscription?.stripe_subscription_id) {
+								const result = await SubscriptionService.cancelSubscription(
+									subscription.stripe_subscription_id,
+								);
+
+								if (result.success) {
+									// Update UI
+									setIsSubscribed(false);
+									if (userProfile) {
+										setUserProfile((prev) =>
+											prev
+												? {
+														...prev,
+														subscribers_count: Math.max(
+															0,
+															prev.subscribers_count - 1,
+														),
+												  }
+												: prev,
+										);
+									}
+
+									Alert.alert(
+										'Suscripción cancelada',
+										'Tu suscripción ha sido cancelada. Mantendrás acceso hasta el final del período actual.',
+										[{ text: 'Entendido' }],
+									);
+								} else {
+									throw new Error(result.error);
+								}
+							}
+						} catch (error) {
+							console.error('Unsubscribe error:', error);
+							Alert.alert('Error', 'No se pudo cancelar la suscripción');
+						} finally {
+							setSpecificLoading(loadingKey, false);
+						}
+					},
+				},
+			],
+		);
 	}, [userId, viewerId, userProfile, setSpecificLoading]);
 
 	// Handle block user
@@ -234,7 +392,6 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 					text: 'Bloquear',
 					style: 'destructive',
 					onPress: async () => {
-						// TODO: Implement block functionality
 						Alert.alert(
 							'Funcionalidad próximamente',
 							'La función de bloquear usuarios estará disponible pronto.',
@@ -251,7 +408,6 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 			if (!userId || !viewerId || userId === viewerId) return;
 
 			try {
-				// TODO: Implement user reporting
 				Alert.alert(
 					'Reporte enviado',
 					'Hemos recibido tu reporte y lo estamos revisando. Gracias por ayudarnos a mantener la comunidad segura.',
@@ -286,6 +442,43 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 		setUserVideos((prev) => prev.filter((video) => video.id !== videoId));
 	}, []);
 
+	// Check for incomplete subscriptions manually
+	const checkIncompleteSubscriptions = useCallback(async () => {
+		if (!userId || !viewerId) return false;
+
+		try {
+			const { SubscriptionService } = await import(
+				'@/services/subscriptionService'
+			);
+
+			const { data: subscriptions } =
+				await SubscriptionService.getAllUserSubscriptions(viewerId);
+
+			if (subscriptions) {
+				const incompleteSubscription = subscriptions.find(
+					(sub) => sub.creator_id === userId && sub.status === 'incomplete',
+				);
+
+				// if (incompleteSubscription?.stripe_subscription_id) {
+				// 	console.log('Found incomplete subscription, refreshing status...');
+				// 	const refreshResult =
+				// 		await SubscriptionService.refreshSubscriptionStatus(
+				// 			incompleteSubscription.stripe_subscription_id,
+				// 		);
+
+				// 	if (refreshResult.success) {
+				// 		await loadUserProfile();
+				// 		return true;
+				// 	}
+				// }
+			}
+			return false;
+		} catch (error) {
+			console.error('Error checking incomplete subscriptions:', error);
+			return false;
+		}
+	}, [userId, viewerId, loadUserProfile]);
+
 	// Load profile when userId changes
 	useEffect(() => {
 		if (userId) {
@@ -311,10 +504,12 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 		error,
 		isFollowing,
 		isSubscribed,
+		showPaymentMethodModal,
 
 		// Actions
 		handleFollow,
-		handleSubscribe,
+		handleSubscribePress,
+		handleSubscribeWithPaymentMethod,
 		handleBlock,
 		handleReport,
 		handleRefresh,
@@ -323,6 +518,8 @@ export const useUserProfile = (userId: string, viewerId?: string) => {
 		updateUserVideo,
 		removeUserVideo,
 		setSortOption: setSortOption_,
+		checkIncompleteSubscriptions,
+		setShowPaymentMethodModal,
 
 		// Loading states
 		isFollowLoading: isActionLoading('follow'),

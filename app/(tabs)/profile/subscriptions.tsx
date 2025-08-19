@@ -73,6 +73,8 @@ const SubscriptionItem: React.FC<SubscriptionItemProps> = ({
 		);
 	};
 
+	console.log(`Subscription status ${subscription.status}`);
+
 	return (
 		<View style={styles.subscriptionItem}>
 			<TouchableOpacity
@@ -100,9 +102,9 @@ const SubscriptionItem: React.FC<SubscriptionItemProps> = ({
 						@{subscription.creator?.username}
 					</Text>
 					<Text style={styles.subscriptionPrice}>
-						{t('subscriptions.subscriptionPrice', {
-							price: `$${subscription.price.toFixed(2)}`,
-						})}
+						{`${subscription.price.toFixed(
+							2,
+						)} ${subscription.currency.toUpperCase()}`}
 					</Text>
 				</View>
 			</TouchableOpacity>
@@ -199,7 +201,7 @@ export default function SubscriptionsScreen() {
 	};
 
 	const handleViewProfile = (creatorId: string) => {
-		router.push(`/profile/${creatorId}`);
+		router.push(`/user/${creatorId}`);
 	};
 
 	const renderSubscription = ({ item }: { item: Subscription }) => (
@@ -226,7 +228,12 @@ export default function SubscriptionsScreen() {
 		(sub) => sub.status === 'active',
 	);
 	const inactiveSubscriptions = subscriptions.filter(
-		(sub) => sub.status !== 'active',
+		(sub) => sub.status !== 'active' && sub.status !== 'incomplete',
+	);
+	
+	// Filter out incomplete subscriptions as they represent failed payment attempts
+	const displaySubscriptions = subscriptions.filter(
+		(sub) => sub.status !== 'incomplete',
 	);
 
 	return (
@@ -241,7 +248,7 @@ export default function SubscriptionsScreen() {
 				>
 					<Feather name="arrow-left" size={24} color={Colors.text} />
 				</TouchableOpacity>
-				<Text style={styles.title}>{t('subscriptions.title')}</Text>
+				<Text style={styles.title}>{t('settings.subscriptions')}</Text>
 				<View style={styles.headerSpacer} />
 			</View>
 
@@ -250,11 +257,11 @@ export default function SubscriptionsScreen() {
 				<View style={styles.loadingContainer}>
 					<ActivityIndicator size="large" color={Colors.primary} />
 				</View>
-			) : subscriptions.length === 0 ? (
+			) : displaySubscriptions.length === 0 ? (
 				renderEmptyState()
 			) : (
 				<FlatList
-					data={subscriptions}
+					data={displaySubscriptions}
 					renderItem={renderSubscription}
 					keyExtractor={(item) => item.id}
 					contentContainerStyle={styles.listContainer}
